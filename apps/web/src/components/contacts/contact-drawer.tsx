@@ -38,12 +38,7 @@ export function ContactDrawer({ contact, open, onClose }: Props) {
   return (
     <div
       role="presentation"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 50,
-        background: "oklch(0.18 0.04 258 / 0.45)",
-      }}
+      className="zed-scrim zed-scrim--modal"
       onClick={onClose}
     >
       <div
@@ -51,22 +46,12 @@ export function ContactDrawer({ contact, open, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Detalle de contacto"
-        className="zed-card zed-card--document zed-animate-slide"
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          height: "100%",
-          width: "min(100%, 28rem)",
-          overflow: "auto",
-          borderRadius: 0,
-          padding: "var(--zed-space-5)",
-        }}
+        className="zed-card zed-card--document zed-animate-slide zed-drawer"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="zed-stack">
-          <div className="zed-row" style={{ justifyContent: "space-between" }}>
-            <h2 className="zed-contact-name" style={{ margin: 0 }}>
+          <div className="zed-row zed-row--spread">
+            <h2 className="zed-contact-name zed-flush">
               {contact.fn_value || "(sin nombre)"}
             </h2>
             <IconButton ref={closeRef} label="Cerrar detalle" onClick={onClose}>

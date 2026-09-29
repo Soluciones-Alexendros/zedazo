@@ -12,14 +12,12 @@ export function JobSummary({ job }: Props) {
   return (
     <div className="zed-stack">
       <Card variant="document">
-        <div className="zed-row" style={{ justifyContent: "space-between" }}>
+        <div className="zed-row zed-row--spread">
           <div>
-            <h2 className="zed-title-section" style={{ marginBottom: "0.35rem" }}>
+            <h2 className="zed-title-section zed-card-kicker">
               {job.display_name || job.job_id}
             </h2>
-            <p className="zed-mono zed-muted" style={{ margin: 0 }}>
-              {job.job_id}
-            </p>
+            <p className="zed-mono zed-muted zed-flush">{job.job_id}</p>
           </div>
           <JobStatus status={job.status} />
         </div>

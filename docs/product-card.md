@@ -6,7 +6,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Nombre** | Zedazo |
+| **Nombre** | **zedazo** (wordmark lowercase; prosa: Zedazo). Convención: [brand.md](./brand.md) |
 | **Versión publicada** | Workspace **0.5.1**; crates.io tras tag humano `v0.5.1` |
 | **Código `main`** | Hitos **v0.5.0** (GUI) + **v0.5.1** (remoto) |
 | **Estado** | Publicado (CLI) + GUI/API self-hosted en código |
@@ -15,10 +15,10 @@
 | **Lenguaje** | Rust (edition 2021) + TypeScript (Next.js) |
 | **Tipo** | CLI + API HTTP + GUI web self-hosted |
 | **Repositorio** | https://github.com/Soluciones-Alexendros/zedazo |
-| **Dominio producto** | https://zedazo.alexendros.dev (cero coste; ADR-0014) |
+| **Dominio producto** | https://zedazo.alexendros.dev (cero coste; ADR-0014; landing `apps/landing/`; DNS en [deploy.md](./gui/deploy.md); marca: [brand.md](./brand.md)) |
 | **crates.io** | https://crates.io/crates/zedazo |
 | **Documentación** | https://docs.rs/zedazo · [docs/gui/](./gui/) |
-| **Workspace** | `zedazo-core` · `zedazo-cli` (binario `zedazo`) · `zedazo-api` · `apps/web` |
+| **Workspace** | `zedazo-core` · `zedazo-cli` (binario `zedazo`) · `zedazo-api` · `zedazo-carddav` · `apps/web` |
 
 ## Descripción
 
@@ -101,8 +101,10 @@ e2_keywords = ["pharma", "jackpot"]
 crates/zedazo-core/   Dominio + application + infra I/O (sin HTTP)
 crates/zedazo-cli/    Binario `zedazo` (Clap)
 crates/zedazo-api/    Axum `/api/v1` (publish = false)
+crates/zedazo-carddav/ Cliente CardDAV (publish = false; ADR-0018)
 apps/web/             Next.js — identidad «Archivo Vivo»
-deploy/               Compose local/remoto + Caddy
+apps/landing/         Ficha pública estática (zedazo.alexendros.dev)
+deploy/               Compose local/remoto/landing + Caddy
 ```
 
 **Patrón:** Clean Architecture; `domain` puro sin I/O. Ver [ARCHITECTURE.md](../ARCHITECTURE.md) y ADR-0015/0016.
@@ -128,7 +130,7 @@ Alineado con [ROADMAP.md](../ROADMAP.md) (canónico):
 | **v0.3.0** ✅ | Calidad: reglas C1/C5/C7/E4/E6, invariantes I1–I7 |
 | **v0.5.0** ✅ código | GUI + API self-hosted (ADR-0015); tag pendiente |
 | **v0.5.1** ✅ código | Remoto HTTPS + token (ADR-0016); tag/bump crates.io pendiente |
-| **v0.4.0** | CardDAV sync, watch mode (requiere ADR de red; PRs separados) |
+| **v0.4.0** | CardDAV CLI: pull, write opt-in, watch, filtros N1/N2 ([docs/carddav.md](./carddav.md), ADR-0018/#48) |
 | **v1.0.0** | API de crate estable, benchmarks, corpus grande |
 | **Post-v1.0** | OpenTelemetry opt-in (ADR-0017) |
 
@@ -157,4 +159,5 @@ cd deploy && docker compose up --build
 - Documentación: https://docs.rs/zedazo
 - Dependencias: Renovate (no Dependabot)
 - Cobertura: cargo-llvm-cov → Coveralls
-- Deploy: [docs/gui/deploy.md](./gui/deploy.md)
+- Deploy: [docs/gui/deploy.md](./gui/deploy.md) (DNS CNAME + landing + GUI remota)
+- Marca / TMview: [docs/brand.md](./brand.md)

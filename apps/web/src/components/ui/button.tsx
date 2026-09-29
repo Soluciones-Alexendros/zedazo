@@ -4,10 +4,40 @@ import {
   type ReactNode,
 } from "react";
 
-type Variant = "primary" | "secondary" | "tertiary" | "danger" | "icon";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "danger"
+  | "icon";
+
+export type ButtonSize = "sm" | "md";
+
+export type ButtonClassNameOptions = {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  className?: string;
+};
+
+/** Receta única `.zed-button` para `<Button>`, `<Link>` y `<label>`. */
+export function buttonClassName({
+  variant = "primary",
+  size = "md",
+  className = "",
+}: ButtonClassNameOptions = {}) {
+  return [
+    "zed-button",
+    `zed-button--${variant}`,
+    size === "sm" ? "zed-button--sm" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: Variant;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
   children?: ReactNode;
 };
@@ -15,6 +45,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
   {
     variant = "primary",
+    size = "md",
     loading = false,
     children,
     className = "",
@@ -26,7 +57,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
   return (
     <button
       ref={ref}
-      className={`zed-button zed-button--${variant} ${className}`.trim()}
+      className={buttonClassName({ variant, size, className })}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...rest}

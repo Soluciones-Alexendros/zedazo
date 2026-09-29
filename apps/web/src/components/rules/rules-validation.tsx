@@ -22,7 +22,7 @@ export function RulesValidation({ ok, diagnostics = [] }: Props) {
   }
   return (
     <Callout variant="danger" title="Diagnósticos" icon="circle-exclamation">
-      <ul style={{ margin: 0, paddingLeft: "1.1rem" }}>
+      <ul className="zed-prose-list zed-flush">
         {diagnostics.map((d, i) => (
           <li key={i}>{d.message}</li>
         ))}

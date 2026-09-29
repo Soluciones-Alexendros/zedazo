@@ -1,0 +1,25 @@
+[package]
+name = "zedazo-carddav"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Cliente CardDAV RFC 6352 para Zedazo (pull, write opt-in, watch, filtros)"
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[lib]
+name = "zedazo_carddav"
+path = "src/lib.rs"
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+roxmltree = "0.20"
+serde = { workspace = true }
+thiserror = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -8,6 +8,12 @@ supersedes: "v0.3.1"
 
 # SPECS.md
 
+### Propósito de este documento
+
+- **Objetivos:** Especificación de producto, invariantes y criterios de aceptación de Zedazo.
+- **Estructura:** Propósito → visión → objetivos → no-objetivos → invariantes → criterios.
+- **Contenido a integrar según contexto:** No inventes requisitos. Si falta ancla, paras. No copies SPECS de otro producto. CardDAV/red van en PRs separados del dominio/UI.
+
 **Versión:** 0.3.2  
 **Fecha:** 2026-09-09  
 **Estado:** Aprobado (v0.3.0 calidad; web local ADR-0015; remoto single-user ADR-0016)  
@@ -39,7 +45,7 @@ supersedes: "v0.3.1"
 
 ## 3. No-objetivos
 
-- APIs externas (CardDAV, Proton, Google People) — hito v0.4.0+ (requiere ADR de red)
+- APIs externas (CardDAV, Proton, Google People) — hito v0.4.0+; red/proveedor **[ADR-0018](./DECISIONS.md)** (aceptada). CLI: crate `zedazo-carddav` + `zedazo carddav list|pull|put|delete|watch` ([docs/carddav.md](./docs/carddav.md)); Google People, OAuth de proveedor y GUI CardDAV siguen fuera
 - TUI interactiva
 - Multiusuario / colaboración / edición manual de contactos en GUI (pospuesto; no cubierto por ADR-0016)
 - SaaS, cuentas OAuth/OIDC o multi-tenant

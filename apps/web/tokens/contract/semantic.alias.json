@@ -1,0 +1,228 @@
+{
+  "$description": "Alias del contrato DTCG OKLCH v1 (bg, text, border, action, feedback) hacia semánticos de marca. El valor CSS es var(--zed-*); aliasOf apunta al token que se resuelve en la landing. No es una paleta paralela.",
+  "contract": {
+    "bg": {
+      "base": {
+        "$type": "color",
+        "$value": "var(--zed-bg-canvas)",
+        "$description": "Fondo de página. Alias de color.bg.canvas.",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-bg-base", "aliasOf": "color.bg.canvas" }
+        }
+      },
+      "surface": {
+        "$type": "color",
+        "$value": "var(--zed-bg-raised)",
+        "$description": "Superficie elevada (tarjeta).",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-bg-surface", "aliasOf": "color.bg.raised" }
+        }
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "var(--zed-bg-muted)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-bg-muted", "aliasOf": "color.bg.muted" }
+        }
+      },
+      "subtle": {
+        "$type": "color",
+        "$value": "var(--zed-bg-subtle)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-bg-subtle", "aliasOf": "color.bg.subtle" }
+        }
+      },
+      "code": {
+        "$type": "color",
+        "$value": "var(--zed-code-bg)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-bg-code", "aliasOf": "color.code.bg" }
+        }
+      }
+    },
+    "text": {
+      "base": {
+        "$type": "color",
+        "$value": "var(--zed-fg-default)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-text-base", "aliasOf": "color.fg.default" }
+        }
+      },
+      "strong": {
+        "$type": "color",
+        "$value": "var(--zed-fg-strong)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-text-strong", "aliasOf": "color.fg.strong" }
+        }
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "var(--zed-fg-muted)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-text-muted", "aliasOf": "color.fg.muted" }
+        }
+      },
+      "link": {
+        "$type": "color",
+        "$value": "var(--zed-accent)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-text-link", "aliasOf": "color.accent.default" }
+        }
+      },
+      "on-code": {
+        "$type": "color",
+        "$value": "var(--zed-code-fg)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-text-on-code", "aliasOf": "color.code.fg" }
+        }
+      }
+    },
+    "border": {
+      "base": {
+        "$type": "color",
+        "$value": "var(--zed-border-default)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-border-base", "aliasOf": "color.border.default" }
+        }
+      },
+      "strong": {
+        "$type": "color",
+        "$value": "var(--zed-border-strong)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-border-strong", "aliasOf": "color.border.strong" }
+        }
+      },
+      "subtle": {
+        "$type": "color",
+        "$value": "var(--zed-border-subtle)",
+        "$extensions": {
+          "com.zedazo": { "cssVar": "--color-border-subtle", "aliasOf": "color.border.subtle" }
+        }
+      }
+    },
+    "action": {
+      "primary-bg": {
+        "$type": "color",
+        "$value": "var(--zed-accent)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-action-primary-bg",
+            "aliasOf": "color.accent.default"
+          }
+        }
+      },
+      "primary-bg-hover": {
+        "$type": "color",
+        "$value": "var(--zed-accent-hover)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-action-primary-bg-hover",
+            "aliasOf": "color.accent.hover"
+          }
+        }
+      },
+      "on-primary": {
+        "$type": "color",
+        "$value": "var(--zed-accent-on)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-action-on-primary",
+            "aliasOf": "color.accent.on"
+          }
+        }
+      },
+      "secondary-bg": {
+        "$type": "color",
+        "$value": "var(--zed-bg-raised)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-action-secondary-bg",
+            "aliasOf": "color.bg.raised"
+          }
+        }
+      },
+      "on-secondary": {
+        "$type": "color",
+        "$value": "var(--zed-fg-strong)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-action-on-secondary",
+            "aliasOf": "color.fg.strong"
+          }
+        }
+      },
+      "focus-ring": {
+        "$type": "color",
+        "$value": "var(--zed-focus-ring)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-action-focus-ring",
+            "aliasOf": "color.focus.ring"
+          }
+        }
+      }
+    },
+    "feedback": {
+      "success-bg": {
+        "$type": "color",
+        "$value": "var(--zed-success-soft)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-feedback-success-bg",
+            "aliasOf": "color.success.soft"
+          }
+        }
+      },
+      "success-text": {
+        "$type": "color",
+        "$value": "var(--zed-success-on-soft)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-feedback-success-text",
+            "aliasOf": "color.success.onSoft"
+          }
+        }
+      },
+      "warning-bg": {
+        "$type": "color",
+        "$value": "var(--zed-warning-soft)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-feedback-warning-bg",
+            "aliasOf": "color.warning.soft"
+          }
+        }
+      },
+      "warning-text": {
+        "$type": "color",
+        "$value": "var(--zed-warning-on-soft)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-feedback-warning-text",
+            "aliasOf": "color.warning.onSoft"
+          }
+        }
+      },
+      "danger-bg": {
+        "$type": "color",
+        "$value": "var(--zed-danger-soft)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-feedback-danger-bg",
+            "aliasOf": "color.danger.soft"
+          }
+        }
+      },
+      "danger-text": {
+        "$type": "color",
+        "$value": "var(--zed-danger-on-soft)",
+        "$extensions": {
+          "com.zedazo": {
+            "cssVar": "--color-feedback-danger-text",
+            "aliasOf": "color.danger.onSoft"
+          }
+        }
+      }
+    }
+  }
+}

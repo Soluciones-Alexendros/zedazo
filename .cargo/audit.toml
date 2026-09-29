@@ -1,0 +1,15 @@
+# Política cargo-audit (RustSec) para Zedazo
+#
+# Criterio de fallo del workflow `.github/workflows/audit.yml` y de `make audit`:
+# - Falla solo ante vulnerabilidades (advisory type = vulnerability).
+# - No falla por avisos informativos: unmaintained, unsound, yanked.
+# - Cada ID en `ignore` es una excepción temporal: motivo, fecha y revisión.
+#   El mismo ID debe figurar en `deny.toml` [advisories].ignore.
+#
+# No uses ignore para aplazar un parche disponible (p. ej. rustls >= 0.23.45
+# para RUSTSEC-2026-0285). Primero actualiza Cargo.lock.
+
+[advisories]
+ignore = []
+# informational_warnings = ["unmaintained", "unsound"]
+# severity_threshold no se usa: cualquier vulnerability falla.

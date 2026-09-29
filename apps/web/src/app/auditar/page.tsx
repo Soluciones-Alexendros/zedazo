@@ -1,13 +1,14 @@
 "use client";
 
-import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import Link from "next/link";
-import { createAudit, uploadVcf } from "@/lib/api";
+import { createAudit, uploadVcf } from "@/lib/data-adapter";
 import { PageHeader } from "@/components/shell/page-header";
 import { Card } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
 import { ErrorState } from "@/components/ui/error-state";
+import { FileDropzone } from "@/components/ui/file-dropzone";
+import { buttonClassName } from "@/components/ui/button";
 
 export default function AuditarPage() {
   const [jobId, setJobId] = useState<string | null>(null);
@@ -46,28 +47,17 @@ export default function AuditarPage() {
       </Callout>
 
       <Card variant="document">
-        <div className="zed-dropzone">
-          <Icon name="file-magnifying-glass" style={{ fontSize: "1.75rem" }} aria-hidden={true} />
-          <p style={{ margin: 0, fontWeight: 600, color: "var(--zed-fg-strong)" }}>
-            Selecciona un VCF para analizar
-          </p>
-          <label className="zed-button zed-button--primary">
-            {busy ? "Analizando…" : "Analizar archivo"}
-            <input
-              className="zed-sr-only"
-              type="file"
-              accept=".vcf"
-              disabled={busy}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void onFile(f);
-              }}
-            />
-          </label>
-        </div>
+        <FileDropzone
+          icon="file-magnifying-glass"
+          title="Selecciona un VCF para analizar"
+          buttonLabel="Analizar archivo"
+          busyLabel="Analizando…"
+          busy={busy}
+          onFile={(f) => void onFile(f)}
+        />
 
         {fileMeta ? (
-          <p className="zed-muted" style={{ marginTop: "1rem" }}>
+          <p className="zed-muted">
             Archivo: <span className="zed-mono">{fileMeta.name}</span> ·{" "}
             {(fileMeta.size / 1024).toFixed(1)} KiB
           </p>
@@ -77,10 +67,13 @@ export default function AuditarPage() {
 
         {jobId ? (
           <Callout variant="success" title="Análisis creado" icon="circle-check">
-            <p style={{ margin: "0 0 0.75rem" }}>
+            <p className="zed-flush">
               La inspección está disponible como ejecución de auditoría.
             </p>
-            <Link className="zed-button zed-button--secondary" href={`/ejecuciones/${jobId}`}>
+            <Link
+              className={buttonClassName({ variant: "secondary" })}
+              href={`/ejecuciones/${jobId}`}
+            >
               Ver informe
             </Link>
           </Callout>

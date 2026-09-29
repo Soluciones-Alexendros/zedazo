@@ -1,0 +1,102 @@
+{
+  "$description": "Familias, escala, interlineado y pesos. Pila de flota (system-ui / Fira Code).",
+  "font": {
+    "family": {
+      "ui": {
+        "$type": "fontFamily",
+        "$value": [
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif"
+        ],
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-font-ui" } }
+      },
+      "mono": {
+        "$type": "fontFamily",
+        "$value": [
+          "ui-monospace",
+          "Fira Code",
+          "Consolas",
+          "monospace"
+        ],
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-font-mono" } }
+      }
+    },
+    "size": {
+      "$type": "dimension",
+      "xs": {
+        "$value": { "value": 0.8125, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-text-xs" } }
+      },
+      "sm": {
+        "$value": { "value": 0.9375, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-text-sm" } }
+      },
+      "base": {
+        "$value": { "value": 1.0625, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-text-base" } }
+      },
+      "md": {
+        "$value": { "value": 1.1875, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-text-md" } }
+      },
+      "lg": {
+        "$value": { "value": 1.375, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-text-lg" } }
+      },
+      "xl": {
+        "$value": { "value": 1.625, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-text-xl" } }
+      },
+      "2xl": {
+        "$value": { "value": 2.125, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-text-2xl" } }
+      },
+      "3xl": {
+        "$value": { "value": 2.75, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-text-3xl" } }
+      }
+    },
+    "lineHeight": {
+      "$type": "number",
+      "tight": {
+        "$value": 1.2,
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-leading-tight" } }
+      },
+      "snug": {
+        "$value": 1.35,
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-leading-snug" } }
+      },
+      "normal": {
+        "$value": 1.55,
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-leading-normal" } }
+      },
+      "relaxed": {
+        "$value": 1.7,
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-leading-relaxed" } }
+      }
+    },
+    "weight": {
+      "$type": "number",
+      "regular": {
+        "$value": 400,
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-weight-regular" } }
+      },
+      "medium": {
+        "$value": 500,
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-weight-medium" } }
+      },
+      "semibold": {
+        "$value": 600,
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-weight-semibold" } }
+      },
+      "bold": {
+        "$value": 700,
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-weight-bold" } }
+      }
+    }
+  }
+}

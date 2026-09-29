@@ -1,0 +1,78 @@
+{
+  "$description": "Alias de componente del contrato v1. Apuntan a los semánticos contract.* (bg, text, border, action), no a rampas primitivas ni a un segundo sistema visual.",
+  "button": {
+    "primary": {
+      "bg": {
+        "$type": "color",
+        "$value": "var(--color-action-primary-bg)",
+        "$extensions": { "com.zedazo": { "cssVar": "--color-button-primary-bg" } }
+      },
+      "bg-hover": {
+        "$type": "color",
+        "$value": "var(--color-action-primary-bg-hover)",
+        "$extensions": { "com.zedazo": { "cssVar": "--color-button-primary-bg-hover" } }
+      },
+      "fg": {
+        "$type": "color",
+        "$value": "var(--color-action-on-primary)",
+        "$extensions": { "com.zedazo": { "cssVar": "--color-button-primary-fg" } }
+      }
+    },
+    "secondary": {
+      "bg": {
+        "$type": "color",
+        "$value": "var(--color-action-secondary-bg)",
+        "$extensions": { "com.zedazo": { "cssVar": "--color-button-secondary-bg" } }
+      },
+      "fg": {
+        "$type": "color",
+        "$value": "var(--color-action-on-secondary)",
+        "$extensions": { "com.zedazo": { "cssVar": "--color-button-secondary-fg" } }
+      },
+      "border": {
+        "$type": "color",
+        "$value": "var(--color-border-base)",
+        "$extensions": { "com.zedazo": { "cssVar": "--color-button-secondary-border" } }
+      }
+    }
+  },
+  "card": {
+    "bg": {
+      "$type": "color",
+      "$value": "var(--color-bg-surface)",
+      "$extensions": { "com.zedazo": { "cssVar": "--color-card-bg" } }
+    },
+    "fg": {
+      "$type": "color",
+      "$value": "var(--color-text-base)",
+      "$extensions": { "com.zedazo": { "cssVar": "--color-card-fg" } }
+    },
+    "border": {
+      "$type": "color",
+      "$value": "var(--color-border-base)",
+      "$extensions": { "com.zedazo": { "cssVar": "--color-card-border" } }
+    }
+  },
+  "input": {
+    "bg": {
+      "$type": "color",
+      "$value": "var(--color-bg-surface)",
+      "$extensions": { "com.zedazo": { "cssVar": "--color-input-bg" } }
+    },
+    "fg": {
+      "$type": "color",
+      "$value": "var(--color-text-base)",
+      "$extensions": { "com.zedazo": { "cssVar": "--color-input-fg" } }
+    },
+    "border": {
+      "$type": "color",
+      "$value": "var(--color-border-base)",
+      "$extensions": { "com.zedazo": { "cssVar": "--color-input-border" } }
+    },
+    "focus": {
+      "$type": "color",
+      "$value": "var(--color-action-focus-ring)",
+      "$extensions": { "com.zedazo": { "cssVar": "--color-input-focus" } }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { AuditEvent } from "./audit-event";
+import { EmptyState } from "@/components/ui/empty-state";
 import tableStyles from "@/styles/tables.module.css";
 
 type Props = {
@@ -8,7 +9,13 @@ type Props = {
 
 export function AuditTimeline({ items, technical = false }: Props) {
   if (items.length === 0) {
-    return <p className="zed-muted">Sin filas de auditoría.</p>;
+    return (
+      <EmptyState
+        compact
+        title="Sin auditoría"
+        description="No hay filas de auditoría para esta ejecución."
+      />
+    );
   }
 
   if (technical) {

@@ -2,6 +2,7 @@
 
 import type { ContactView } from "@/lib/api";
 import { ContactResultBadge } from "./contact-result-badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import tableStyles from "@/styles/tables.module.css";
 
 type Props = {
@@ -10,6 +11,16 @@ type Props = {
 };
 
 export function ContactTable({ contacts, onSelect }: Props) {
+  if (contacts.length === 0) {
+    return (
+      <EmptyState
+        compact
+        title="Sin contactos"
+        description="Ningún contacto coincide con los filtros de esta ejecución."
+      />
+    );
+  }
+
   return (
     <>
       <div className={`${tableStyles.tableWrap} ${tableStyles.desktopOnly}`}>
@@ -28,6 +39,7 @@ export function ContactTable({ contacts, onSelect }: Props) {
             {contacts.map((c) => (
               <tr
                 key={c.uid}
+                className={onSelect ? tableStyles.interactive : undefined}
                 onClick={() => onSelect?.(c)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -36,10 +48,9 @@ export function ContactTable({ contacts, onSelect }: Props) {
                   }
                 }}
                 tabIndex={onSelect ? 0 : undefined}
-                style={{ cursor: onSelect ? "pointer" : undefined }}
               >
                 <td>
-                  <span className="zed-contact-name" style={{ fontSize: "1rem" }}>
+                  <span className="zed-contact-name zed-contact-name--table">
                     {c.fn_value || "(sin nombre)"}
                   </span>
                 </td>
@@ -59,11 +70,10 @@ export function ContactTable({ contacts, onSelect }: Props) {
           <button
             key={c.uid}
             type="button"
-            className={tableStyles.dossierCard}
+            className={`${tableStyles.dossierCard} ${tableStyles.dossierButton}`}
             onClick={() => onSelect?.(c)}
-            style={{ textAlign: "left", width: "100%", cursor: "pointer" }}
           >
-            <div className="zed-row" style={{ justifyContent: "space-between" }}>
+            <div className="zed-row zed-row--spread">
               <strong className="zed-contact-name">{c.fn_value || "(sin nombre)"}</strong>
               <ContactResultBadge result={c.result} />
             </div>

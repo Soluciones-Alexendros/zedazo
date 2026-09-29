@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  eventsUrl,
-  getJob,
-  isTerminalStatus,
-  type JobManifest,
-} from "@/lib/api";
+import { eventsUrl, isTerminalStatus, type JobManifest } from "@/lib/api";
+import { getJob, probeAdapter } from "@/lib/data-adapter";
 
 export function useJobEvents(jobId: string | null) {
   const [job, setJob] = useState<JobManifest | null>(null);
@@ -58,22 +54,36 @@ export function useJobEvents(jobId: string | null) {
       attachListeners(es);
     };
 
-    connect();
-    poll = window.setInterval(async () => {
-      try {
-        const j = await getJob(jobId);
-        if (cancelled) return;
-        setJob(j.job);
-        if (isTerminalStatus(j.job.status)) {
-          if (poll) window.clearInterval(poll);
-          if (reconnectTimer) window.clearTimeout(reconnectTimer);
-          es?.close();
-          setReconnecting(false);
-        }
-      } catch (e) {
-        if (!cancelled) setError(String(e));
+    void probeAdapter().then((adapter) => {
+      if (cancelled) return;
+      if (adapter === "local") {
+        void getJob(jobId)
+          .then((j) => {
+            if (!cancelled) setJob(j.job);
+          })
+          .catch((e) => {
+            if (!cancelled) setError(String(e));
+          });
+        return;
       }
-    }, 1500);
+
+      connect();
+      poll = window.setInterval(async () => {
+        try {
+          const j = await getJob(jobId);
+          if (cancelled) return;
+          setJob(j.job);
+          if (isTerminalStatus(j.job.status)) {
+            if (poll) window.clearInterval(poll);
+            if (reconnectTimer) window.clearTimeout(reconnectTimer);
+            es?.close();
+            setReconnecting(false);
+          }
+        } catch (e) {
+          if (!cancelled) setError(String(e));
+        }
+      }, 1500);
+    });
 
     return () => {
       cancelled = true;

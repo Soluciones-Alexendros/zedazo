@@ -8,18 +8,11 @@ type Props = {
 
 export function SectionHeading({ title, description, action }: Props) {
   return (
-    <div
-      className="zed-row"
-      style={{
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        marginBottom: "var(--zed-space-4)",
-      }}
-    >
+    <div className="zed-row zed-section-heading">
       <div>
         <h2 className="zed-title-section">{title}</h2>
         {description ? (
-          <p className="zed-muted" style={{ margin: 0 }}>
+          <p className="zed-muted zed-flush">
             {description}
           </p>
         ) : null}

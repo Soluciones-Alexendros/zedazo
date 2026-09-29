@@ -2,16 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  cancelJob,
-  deleteJob,
-  isCancellableStatus,
-  listJobs,
-  type JobManifest,
-} from "@/lib/api";
+import type { JobManifest } from "@/lib/api";
+import { listJobs } from "@/lib/data-adapter";
 import { PageHeader } from "@/components/shell/page-header";
 import { JobStatus } from "@/components/jobs/job-status";
+import { JobRowActions } from "@/components/jobs/job-row-actions";
 import { Button } from "@/components/ui/button";
+import { buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -62,13 +59,18 @@ export default function EjecucionesPage() {
         title="Ejecuciones"
         description="Expedientes de procesamiento. Sin datos personales de contactos en este listado."
         actions={
-          <Link className="zed-button zed-button--primary" href="/procesar">
+          <Link className={buttonClassName({ variant: "primary" })} href="/procesar">
             Nueva ejecución
           </Link>
         }
       />
 
-      {error ? <ErrorState message={error} action={<Button onClick={() => void refresh()}>Reintentar</Button>} /> : null}
+      {error ? (
+        <ErrorState
+          message={error}
+          action={<Button onClick={() => void refresh()}>Reintentar</Button>}
+        />
+      ) : null}
 
       <FilterBar
         chips={chips}
@@ -82,8 +84,7 @@ export default function EjecucionesPage() {
         </label>
         <input
           id="jobs-q"
-          className="zed-input"
-          style={{ maxWidth: "16rem" }}
+          className="zed-input zed-input--filter"
           placeholder="Buscar por nombre o ID"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -93,8 +94,7 @@ export default function EjecucionesPage() {
         </label>
         <select
           id="jobs-status"
-          className="zed-input"
-          style={{ width: "auto" }}
+          className="zed-input zed-input--auto"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >
@@ -112,9 +112,9 @@ export default function EjecucionesPage() {
       {!loading && filtered.length === 0 ? (
         <EmptyState
           title="Sin ejecuciones"
-          description="Aún no hay jobs que coincidan con los filtros."
+          description="Aún no hay ejecuciones que coincidan con los filtros."
           action={
-            <Link className="zed-button zed-button--primary" href="/procesar">
+            <Link className={buttonClassName({ variant: "primary" })} href="/procesar">
               Procesar un archivo VCF
             </Link>
           }
@@ -167,34 +167,7 @@ export default function EjecucionesPage() {
                       {j.retention_hours != null ? `${j.retention_hours} h` : "—"}
                     </td>
                     <td>
-                      <div className="zed-row">
-                        <Link
-                          className="zed-button zed-button--tertiary"
-                          href={`/ejecuciones/${j.job_id}`}
-                        >
-                          Abrir
-                        </Link>
-                        {isCancellableStatus(j.status) ? (
-                          <Button
-                            variant="secondary"
-                            onClick={async () => {
-                              await cancelJob(j.job_id);
-                              await refresh();
-                            }}
-                          >
-                            Cancelar
-                          </Button>
-                        ) : null}
-                        <Button
-                          variant="danger"
-                          onClick={async () => {
-                            await deleteJob(j.job_id);
-                            await refresh();
-                          }}
-                        >
-                          Eliminar
-                        </Button>
-                      </div>
+                      <JobRowActions job={j} onChanged={refresh} />
                     </td>
                   </tr>
                 ))}
@@ -205,7 +178,7 @@ export default function EjecucionesPage() {
           <div className={tableStyles.cardList}>
             {filtered.map((j) => (
               <article key={j.job_id} className={tableStyles.dossierCard}>
-                <div className="zed-row" style={{ justifyContent: "space-between" }}>
+                <div className="zed-row zed-row--spread">
                   <strong>{j.display_name || j.input.original_name}</strong>
                   <JobStatus status={j.status} />
                 </div>
@@ -214,34 +187,7 @@ export default function EjecucionesPage() {
                   <span>Entrada: {j.summary?.input_contacts ?? "—"}</span>
                   <span>Conservados: {j.summary?.retained ?? "—"}</span>
                 </div>
-                <div className="zed-row">
-                  <Link
-                    className="zed-button zed-button--primary"
-                    href={`/ejecuciones/${j.job_id}`}
-                  >
-                    Abrir
-                  </Link>
-                  {isCancellableStatus(j.status) ? (
-                    <Button
-                      variant="secondary"
-                      onClick={async () => {
-                        await cancelJob(j.job_id);
-                        await refresh();
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                  ) : null}
-                  <Button
-                    variant="danger"
-                    onClick={async () => {
-                      await deleteJob(j.job_id);
-                      await refresh();
-                    }}
-                  >
-                    Eliminar
-                  </Button>
-                </div>
+                <JobRowActions job={j} onChanged={refresh} primary />
               </article>
             ))}
           </div>

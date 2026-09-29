@@ -8,6 +8,12 @@ supersedes: "v0.3.1"
 
 # ROADMAP.md
 
+### Propósito de este documento
+
+- **Objetivos:** Hitos, criterios de salida y traza a SPECS/DECISIONS.
+- **Estructura:** Propósito → reglas → estado actual → hitos.
+- **Contenido a integrar según contexto:** No adelantes features de red o GUI sin ancla. No copies un roadmap de landing/SaaS.
+
 **Versión:** 0.3.2  
 **Fecha:** 2026-09-09  
 **Canónico:** este archivo. [`docs/tasks.md`](docs/tasks.md) redirige aquí.
@@ -30,7 +36,8 @@ supersedes: "v0.3.1"
 | CI | `ubuntu-latest`; Renovate; `make ci` = fmt + clippy + test + check + doc + docs-validate + parity + web-ci |
 | GUI/API | Local loopback (ADR-0015) + remoto HTTPS+token (ADR-0016, O11) |
 | Branch protection | Activa en `main` |
-| Backlog trazable | Issues GitHub (post-cierre #24–27/#35: TMview humano; CardDAV v0.4; OTel post-v1.0) |
+| Dominio producto | Landing `apps/landing` + guía DNS (#50); CNAME a rellenar por el operador |
+| Backlog trazable | Issues GitHub (post-cierre #24–27/#35: TMview oficial residual #49; CardDAV v0.4 ADR-0018/#48; OTel post-v1.0) |
 
 ## Hitos
 
@@ -70,7 +77,13 @@ supersedes: "v0.3.1"
 *(antes numerado v0.3.0)*
 
 - CardDAV sync, watch mode, filtros por categoría
-- Requiere ADR de proveedor/red antes de implementar
+- Precondición: **[ADR-0018](./DECISIONS.md)** (aceptada 2026-09-11) — red/proveedor **antes** de código ([#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48))
+- [x] Primer slice: crate `zedazo-carddav` (`publish = false`); CLI `zedazo carddav list|pull`; RFC 6352 + Basic/app-password; una cuenta; HTTPS TLS 1.2+; ver [docs/carddav.md](./docs/carddav.md)
+- [x] Write opt-in (PUT/DELETE, If-Match/ETag; HTTP 412 = conflicto; `--confirm`)
+- [x] Watch mode (polling CTag / sync-token; sin auto-sync al arrancar)
+- [x] Filtros por categoría N1/N2 client-side sobre el set sincronizado
+- Fuera de v0.4.0: OAuth Google / People API, proveedor Proton de primera clase (Proton no expone CardDAV nativo; sigue export VCF)
+- OTel permanece post-v1.0 (ADR-0017)
 
 ### v0.5.0 — Web self-hosted (GUI + API) — L
 
@@ -93,6 +106,24 @@ supersedes: "v0.3.1"
 - [x] Tests auth + `make ci` (O10 intacto)
 
 **Criterio de salida:** O11; despliegue remoto usable sin publicar API/web directamente; CI verde. Tag `v0.5.1` (y bump crates.io) a confirmación humana.
+
+**Nota (v0.5.x, docs):** modernización del design system de la GUI (OKLCH tokenizado → GUI profesional) — plan en [`docs/gui/design-system-plan.md`](./docs/gui/design-system-plan.md) **ejecutado** 2026-09-12, epic [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59). Fases 1–4 aterrizadas (pipeline DTCG + átomos + pantallas `--zed-*` + catálogo `/documentacion/ds` + axe/visual en CI), **separada** de CardDAV ([#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48)).
+
+### Ops — dominio de producto (`zedazo.alexendros.dev`) — S
+
+- [x] Landing estática [`apps/landing/`](apps/landing/index.html) (ficha pública, no GUI)
+- [x] Guía DNS CNAME + Caddy Let's Encrypt en [`docs/gui/deploy.md`](docs/gui/deploy.md) (#50)
+- CNAME en zona `alexendros.dev`: lo crea el operador (`zedazo` → host real; placeholder `<HOST_DESTINO>`)
+
+**Fuera de alcance de esta unidad:** CardDAV (#48), GUI en el mismo hostname (sigue ADR-0016 / `Caddyfile.public`).
+
+### Ops — wordmark + TMview (#49) — S
+
+- [x] Wordmark lowercase `zedazo` (landing, GUI chrome, README H1); convención en [`docs/brand.md`](./docs/brand.md)
+- [x] Pesquisa documental TMview/EUIPO clases 9 y 42 (sin coincidencia exacta en índices públicos)
+- Checklist humano residual: TMview oficial + similitud (p. ej. ZEZARO 009317348) + decisión de presentar EUTM/OEPM (no es código)
+
+**Fuera de alcance de esta unidad:** CardDAV (#48), DNS (#50), presentación de marca ante EUIPO/OEPM.
 
 ### v1.0.0 — Producción — L
 

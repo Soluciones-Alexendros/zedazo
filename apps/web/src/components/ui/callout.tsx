@@ -3,7 +3,7 @@
 import { Icon } from "@/components/ui/icon";
 import type { ReactNode } from "react";
 
-type Variant =
+export type CalloutVariant =
   | "info"
   | "success"
   | "warning"
@@ -12,7 +12,7 @@ type Variant =
   | "verification";
 
 type Props = {
-  variant?: Variant;
+  variant?: CalloutVariant;
   title?: string;
   children: ReactNode;
   icon?: string;
@@ -28,11 +28,7 @@ export function Callout({
     <div className={`zed-callout zed-callout--${variant}`} role="note">
       <Icon name={icon} aria-hidden={true} />
       <div>
-        {title ? (
-          <strong style={{ display: "block", marginBottom: "0.25rem" }}>
-            {title}
-          </strong>
-        ) : null}
+        {title ? <strong className="zed-callout__title">{title}</strong> : null}
         <div>{children}</div>
       </div>
     </div>

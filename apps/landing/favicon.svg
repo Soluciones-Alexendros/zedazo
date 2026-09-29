@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <title>zedazo</title>
+  <rect width="32" height="32" rx="6" fill="#2f4f9c"/>
+  <path d="M8 7h12L10 16h11" stroke="#faf8f2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/>
+  <circle cx="8" cy="7" r="3" fill="#faf8f2"/>
+  <circle cx="16" cy="16" r="3.25" fill="#faf8f2"/>
+  <circle cx="24" cy="25" r="3" fill="#faf8f2"/>
+  <path d="M10.2 9.2 14.1 14.1M17.9 17.9 21.8 22.8" stroke="#faf8f2" stroke-width="2" stroke-linecap="round"/>
+</svg>

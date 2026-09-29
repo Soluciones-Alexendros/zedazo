@@ -125,7 +125,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: ./node_modules/.bin/tsc --noEmit
       - run: ./node_modules/.bin/next lint
-      - run: node --test src/lib/api.test.mjs
+      - run: node scripts/design-tokens/build.mjs --check
+      - run: node scripts/design-tokens/contrast.mjs
+      - run: node --test src/lib/api.test.mjs src/lib/design-tokens-contrast.test.mjs src/lib/atoms-contract.test.mjs
       - run: ./node_modules/.bin/next build
       - name: Install Playwright Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
@@ -168,3 +170,35 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file: coverage/lcov.info
+
+  # Wrappers canónicos P0 (no sustituyen jobs Rust maduros).
+  # Equivalencia documentada en AGENTS.md.
+  quality:
+    name: quality
+    if: ${{ always() && !cancelled() }}
+    needs: [fmt, clippy, docs-validate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Agregar fmt + clippy + docs-validate
+        run: |
+          echo "quality ≡ fmt + clippy + docs-validate"
+          echo "fmt=${{ needs.fmt.result }}"
+          echo "clippy=${{ needs.clippy.result }}"
+          echo "docs-validate=${{ needs.docs-validate.result }}"
+          test "${{ needs.fmt.result }}" = success
+          test "${{ needs.clippy.result }}" = success
+          test "${{ needs.docs-validate.result }}" = success
+
+  smoke:
+    name: smoke
+    if: ${{ always() && !cancelled() }}
+    needs: [health, check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Agregar health + check
+        run: |
+          echo "smoke ≡ health + check (compilación workspace)"
+          echo "health=${{ needs.health.result }}"
+          echo "check=${{ needs.check.result }}"
+          test "${{ needs.health.result }}" = success
+          test "${{ needs.check.result }}" = success

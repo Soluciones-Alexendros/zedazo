@@ -4,6 +4,7 @@ members = [
   "crates/zedazo-core",
   "crates/zedazo-cli",
   "crates/zedazo-api",
+  "crates/zedazo-carddav",
 ]
 default-members = ["crates/zedazo-cli"]
 
@@ -17,6 +18,7 @@ homepage = "https://github.com/Soluciones-Alexendros/zedazo"
 
 [workspace.dependencies]
 zedazo-core = { path = "crates/zedazo-core", version = "0.5.1" }
+zedazo-carddav = { path = "crates/zedazo-carddav" }
 clap = { version = "4.5", features = ["derive"] }
 clap_complete = "4.5"
 nom = "7"

@@ -1,5 +1,6 @@
 import styles from "@/styles/shell.module.css";
 import type { ConnectionState } from "@/lib/hooks/use-api-health";
+import { ZEDAZO_WORDMARK } from "@/components/brand/zedazo-wordmark";
 
 type Props = {
   connection: ConnectionState;
@@ -23,16 +24,18 @@ export function Statusbar({
   const conn =
     connection === "connected"
       ? "API conectada"
-      : connection === "disconnected"
-        ? "Sin conexión"
-        : "Comprobando…";
+      : connection === "local"
+        ? "Adaptador local"
+        : connection === "disconnected"
+          ? "Sin conexión"
+          : "Comprobando…";
 
   const parts = [
     conn,
     isLocalProcessing ? "Procesamiento local" : null,
     storageMode ? `Almacenamiento: ${storageMode}` : null,
     retentionHint,
-    `Zedazo ${appVersion}`,
+    `${ZEDAZO_WORDMARK} ${appVersion}`,
     apiVersion ? `API ${apiVersion}` : null,
     coreVersion ? `core ${coreVersion}` : null,
   ].filter(Boolean);

@@ -8,6 +8,12 @@ supersedes: "v0.3.1"
 
 # DECISIONS.md
 
+### Propósito de este documento
+
+- **Objetivos:** Registro de ADRs con IDs estables (fuente de verdad; no se mueve a `docs/architecture/decisions/`).
+- **Estructura:** Propósito → convenciones → ADR-0001… en `<details>`.
+- **Contenido a integrar según contexto:** Una decisión aceptada no se reescribe: se sustituye. No copies ADRs de otro repo. Confirmación humana antes de deps nuevas, majors, runners o `panic`/`profile`.
+
 **Versión:** 0.3.2  
 **Fecha:** 2026-09-09  
 **Canónico:** este archivo. [`docs/adr/README.md`](docs/adr/README.md) conserva el texto histórico de ADR-0001…0005 y apunta aquí para IDs nuevos.
@@ -164,11 +170,14 @@ supersedes: "v0.3.1"
 <summary><strong>ADR-0014</strong> — Rename producto/crate a Zedazo</summary>
 
 - Estado: aceptada
-- Fecha: 2026-08-15 / enmienda 2026-09-09
-- Contexto: `vcf-cribador` colisiona semánticamente con el verbo de dominio *cribar*; se busca marca de producto distinta (patrón Atlaps). `cedazo` descartado. Gate crates.io: `zedazo` libre (`ze/da/zedazo` → 404). TMview UE clases 9 y 42: checklist humano pendiente (no bloquea rename).
+- Fecha: 2026-08-15 / enmienda 2026-09-09 / wordmark+TMview 2026-09-11
+- Contexto: `vcf-cribador` colisiona semánticamente con el verbo de dominio *cribar*; se busca marca de producto distinta (patrón Atlaps). `cedazo` descartado. Gate crates.io: `zedazo` libre (`ze/da/zedazo` → 404).
 - Decisión: Renombrar producto/crate/binario a **Zedazo** (`zedazo`) en release **v0.2.0** solo rename+migración. Internos de dominio (`CribaError`, módulo `cribar`, «cribado») sin rename.
-- Dominio de producto (cero coste): **`https://zedazo.alexendros.dev`** (wordmark lowercase). DNS/CNAME cuando exista landing.
-- Relacionado: issues [#32](https://github.com/Soluciones-Alexendros/zedazo/issues/32), [#35](https://github.com/Soluciones-Alexendros/zedazo/issues/35); [ROADMAP.md](./ROADMAP.md), [CHANGELOG.md](./CHANGELOG.md).
+- Wordmark: **`zedazo` en minúsculas** en lockups, pestaña, landing y H1 de README (patrón Atlaps). Prosa: «Zedazo». Identificadores: `zedazo` / `ZEDAZO_*` / `X-ZEDAZO-*`. Convención: [`docs/brand.md`](./docs/brand.md).
+- Dominio de producto (cero coste): **`https://zedazo.alexendros.dev`**. DNS/CNAME: operativa #50.
+- Operativa (#50): landing estática [`apps/landing/`](./apps/landing/); CNAME `zedazo` → `<HOST_DESTINO>` (operador) y Caddy/Let's Encrypt en [`docs/gui/deploy.md`](./docs/gui/deploy.md). GUI remota en el mismo host → same-origin (ADR-0016), no este Caddyfile de landing.
+- TMview UE clases 9 y 42 (#49): pesquisa documental 2026-09-11 en [`docs/brand.md`](./docs/brand.md) — sin coincidencia exacta «Zedazo» en índices públicos; TMview oficial y valoración de similitud (p. ej. EUTM **ZEZARO** 009317348) quedan en checklist humano. No bloquea el rename ni el wordmark.
+- Relacionado: issues [#32](https://github.com/Soluciones-Alexendros/zedazo/issues/32), [#35](https://github.com/Soluciones-Alexendros/zedazo/issues/35), [#49](https://github.com/Soluciones-Alexendros/zedazo/issues/49), [#50](https://github.com/Soluciones-Alexendros/zedazo/issues/50); [ROADMAP.md](./ROADMAP.md), [CHANGELOG.md](./CHANGELOG.md).
 
 | # | Elemento | Actual | Decisión | Tipo |
 |---|---|---|---|---|
@@ -237,5 +246,80 @@ supersedes: "v0.3.1"
 - Contexto: [#24](https://github.com/Soluciones-Alexendros/zedazo/issues/24) pedía instrumentación OTLP; existe receta en [docs/otel.md](./docs/otel.md) pero no hay feature `otel` ni deps exportables. ADR-0015 exige telemetría remota off por defecto (`ZEDAZO_OTEL_ENABLED=false` en deploy = reservado/no-op).
 - Decisión: **No** añadir `opentelemetry*` / `tracing-opentelemetry` hasta **post-v1.0**. Logging con `tracing` permanece. Variables `ZEDAZO_OTEL_*` / `OTEL_*` documentadas como reservadas.
 - Consecuencias: Cierra #24 como diferido (no won't-fix); reabrir con ADR de deps cuando toque implementar. Guía en `docs/otel.md` marcada como aplazada.
+
+</details>
+
+<details>
+<summary><strong>ADR-0018</strong> — Red/proveedor CardDAV (precondición v0.4.0)</summary>
+
+- Estado: **aceptada**
+- Fecha: 2026-09-11
+- Contexto: [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48) / [ROADMAP.md](./ROADMAP.md) **v0.4.0** exigen un ADR de red/proveedor **antes** de implementar sync. SPECS §3 deja CardDAV, Proton API y Google People como no-objetivo hasta ese hito. El producto ya parsea vCard 3.0/4.0 de **export** Proton / Google / Apple (O1) y opera **single-user self-hosted** (ADR-0015 local, ADR-0016 remoto HTTPS+token). La landing `zedazo.alexendros.dev` (ADR-0014) no es proxy de contactos. El pipeline local sigue **sin red saliente por defecto**.
+- Hallazgo de proveedores (2026-09):
+  1. **RFC 6352 genérico** (descubrimiento RFC 6764 `/.well-known/carddav`, `addressbook-home-set`, sync RFC 6578): cubre Nextcloud/SabreDAV, Fastmail y hosts DAV ordinarios. Auth típica: HTTP Basic + **contraseña de aplicación**.
+  2. **Apple iCloud:** CardDAV nativo (`https://contacts.icloud.com` → shard `pNN-contacts.icloud.com`); Basic + app-specific password; vCard 3.0. Encaja con O1.
+  3. **Proton Contacts:** **no** expone CardDAV/CalDAV nativo (Bridge oficial es correo, no contactos; E2E). El flujo vigente sigue siendo export/import VCF 4.0. Un puente local no oficial (p. ej. hydroxide en loopback) podría hablar RFC genérico; Zedazo **no** lo empaqueta ni lo soporta.
+  4. **Google Contacts CardDAV:** existe (`https://www.googleapis.com/.well-known/carddav`) pero **solo OAuth 2.0** + registro de cliente en Google Cloud; vCard 3.0. People API es **otro** protocolo (SPECS §3 lo lista aparte).
+- Decisión:
+  1. **Una cuenta / un principal** por configuración. Sin multi-cuenta simultánea ni perfiles de operador. Cambiar de servidor = cambiar config, no N sesiones. Encaja con ADR-0015/0016; no hay evidencia que fuerce multi-cuenta en v0.4.0.
+  2. **Read y write** sobre CardDAV. La lectura (pull) es el default. La escritura (PUT/DELETE) es **opt-in explícito** por invocación: I7 prohíbe sobrescribir el VCF local; el remoto no se muta en `cribar` salvo comando de sync con confirmación. Sin last-write-wins silencioso: `If-Match` / ETag; HTTP 412 → conflicto reportado, no overwrite.
+  3. **Cliente RFC primero**, no SDK de marca. Perfiles de descubrimiento documentados: URL explícita, Nextcloud (`/remote.php/dav/`), iCloud (`contacts.icloud.com`). Fastmail u otros hosts RFC = misma impl.
+  4. **Auth v0.4.0:** HTTP Basic (usuario + app password / token de aplicación del *proveedor*). Credenciales en env/`zedazo.toml` local (`ZEDAZO_CARDDAV_*`); **nunca** reutilizar `ZEDAZO_AUTH_TOKEN` (eso es acceso a la GUI, ADR-0016). No loguear secretos. Egreso solo desde la máquina del operador (CLI) o, más tarde, desde el host self-hosted; **no** vía `zedazo.alexendros.dev`.
+  5. **OAuth/OIDC de proveedor (Google) y Google People API:** fuera del primer slice. SPECS §3 rechaza cuentas OAuth de *producto* Zedazo; un cliente OAuth Google implicaría `client_id`/refresh tokens y un ADR o slice dedicado. **Hunch:** no conviene mezclarlo con el cliente RFC+Basic.
+  6. **Proton:** sigue por fichero VCF. CardDAV a Proton solo si el operador apunta el cliente genérico a un puente *suyo*. No hay proveedor «Proton» de primera clase hasta que Proton publique DAV.
+  7. **TLS:** HTTPS obligatorio (TLS 1.2+); sin `insecure-skip-verify` por defecto. CA privada (Nextcloud self-signed) solo con flag/config explícita en un PR posterior. HTTP claro solo hacia loopback (puente local).
+  8. **Límites:** un request en vuelo por colección de forma conservadora; honrar `Retry-After`; backoff exponencial; sin sync automático al arrancar GUI/CLI.
+  9. **Crate:** `zedazo-carddav` (`publish = false`), adaptador de infraestructura. Lo consume `zedazo-cli` en el primer slice. **`zedazo-core` sin HTTP** (ADR-0015: ni Axum inbound ni cliente CardDAV). `zedazo-api` / GUI **no** ganan endpoints CardDAV en el mismo PR que el cliente. Deps HTTP concretas (`reqwest`/equivalente, rustls) + `deny.toml` → PR de implementación (confirmación de dep nueva, AGENTS §4).
+  10. **Watch mode y filtros por categoría** (ROADMAP v0.4.0): **fuera del primer slice**. Watch = más adelante, acotado a polling de `CTag`/`sync-token` (y/o watch de ficheros locales) en PRs propios. Filtros = aplicar taxonomía N1/N2 ya existente sobre el set sincronizado; `addressbook-query` RFC 6352 no es requisito del primer slice.
+- PRs: todo código CardDAV **separado** de cambios de dominio o UI (AGENTS / #48). No mezclar con features GUI en la misma unidad.
+- Alternativas rechazadas (o diferidas):
+  - Meter HTTP CardDAV en `zedazo-core`: viola «core sin HTTP».
+  - Multi-cuenta / OAuth de producto: contradice single-user ADR-0015/0016.
+  - Tratar Proton o Google People como primer proveedor CardDAV: Proton no tiene DAV; People no es CardDAV.
+  - Push automático tras `cribar`: viola I7 y el principio de red saliente opt-in.
+- Consecuencias: desbloquea implementación de #48 (PRs de código posteriores; este ADR no incluye sync). SPECS §3 / ROADMAP v0.4.0 apuntan aquí. Primer slice verificable: pull RFC + Basic contra fixture/servidor de prueba (Nextcloud o DAV genérico), sin GUI. OTel sigue post-v1.0 (ADR-0017).
+- Relacionado: [SPECS.md](./SPECS.md) §3, [ROADMAP.md](./ROADMAP.md) v0.4.0, [ARCHITECTURE.md](./ARCHITECTURE.md), ADR-0014, ADR-0015, ADR-0016, [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48).
+- **Hunches** (etiquetados; no bloquean el ADR si se enmiendan):
+  - Nextcloud + iCloud cubren al operador self-hosted y a O1 Apple mejor que perseguir Proton DAV.
+  - Un subcomando CLI (`zedazo carddav …`) antes que pantalla GUI.
+  - `addressbook-query` y filtros server-side no hacen falta para el MVP de sync.
+
+</details>
+
+<details>
+<summary><strong>ADR-0019</strong> — Fuente DTCG de tokens GUI (script Node, sin Style Dictionary)</summary>
+
+- Estado: **aceptada**
+- Fecha: 2026-09-11
+- Contexto: La GUI (ADR-0015/0016) ya usa custom properties `--zed-*` en OKLCH, escritas a mano. El [plan de design system](./docs/gui/design-system-plan.md) (epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59)) exige un origen DTCG, CSS/TS generados y contraste WCAG 2.2 AA en CI. Style Dictionary v4 + `@tokens-studio/sd-transforms` era la hipótesis; AGENTS §4 pide confirmación para deps nuevas.
+- Decisión:
+  1. **Fuente DTCG** en [`apps/web/tokens/`](./apps/web/tokens/) (primitivo → semántico; componente = stub en fase 1). Color de origen: objeto `{ colorSpace: "oklch", components: [L, C, H] }`. Sin hex/rgb/hsl en la fuente.
+  2. **Build propio en Node 22** ([`apps/web/scripts/design-tokens/`](./apps/web/scripts/design-tokens/)): passthrough OKLCH → `--zed-*` + `src/lib/design-tokens.ts`. **Sin** `style-dictionary` ni otras deps npm. Revisitar SD solo si aparece sync Figma/Tokens Studio o el volumen de transforms lo justifica.
+  3. **Artefactos commiteados** (`src/design-system/generated/`, `src/lib/design-tokens.ts`) + `pnpm tokens:check` en `web-ci` / job Web. Política única: no generate-on-CI sin el check de drift.
+  4. **Hex solo generado** (`themeColorHex`, `faviconHex`) para `theme-color` del viewport y el favicon (Satori no pinta OKLCH). Los hex huérfanos de `layout.tsx` / `icon.tsx` dejan de ser origen.
+  5. **Contraste:** script `pnpm tokens:contrast` convierte OKLCH → sRGB lineal y aplica ratio WCAG 2.2 AA sobre pares semánticos light y dark. APCA informativo queda fuera (fase 4 / catálogo).
+  6. **Web Awesome:** se conserva la dependencia; el bridge `--wa-*` se genera desde semánticos Zedazo. La decisión A/B (kit opcional vs retirar) se aplaza a fase 2. Este PR no monta componentes `<wa-*>`.
+  7. Nombres públicos `--zed-*` **estables** (sin rename breaking). Tokens aditivos de fase 1: `--zed-bp-md/lg`, `--zed-target-min`, `--zed-z-shell/drawer`, `--zed-badge-*-border`.
+- Alternativas rechazadas (o diferidas):
+  - Style Dictionary v4 + sd-transforms: dos deps nuevas, riesgo de convertir OKLCH a sRGB, y el set actual cabe en un script de decenas de líneas.
+  - Generate-on-CI sin commitear: peor revisión de diffs visuales y CI más opaco.
+  - Retirar Web Awesome ahora: es decisión de inventario (fase 2), no de pipeline.
+- Consecuencias: `make web-ci` incluye check de artefactos + contraste. `apps/landing/` y `zedazo-api` no consumen estos tokens. PRs de CardDAV (#48) no tocan `tokens/` ni `design-system/`.
+- Relacionado: ADR-0015, ADR-0016, [SPECS.md](./SPECS.md) O10, [ROADMAP.md](./ROADMAP.md) v0.5.x, [docs/gui/design-system-plan.md](./docs/gui/design-system-plan.md), [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59).
+
+</details>
+
+<details>
+<summary><strong>ADR-0020</strong> — Alineación P1+P2 (canon de flota) sin aplastar CI Rust</summary>
+
+- Estado: **aceptada**
+- Fecha: 2026-09-24
+- Contexto: Oleada de alineación a `Soluciones-Alexendros/repo-standard` (main). Este repo ya es gold en governance (dual license, CoC, Renovate, SPECS/ARCHITECTURE/AGENTS, jobs Rust maduros). El canon pide jobs `quality` / `test` / `smoke` y meta-sección **Propósito**. Reescribir `fmt`/`clippy`/`test`/`check`/`parity`/`web` rompería CI.
+- Decisión:
+  1. Añadir wrappers `quality` (fmt+clippy+docs-validate) y `smoke` (health+check). El job `test` ya es canónico.
+  2. Documentar la equivalencia en [`AGENTS.md`](./AGENTS.md). No mover ADRs fuera de este archivo.
+  3. Conservar dual license MIT OR Apache-2.0, CoC y Renovate.
+- Consecuencias: `make ci` no cambia. Los wrappers solo agregan estado. Sin force-push ni org settings.
+- Relacionado: [AGENTS.md](./AGENTS.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [SPECS.md](./SPECS.md), [ROADMAP.md](./ROADMAP.md).
 
 </details>

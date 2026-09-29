@@ -59,6 +59,9 @@ fn main() -> anyhow::Result<()> {
             let name = cmd.get_name().to_string();
             clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
         }
+        Command::Carddav { action } => {
+            interfaces::carddav::run(action)?;
+        }
     }
 
     Ok(())

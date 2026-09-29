@@ -7,6 +7,7 @@ type Props = {
   action?: ReactNode;
   icon?: ReactNode;
   centered?: boolean;
+  compact?: boolean;
 };
 
 export function EmptyState({
@@ -15,9 +16,18 @@ export function EmptyState({
   action,
   icon,
   centered = false,
+  compact = false,
 }: Props) {
+  const className = [
+    styles.state,
+    centered ? styles.stateCenter : "",
+    compact ? styles.stateCompact : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={`${styles.state} ${centered ? styles.stateCenter : ""}`}>
+    <div className={className}>
       {icon}
       <h2 className={styles.stateTitle}>{title}</h2>
       {description ? <p className={styles.stateBody}>{description}</p> : null}

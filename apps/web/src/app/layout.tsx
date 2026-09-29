@@ -2,11 +2,8 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Providers } from "@/components/providers";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
-import "@fontsource/atkinson-hyperlegible-next/400.css";
-import "@fontsource/atkinson-hyperlegible-next/600.css";
-import "@fontsource/atkinson-hyperlegible-next/700.css";
-import "@fontsource/ibm-plex-mono/400.css";
-import "@fontsource/ibm-plex-mono/500.css";
+import { themeColorHex } from "@/lib/design-tokens";
+import { ZEDAZO_WORDMARK } from "@/components/brand/zedazo-wordmark";
 import "@/design-system/reset.css";
 import "@/design-system/tokens.css";
 import "@/design-system/themes.css";
@@ -17,15 +14,15 @@ import "@/design-system/components.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Zedazo",
+  title: ZEDAZO_WORDMARK,
   description:
     "Ordena tus contactos. Conserva las decisiones. Procesamiento VCF local y trazable.",
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf8f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1f2e" },
+    { media: "(prefers-color-scheme: light)", color: themeColorHex.light },
+    { media: "(prefers-color-scheme: dark)", color: themeColorHex.dark },
   ],
 };
 

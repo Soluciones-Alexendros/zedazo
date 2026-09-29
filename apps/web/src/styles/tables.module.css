@@ -1,7 +1,7 @@
 .tableWrap {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--zed-border-subtle);
+  border: var(--zed-border-width) solid var(--zed-border-subtle);
   border-radius: var(--zed-radius-lg);
   background: var(--zed-bg-raised);
 }
@@ -27,8 +27,8 @@
 .table th,
 .table td {
   text-align: left;
-  padding: 0.7rem 0.85rem;
-  border-bottom: 1px solid var(--zed-border-subtle);
+  padding: var(--zed-space-3);
+  border-bottom: var(--zed-border-width) solid var(--zed-border-subtle);
   vertical-align: top;
 }
 
@@ -43,8 +43,26 @@
   font-variant-numeric: tabular-nums;
 }
 
-.table tbody tr:hover {
+.table tbody tr:hover,
+.table tbody tr.interactive:hover {
   background: var(--zed-bg-subtle);
+}
+
+.interactive {
+  cursor: pointer;
+}
+
+.interactive:focus-visible {
+  outline: var(--zed-focus-width) solid var(--zed-focus-ring);
+  outline-offset: calc(-1 * var(--zed-focus-offset));
+}
+
+.dossierButton {
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
 }
 
 .cardList {
@@ -53,7 +71,7 @@
 }
 
 .dossierCard {
-  border: 1px solid var(--zed-border-subtle);
+  border: var(--zed-border-width) solid var(--zed-border-subtle);
   border-radius: var(--zed-radius-lg);
   background: var(--zed-bg-raised);
   padding: var(--zed-space-4);
@@ -69,7 +87,8 @@
   font-size: var(--zed-text-sm);
 }
 
-@media (max-width: 900px) {
+/* 900px = --zed-bp-md (56.25rem). Custom props no aplican en @media. */
+@media (max-width: 56.25rem) {
   .desktopOnly {
     display: none;
   }

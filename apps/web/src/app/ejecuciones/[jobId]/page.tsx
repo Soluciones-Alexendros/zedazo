@@ -2,18 +2,16 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { isCancellableStatus, type ContactView, type JobManifest } from "@/lib/api";
 import {
   artifactUrl,
   cancelJob,
   getAudit,
   getJob,
   getStats,
-  isCancellableStatus,
   listContacts,
   listDuplicates,
-  type ContactView,
-  type JobManifest,
-} from "@/lib/api";
+} from "@/lib/data-adapter";
 import { PageHeader } from "@/components/shell/page-header";
 import { JobSummary } from "@/components/jobs/job-summary";
 import { JobStatus } from "@/components/jobs/job-status";
@@ -29,7 +27,7 @@ import { Callout } from "@/components/ui/callout";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { FilterBar } from "@/components/ui/filter-bar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClassName } from "@/components/ui/button";
 
 type Tab =
   | "resumen"
@@ -157,7 +155,7 @@ export default function JobDetailPage() {
               </Button>
             ) : null}
             <a
-              className="zed-button zed-button--primary"
+              className={buttonClassName({ variant: "primary" })}
               href={artifactUrl(jobId, "vcf")}
             >
               Descargar VCF
@@ -188,7 +186,7 @@ export default function JobDetailPage() {
           <RetentionNotice hours={job.retention_hours} />
           {warnings.length > 0 ? (
             <Callout variant="warning" title="Avisos">
-              <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+              <ul className="zed-prose-list zed-flush">
                 {warnings.map((w) => (
                   <li key={`${w.code}-${w.message}`}>
                     <code className="zed-mono">{w.code}</code>: {w.message}
@@ -221,8 +219,7 @@ export default function JobDetailPage() {
             </label>
             <input
               id="contact-q"
-              className="zed-input"
-              style={{ maxWidth: "18rem" }}
+              className="zed-input zed-input--filter"
               placeholder="Nombre, email o teléfono"
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -232,8 +229,7 @@ export default function JobDetailPage() {
             </label>
             <select
               id="contact-result"
-              className="zed-input"
-              style={{ width: "auto" }}
+              className="zed-input zed-input--auto"
               value={result}
               onChange={(e) => setResult(e.target.value)}
             >
@@ -279,7 +275,7 @@ export default function JobDetailPage() {
               Vista técnica
             </Button>
             <a
-              className="zed-button zed-button--tertiary"
+              className={buttonClassName({ variant: "tertiary" })}
               href={artifactUrl(jobId, "audit_tsv")}
             >
               Descargar TSV
@@ -308,11 +304,9 @@ export default function JobDetailPage() {
               </table>
               {numericStats.map(([k, v]) => (
                 <div key={k}>
-                  <div className="zed-row" style={{ justifyContent: "space-between" }}>
+                  <div className="zed-row zed-row--spread">
                     <span>{k}</span>
-                    <span className="zed-stat-value" style={{ fontSize: "1.1rem" }}>
-                      {v}
-                    </span>
+                    <span className="zed-stat-value zed-stat-bar__value">{v}</span>
                   </div>
                   <div className="zed-bar" aria-hidden>
                     <div
@@ -347,7 +341,7 @@ export default function JobDetailPage() {
         <Card variant="document">
           <MetadataList
             items={[
-              { label: "Job ID", value: job.job_id, mono: true, copyable: true },
+              { label: "ID de ejecución", value: job.job_id, mono: true, copyable: true },
               {
                 label: "Hash input",
                 value: job.input.sha256,

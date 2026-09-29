@@ -17,6 +17,7 @@ path = "src/main.rs"
 
 [dependencies]
 zedazo-core = { workspace = true }
+zedazo-carddav = { workspace = true }
 clap = { workspace = true }
 clap_complete = { workspace = true }
 anyhow = { workspace = true }

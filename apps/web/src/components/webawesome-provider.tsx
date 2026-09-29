@@ -3,9 +3,10 @@
 import type { ReactNode } from "react";
 
 /**
- * Web Awesome permanece como dependencia de base UI del proyecto.
- * En esta iteración la superficie visual usa tokens Zedazo + Icon local
- * (sin CDN ni CSS de tema WA que pise el contraste OKLCH).
+ * Frontera Web Awesome (fase 2, opción A acotada — epic #59).
+ * Se conserva la dependencia y el bridge `--wa-*` generado.
+ * Clases `wa-light` / `wa-dark` en `<html>` (tema). Iconos: SVG local (`Icon`).
+ * No se montan componentes compuestos `<wa-*>`.
  */
 export function WebAwesomeProvider({ children }: { children: ReactNode }) {
   return children;

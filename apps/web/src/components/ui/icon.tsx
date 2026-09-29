@@ -76,8 +76,8 @@ export function Icon({ name, className, style, ...rest }: Props) {
       strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={className}
-      style={{ flexShrink: 0, ...style }}
+      className={["zed-icon", className].filter(Boolean).join(" ")}
+      style={style}
       {...rest}
     >
       <path d={d} />

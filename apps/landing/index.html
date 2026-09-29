@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>zedazo — tu agenda, pasada por el zedazo fino</title>
+    <meta
+      name="description"
+      content="Criba, normaliza, clasifica y deduplica contactos VCF de ProtonMail, Google Contacts y Apple iCloud. Procesamiento local, CLI y GUI self-hosted."
+    />
+    <link rel="canonical" href="https://zedazo.alexendros.dev/" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#fcfaf4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#070d18" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content="zedazo" />
+    <meta
+      property="og:description"
+      content="Tu agenda, pasada por el zedazo fino. Criba contactos VCF en local."
+    />
+    <meta property="og:url" content="https://zedazo.alexendros.dev/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_ES" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="stylesheet" href="./tokens.css" />
+    <link rel="stylesheet" href="./landing.css" />
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("zedazo-theme");
+          if (theme === "light" || theme === "dark") {
+            document.documentElement.setAttribute("data-theme", theme);
+          }
+        } catch (e) {
+          /* sin almacenamiento: sigue el esquema del sistema */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#contenido">Saltar al contenido</a>
+    <div class="wrap">
+      <header class="site-header">
+        <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path
+            d="M8 7h12L10 16h11"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            opacity="0.35"
+          />
+          <circle cx="8" cy="7" r="3" fill="currentColor" />
+          <circle cx="16" cy="16" r="3.25" fill="currentColor" />
+          <circle cx="24" cy="25" r="3" fill="currentColor" />
+          <path
+            d="M10.2 9.2 14.1 14.1M17.9 17.9 21.8 22.8"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <h1 class="wordmark">zedazo</h1>
+        <div class="header-actions">
+          <button type="button" class="theme-toggle" id="tema">Tema: sistema</button>
+        </div>
+      </header>
+
+      <nav aria-label="Secciones">
+        <ul class="section-nav">
+          <li><a href="#propuesta">Propuesta</a></li>
+          <li><a href="#caracteristicas">Características</a></li>
+          <li><a href="#funcionalidades">Funcionalidades</a></li>
+          <li><a href="#roadmap">Roadmap</a></li>
+          <li><a href="#cierre">Cierre</a></li>
+        </ul>
+      </nav>
+
+      <main id="contenido">
+        <section id="propuesta" aria-labelledby="propuesta-titulo">
+          <h2 id="propuesta-titulo">Propuesta</h2>
+          <p class="lede">Tu agenda, pasada por el zedazo fino.</p>
+          <p>
+            Zedazo criba, normaliza, clasifica y deduplica contactos VCF
+            exportados desde ProtonMail, Google Contacts o Apple iCloud. Reglas
+            deterministas, auditoría trazable y procesamiento local: no es un
+            SaaS ni una nube de agendas.
+          </p>
+          <p class="actions">
+            <a
+              class="btn btn-primary"
+              href="https://github.com/Iniciativas-Alexendros/zedazo"
+              rel="noopener noreferrer"
+              >Código en GitHub</a
+            >
+            <a
+              class="btn btn-secondary"
+              href="https://crates.io/crates/zedazo"
+              rel="noopener noreferrer"
+              >Crate en crates.io</a
+            >
+            <a
+              class="btn btn-secondary"
+              href="https://docs.rs/zedazo"
+              rel="noopener noreferrer"
+              >docs.rs</a
+            >
+          </p>
+        </section>
+
+        <section id="caracteristicas" aria-labelledby="caracteristicas-titulo">
+          <h2 id="caracteristicas-titulo">Características</h2>
+          <ul class="grid">
+            <li class="panel">
+              <h3>Local por defecto</h3>
+              <p class="muted">
+                El cribado corre en tu máquina. Esta ficha no recibe agendas.
+              </p>
+            </li>
+            <li class="panel">
+              <h3>Determinista</h3>
+              <p class="muted">
+                Mismas reglas, mismo resultado. La auditoría deja constancia de
+                cada decisión.
+              </p>
+            </li>
+            <li class="panel">
+              <h3>Self-hosted</h3>
+              <p class="muted">
+                CLI para automatizar. GUI y API en loopback, o remoto con HTTPS
+                y token (ADR-0016).
+              </p>
+            </li>
+            <li class="panel">
+              <h3>Código abierto</h3>
+              <p class="muted">Licencia dual MIT OR Apache-2.0. MSRV Rust 1.80+.</p>
+            </li>
+          </ul>
+        </section>
+
+        <section id="funcionalidades" aria-labelledby="funcionalidades-titulo">
+          <h2 id="funcionalidades-titulo">Funcionalidades</h2>
+          <div class="panel">
+            <h3>Pipeline VCF</h3>
+            <ol class="steps">
+              <li>Parsear vCard 3.0 y 4.0 (Proton, Google, Apple).</li>
+              <li>Normalizar nombres, teléfonos y organizaciones.</li>
+              <li>Clasificar, cribar y deduplicar con reglas TOML.</li>
+              <li>Escribir VCF limpio y auditoría TSV, CSV o JSON.</li>
+            </ol>
+          </div>
+          <div class="panel">
+            <h3>CLI</h3>
+            <pre><code>cargo install zedazo
+zedazo cribar contactos.vcf -o limpio.vcf -a auditoria.tsv</code></pre>
+            <p class="muted">
+              También <code>audit</code>, <code>stats</code>, <code>export</code> y
+              <code>completions</code>. CardDAV (pull, escritura opt-in, watch)
+              vive en la CLI, no en esta página.
+            </p>
+          </div>
+          <div class="panel">
+            <h3>GUI</h3>
+            <ul class="facts">
+              <li>Procesar, ejecuciones, auditar, reglas y ajustes.</li>
+              <li>Paridad funcional con la CLI, salvo el autocompletado de shell.</li>
+              <li>
+                Sin API, la interfaz muestra fixtures sintéticos. Un VCF real
+                sigue exigiendo <code>zedazo-api</code>.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="roadmap" aria-labelledby="roadmap-titulo">
+          <h2 id="roadmap-titulo">Roadmap</h2>
+          <p class="muted">
+            Estado honesto del repositorio. No es una promesa de fecha.
+          </p>
+          <ul class="roadmap">
+            <li>
+              <span class="tag tag-done">Hecho</span>
+              CLI de cribado, GUI y API self-hosted, remoto HTTPS + token,
+              design system OKLCH.
+            </li>
+            <li>
+              <span class="tag tag-done">Hecho en CLI</span>
+              CardDAV: listar, pull, escritura con confirmación y watch. La GUI
+              no sincroniza libretas.
+            </li>
+            <li>
+              <span class="tag tag-now">Pendiente humano</span>
+              Tag <code>v0.5.1</code> y publicación en crates.io. El CNAME de
+              zedazo.alexendros.dev lo crea el operador.
+            </li>
+            <li>
+              <span class="tag tag-later">v1.0</span>
+              API de crate estable, benchmarks y corpus de regresión grande.
+            </li>
+            <li>
+              <span class="tag tag-later">Aplazado</span>
+              OpenTelemetry opt-in. No hay PWA ni notificaciones.
+            </li>
+          </ul>
+        </section>
+
+        <section id="cierre" aria-labelledby="cierre-titulo">
+          <h2 id="cierre-titulo">Cierre</h2>
+          <ul class="links">
+            <li>
+              <a
+                href="https://github.com/Iniciativas-Alexendros/zedazo"
+                rel="noopener noreferrer"
+                >GitHub
+                <span>código, issues y guía de contribución</span></a
+              >
+            </li>
+            <li>
+              <a
+                href="https://crates.io/crates/zedazo"
+                rel="noopener noreferrer"
+                aria-label="crates.io: crate y binario zedazo"
+                >crates.io
+                <span>crate y binario <code>zedazo</code></span></a
+              >
+            </li>
+            <li>
+              <a href="https://docs.rs/zedazo" rel="noopener noreferrer"
+                >docs.rs
+                <span>documentación de la API del crate</span></a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/Iniciativas-Alexendros/zedazo/blob/main/docs/product-card.md"
+                rel="noopener noreferrer"
+                >Ficha de producto
+                <span>alcance, stack y roadmap</span></a
+              >
+            </li>
+            <li>
+              <a
+                href="https://github.com/Iniciativas-Alexendros/zedazo/blob/main/docs/gui/deploy.md"
+                rel="noopener noreferrer"
+                >Despliegue self-hosted
+                <span>Docker, Caddy, DNS y GUI remota</span></a
+              >
+            </li>
+          </ul>
+          <p class="note muted">
+            Wordmark en minúsculas: <strong>zedazo.alexendros.dev</strong> (ADR-0014).
+            La GUI remota, si se sirve en este mismo host, exige same-origin
+            (Caddy: <code>/</code> → web, <code>/api/*</code> → api; ADR-0016).
+            Esta URL no procesa contactos.
+          </p>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>
+          Iniciativas Alexendros · código abierto · no almacena agendas en este
+          dominio.
+        </p>
+      </footer>
+    </div>
+    <script>
+      (function () {
+        var key = "zedazo-theme";
+        var root = document.documentElement;
+        var button = document.getElementById("tema");
+        if (!button) return;
+
+        function mode() {
+          return root.getAttribute("data-theme") || "system";
+        }
+
+        function paint() {
+          var current = mode();
+          button.textContent =
+            current === "light"
+              ? "Tema: claro"
+              : current === "dark"
+                ? "Tema: oscuro"
+                : "Tema: sistema";
+        }
+
+        paint();
+        button.addEventListener("click", function () {
+          var current = mode();
+          var next = current === "system" ? "light" : current === "light" ? "dark" : "system";
+          try {
+            if (next === "system") {
+              root.removeAttribute("data-theme");
+              localStorage.removeItem(key);
+            } else {
+              root.setAttribute("data-theme", next);
+              localStorage.setItem(key, next);
+            }
+          } catch (e) {
+            if (next === "system") root.removeAttribute("data-theme");
+            else root.setAttribute("data-theme", next);
+          }
+          paint();
+        });
+      })();
+    </script>
+  </body>
+</html>

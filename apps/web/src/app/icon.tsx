@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { faviconHex } from "@/lib/design-tokens";
 
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
@@ -13,8 +14,8 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#2f4f9c",
-          color: "#faf8f2",
+          background: faviconHex.background,
+          color: faviconHex.foreground,
           fontSize: 20,
           fontWeight: 700,
           borderRadius: 6,

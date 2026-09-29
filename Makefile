@@ -1,4 +1,4 @@
-.PHONY: all check test build release clean hooks version bump fmt clippy doc deny help docs-validate parity web-ci
+.PHONY: all check test build release clean hooks version bump fmt clippy doc deny audit help docs-validate parity web-ci
 
 CARGO := cargo
 BINARY := target/release/zedazo
@@ -17,11 +17,13 @@ test: ## Ejecuta todos los tests
 parity: ## Tests de equivalencia CLI↔API HTTP (O10)
 	$(CARGO) test -p zedazo-api --test equivalence_http --all-features
 
-web-ci: ## Lint + typecheck + unit tests + build + Playwright e2e de apps/web
+web-ci: ## Tokens check/contraste + lint + typecheck + unit tests + build + Playwright e2e/a11y/visual de apps/web
 	CI=true $(PNPM) install --frozen-lockfile || CI=true $(PNPM) install
 	cd apps/web && ./node_modules/.bin/tsc --noEmit
 	cd apps/web && ./node_modules/.bin/next lint
-	cd apps/web && node --test src/lib/api.test.mjs
+	cd apps/web && node scripts/design-tokens/build.mjs --check
+	cd apps/web && node scripts/design-tokens/contrast.mjs
+	cd apps/web && node --test src/lib/api.test.mjs src/lib/design-tokens-contrast.test.mjs src/lib/atoms-contract.test.mjs src/lib/local-fixtures.test.mjs
 	cd apps/web && ./node_modules/.bin/next build
 	cd apps/web && ./node_modules/.bin/playwright install --with-deps chromium
 	cd apps/web && ./node_modules/.bin/playwright test --grep-invert screenshots
@@ -40,6 +42,10 @@ clean: ## Limpia artefactos de compilación
 deny: ## Licencias/advisories (cargo-deny; ADR-0013)
 	@command -v cargo-deny >/dev/null || (echo "Instala: cargo install cargo-deny" && exit 1)
 	cargo deny check
+
+audit: ## Advisories RustSec (cargo-audit; política en .cargo/audit.toml)
+	@command -v cargo-audit >/dev/null || (echo "Instala: cargo install cargo-audit" && exit 1)
+	cargo audit
 
 docs-validate: ## Valida documentación canónica (frontmatter, enlaces, stubs, trazabilidad)
 	@echo "→ Validando frontmatter en docs canónicos..."
@@ -81,6 +87,21 @@ docs-validate: ## Valida documentación canónica (frontmatter, enlaces, stubs, 
 		echo "❌ ARCHITECTURE.md no referencia ROADMAP/DECISIONS"; exit 1; \
 	fi
 	@echo "✓ Trazabilidad OK"
+	@echo "→ Validando landing de producto..."
+	@test -f apps/landing/index.html || (echo "❌ falta apps/landing/index.html"; exit 1)
+	@test -f apps/landing/favicon.svg || (echo "❌ falta apps/landing/favicon.svg"; exit 1)
+	@test -f deploy/Caddyfile.landing || (echo "❌ falta deploy/Caddyfile.landing"; exit 1)
+	@grep -q "https://github.com/Iniciativas-Alexendros/zedazo" apps/landing/index.html || (echo "❌ landing: falta enlace GitHub"; exit 1)
+	@grep -q "https://crates.io/crates/zedazo" apps/landing/index.html || (echo "❌ landing: falta enlace crates.io"; exit 1)
+	@grep -q "https://docs.rs/zedazo" apps/landing/index.html || (echo "❌ landing: falta enlace docs.rs"; exit 1)
+	@grep -q "zedazo.alexendros.dev" apps/landing/index.html || (echo "❌ landing: falta wordmark de dominio"; exit 1)
+	@grep -q "zedazo.alexendros.dev" deploy/Caddyfile.landing || (echo "❌ Caddyfile.landing: falta hostname de producto"; exit 1)
+	@grep -Eq 'class="wordmark">zedazo</(span|h1)>' apps/landing/index.html || (echo "❌ landing: wordmark no está en minúsculas"; exit 1)
+	@grep -q 'href="./tokens.css"' apps/landing/index.html || (echo "❌ landing: no consume tokens.css generado"; exit 1)
+	@test -f apps/landing/tokens.css || (echo "❌ falta apps/landing/tokens.css (pnpm tokens:build)"; exit 1)
+	@grep -q 'ZEDAZO_WORDMARK = "zedazo"' apps/web/src/components/brand/zedazo-wordmark.tsx || (echo "❌ GUI: wordmark no está en minúsculas"; exit 1)
+	@test -f docs/brand.md || (echo "❌ falta docs/brand.md"; exit 1)
+	@echo "✓ Landing OK"
 	@echo "✓ docs-validate completado"
 
 traceability: ## Genera matriz de trazabilidad SPECS→Módulo→Test

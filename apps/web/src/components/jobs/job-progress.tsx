@@ -30,7 +30,7 @@ export function JobProgress({ status, phases = [], reconnecting }: Props) {
           <span className="zed-muted">Reconectando eventos…</span>
         ) : null}
       </div>
-      <ol style={{ listStyle: "none", margin: 0, padding: 0 }} className="zed-stack">
+      <ol className="zed-stack zed-phase-list">
         {PHASE_ORDER.map((phase, index) => {
           const meta = jobStatusMeta(phase);
           const state =
@@ -48,11 +48,7 @@ export function JobProgress({ status, phases = [], reconnecting }: Props) {
           return (
             <li
               key={phase}
-              className="zed-row"
-              style={{
-                opacity: state === "todo" ? 0.55 : 1,
-                fontWeight: state === "current" ? 600 : 400,
-              }}
+              className={`zed-row zed-phase-list__item--${state}`}
             >
               <Icon
                 name={
@@ -74,7 +70,7 @@ export function JobProgress({ status, phases = [], reconnecting }: Props) {
       {phases.length > 0 ? (
         <details>
           <summary>Eventos recibidos ({phases.length})</summary>
-          <ul className="zed-mono" style={{ fontSize: "0.875rem" }}>
+          <ul className="zed-mono zed-prose-list">
             {phases.map((p, i) => (
               <li key={`${i}-${p}`}>{p}</li>
             ))}

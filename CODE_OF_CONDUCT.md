@@ -1,5 +1,11 @@
 # Código de Conducta
 
+### Propósito de este documento
+
+- **Objetivos:** Normas de participación libre de acoso en issues, PRs y espacios del proyecto.
+- **Estructura:** Propósito → compromiso → estándares → alcance → aplicación.
+- **Contenido a integrar según contexto:** Conserva este CoC. No lo sustituyas por el de otro paquete. Vulnerabilidades → [SECURITY.md](SECURITY.md), no issue público.
+
 ## Nuestro compromiso
 
 Como personas contribuyentes y mantenedoras de este proyecto, nos comprometemos a hacer de la participación una experiencia libre de acoso para todas las personas.

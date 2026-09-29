@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { API_BASE, getHealth } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
+import { probeAdapter, readHealth, resetAdapterProbe } from "@/lib/data-adapter";
 
-export type ConnectionState = "checking" | "connected" | "disconnected";
+export type ConnectionState = "checking" | "connected" | "disconnected" | "local";
 
 function isLoopbackHost(hostname: string) {
   return (
@@ -36,8 +37,15 @@ export function useApiHealth(pollMs = 30000) {
   } | null>(null);
 
   const refresh = useCallback(async () => {
+    resetAdapterProbe();
     try {
-      const h = await getHealth();
+      const adapter = await probeAdapter();
+      if (adapter === "local") {
+        setHealth(null);
+        setState("local");
+        return;
+      }
+      const h = await readHealth();
       setHealth(h);
       setState("connected");
     } catch {

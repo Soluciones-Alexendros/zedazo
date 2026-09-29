@@ -1,0 +1,265 @@
+{
+  "$description": "Color semántico — tema oscuro. Nombres públicos --zed-* estables (fase 1, sin rename).",
+  "$extensions": { "com.zedazo": { "theme": "dark" } },
+  "color": {
+    "bg": {
+      "canvas": {
+        "$type": "color",
+        "$value": "{color.ink.700}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-bg-canvas" } }
+      },
+      "subtle": {
+        "$type": "color",
+        "$value": "{color.ink.600}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-bg-subtle" } }
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "{color.ink.450}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-bg-muted" } }
+      },
+      "raised": {
+        "$type": "color",
+        "$value": "{color.ink.500}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-bg-raised" } }
+      },
+      "inverse": {
+        "$type": "color",
+        "$value": "{color.paper.80}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-bg-inverse" } }
+      },
+      "overlay": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.18, 0.04, 258], "alpha": 0.45 },
+        "$description": "Scrim de overlay/drawer. Mismo valor en claro y oscuro (fase 2).",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-overlay" } }
+      }
+    },
+    "fg": {
+      "strong": {
+        "$type": "color",
+        "$value": "{color.paper.90}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-fg-strong" } }
+      },
+      "default": {
+        "$type": "color",
+        "$value": "{color.ink.50}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-fg-default" } }
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "{color.ink.100}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-fg-muted" } }
+      },
+      "subtle": {
+        "$type": "color",
+        "$value": "{color.ink.200}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-fg-subtle" } }
+      },
+      "inverse": {
+        "$type": "color",
+        "$value": "{color.ink.fg-strong}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-fg-inverse" } }
+      }
+    },
+    "border": {
+      "subtle": {
+        "$type": "color",
+        "$value": "{color.ink.400}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-border-subtle" } }
+      },
+      "default": {
+        "$type": "color",
+        "$value": "{color.ink.350}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-border-default" } }
+      },
+      "strong": {
+        "$type": "color",
+        "$value": "{color.ink.300}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-border-strong" } }
+      }
+    },
+    "accent": {
+      "default": {
+        "$type": "color",
+        "$value": "{color.accent.300}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-accent" } }
+      },
+      "hover": {
+        "$type": "color",
+        "$value": "{color.accent.200}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-accent-hover" } }
+      },
+      "active": {
+        "$type": "color",
+        "$value": "{color.accent.400}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-accent-active" } }
+      },
+      "soft": {
+        "$type": "color",
+        "$value": "{color.accent.soft-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-accent-soft" } }
+      },
+      "on": {
+        "$type": "color",
+        "$value": "{color.ink.650}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-accent-on" } }
+      },
+      "border": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.76, 0.13, 257], "alpha": 0.28 },
+        "$description": "Borde de callout privacy/tabs; equivalente a color-mix(accent 28%, transparent)",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-accent-border" } }
+      }
+    },
+    "success": {
+      "default": {
+        "$type": "color",
+        "$value": "{color.success.400}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-success" } }
+      },
+      "hover": {
+        "$type": "color",
+        "$value": "{color.success.300}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-success-hover" } }
+      },
+      "soft": {
+        "$type": "color",
+        "$value": "{color.success.soft-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-success-soft" } }
+      },
+      "onSoft": {
+        "$type": "color",
+        "$value": "{color.success.on-soft-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-success-on-soft" } }
+      }
+    },
+    "warning": {
+      "default": {
+        "$type": "color",
+        "$value": "{color.warning.400}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-warning" } }
+      },
+      "hover": {
+        "$type": "color",
+        "$value": "{color.warning.300}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-warning-hover" } }
+      },
+      "soft": {
+        "$type": "color",
+        "$value": "{color.warning.soft-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-warning-soft" } }
+      },
+      "onSoft": {
+        "$type": "color",
+        "$value": "{color.warning.on-soft-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-warning-on-soft" } }
+      }
+    },
+    "danger": {
+      "default": {
+        "$type": "color",
+        "$value": "{color.danger.400}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-danger" } }
+      },
+      "hover": {
+        "$type": "color",
+        "$value": "{color.danger.300}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-danger-hover" } }
+      },
+      "soft": {
+        "$type": "color",
+        "$value": "{color.danger.soft-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-danger-soft" } }
+      },
+      "onSoft": {
+        "$type": "color",
+        "$value": "{color.danger.on-soft-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-danger-on-soft" } }
+      }
+    },
+    "info": {
+      "default": {
+        "$type": "color",
+        "$value": "{color.info.400}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-info" } }
+      },
+      "hover": {
+        "$type": "color",
+        "$value": "{color.info.300}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-info-hover" } }
+      },
+      "soft": {
+        "$type": "color",
+        "$value": "{color.info.soft-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-info-soft" } }
+      },
+      "onSoft": {
+        "$type": "color",
+        "$value": "{color.info.on-soft-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-info-on-soft" } }
+      }
+    },
+    "focus": {
+      "ring": {
+        "$type": "color",
+        "$value": "{color.accent.focus-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-focus-ring" } }
+      }
+    },
+    "selection": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.accent.selection-dark}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-selection-bg" } }
+      },
+      "fg": {
+        "$type": "color",
+        "$value": "{color.paper.90}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-selection-fg" } }
+      }
+    },
+    "code": {
+      "bg": {
+        "$type": "color",
+        "$value": "{color.ink.750}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-code-bg" } }
+      },
+      "fg": {
+        "$type": "color",
+        "$value": "{color.paper.code-soft}",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-code-fg" } }
+      }
+    },
+    "badge": {
+      "success": {
+        "border": {
+          "$type": "color",
+          "$value": { "colorSpace": "oklch", "components": [0.76, 0.105, 157], "alpha": 0.32 },
+          "$extensions": { "com.zedazo": { "cssVar": "--zed-badge-success-border" } }
+        }
+      },
+      "warning": {
+        "border": {
+          "$type": "color",
+          "$value": { "colorSpace": "oklch", "components": [0.8, 0.13, 86], "alpha": 0.35 },
+          "$extensions": { "com.zedazo": { "cssVar": "--zed-badge-warning-border" } }
+        }
+      },
+      "danger": {
+        "border": {
+          "$type": "color",
+          "$value": { "colorSpace": "oklch", "components": [0.77, 0.13, 25], "alpha": 0.32 },
+          "$extensions": { "com.zedazo": { "cssVar": "--zed-badge-danger-border" } }
+        }
+      },
+      "info": {
+        "border": {
+          "$type": "color",
+          "$value": { "colorSpace": "oklch", "components": [0.78, 0.09, 228], "alpha": 0.3 },
+          "$extensions": { "com.zedazo": { "cssVar": "--zed-badge-info-border" } }
+        }
+      }
+    }
+  }
+}

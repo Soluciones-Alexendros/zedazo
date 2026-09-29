@@ -1,0 +1,17 @@
+{
+  "$description": "Alias semánticos de elevación. Las custom properties públicas viven en primitive/elevation.json.",
+  "elevation": {
+    "raised": {
+      "$type": "shadow",
+      "$value": "{elevation.shadow.xs}"
+    },
+    "overlay": {
+      "$type": "shadow",
+      "$value": "{elevation.shadow.sm}"
+    },
+    "modal": {
+      "$type": "shadow",
+      "$value": "{elevation.shadow.md}"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "elevation": {
+    "shadow": {
+      "$type": "shadow",
+      "xs": {
+        "$value": {
+          "offsetX": { "value": 0, "unit": "px" },
+          "offsetY": { "value": 1, "unit": "px" },
+          "blur": { "value": 2, "unit": "px" },
+          "spread": { "value": 0, "unit": "px" },
+          "color": {
+            "colorSpace": "oklch",
+            "components": [0.18, 0.04, 255],
+            "alpha": 0.06
+          }
+        },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-shadow-xs" } }
+      },
+      "sm": {
+        "$value": {
+          "offsetX": { "value": 0, "unit": "px" },
+          "offsetY": { "value": 2, "unit": "px" },
+          "blur": { "value": 8, "unit": "px" },
+          "spread": { "value": 0, "unit": "px" },
+          "color": {
+            "colorSpace": "oklch",
+            "components": [0.18, 0.04, 255],
+            "alpha": 0.08
+          }
+        },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-shadow-sm" } }
+      },
+      "md": {
+        "$value": {
+          "offsetX": { "value": 0, "unit": "px" },
+          "offsetY": { "value": 12, "unit": "px" },
+          "blur": { "value": 32, "unit": "px" },
+          "spread": { "value": 0, "unit": "px" },
+          "color": {
+            "colorSpace": "oklch",
+            "components": [0.18, 0.04, 255],
+            "alpha": 0.12
+          }
+        },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-shadow-md" } }
+      }
+    }
+  }
+}

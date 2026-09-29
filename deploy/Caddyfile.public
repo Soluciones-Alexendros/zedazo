@@ -1,5 +1,10 @@
-# Ejemplo para miniPC + dominio (Let's Encrypt).
-# Sustituir example.com y montar este archivo como Caddyfile en compose remoto.
+# Ejemplo para miniPC + dominio de la GUI (Let's Encrypt, ADR-0016).
+# Sustituir example.com (p. ej. zedazo.alexendros.dev) y montar este archivo
+# como Caddyfile en compose remoto.
+#
+# Same-origin: `/` → web, `/api/*` → api. No publicar api/web a Internet.
+# Si este hostname aún solo debe mostrar la ficha de producto, usar
+# Caddyfile.landing + docker-compose.landing.yml (issue #50).
 example.com {
 	header {
 		X-Content-Type-Options nosniff

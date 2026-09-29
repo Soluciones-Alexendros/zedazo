@@ -6,6 +6,12 @@ labels: bug
 assignees: ''
 ---
 
+### Propósito de este documento
+
+- **Objetivos:** Recoger un fallo reproducible (CLI o GUI) sin PII real.
+- **Estructura:** Propósito → descripción → repro → esperado → entorno.
+- **Contenido a integrar según contexto:** Adjunta VCF anonimizado. Vulnerabilidades → SECURITY.md, no este issue.
+
 ## Descripción
 
 Describe el error de forma clara y concisa.

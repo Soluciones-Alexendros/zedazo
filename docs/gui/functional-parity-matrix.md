@@ -29,6 +29,7 @@ O11 (auth remoto) no altera la semántica del pipeline: O10 sigue válido con `Z
 | Preservación PHOTO/folding | writer | Artifact VCF | Roundtrip como CLI |
 | Cancelación | N/A (CTRL-C) | `POST .../cancel` | Artefactos incompletos no descargables como definitivos |
 | Shell completions | `completions` | Solo documentación | Sin pantalla equivalente |
+| CardDAV pull/list/write/watch (ADR-0018) | `zedazo carddav` | N/A (CLI only) | Sin pantalla ni `/api/v1` CardDAV |
 
 ## Test de equivalencia (CI)
 
@@ -43,3 +44,4 @@ Para cada fixture en `crates/zedazo-core/tests/fixtures/*.vcf` relevante: ejecut
 | Dedup grupos (conteos + artifacts) | sí (`duplicates.vcf`) |
 | Warning `[cribado]` / cancelación UI / evidencias D1-D2 en GUI | sí (API+UI V1 endurecido) |
 | Shell completions | N/A (sin pantalla) |
+| CardDAV `list`/`pull` | N/A (CLI only; ADR-0018) |

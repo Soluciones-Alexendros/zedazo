@@ -1,9 +1,37 @@
+# Security Audit — cargo audit contra RustSec.
+#
+# Política (ver `.cargo/audit.toml` y SECURITY.md):
+# - Falla solo si hay vulnerabilidades (no por unmaintained/unsound/yanked).
+# - Excepciones: IDs en `.cargo/audit.toml` y `deny.toml`, con motivo y revisión.
+# - `createIssues: false`: el veredicto es el exit code de cargo-audit.
+#   Abrir issues no forma parte del gate (el token de schedule no escribe issues
+#   y un 403 no debe mezclarse con un advisory real).
 name: Security Audit
 
 on:
   schedule:
     - cron: '0 8 * * 1' # cada lunes 08:00 UTC
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - '**/Cargo.toml'
+      - '.cargo/audit.toml'
+      - 'deny.toml'
+      - '.github/workflows/audit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - '**/Cargo.toml'
+      - '.cargo/audit.toml'
+      - 'deny.toml'
+      - '.github/workflows/audit.yml'
+
+permissions:
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -17,3 +45,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: actions-rust-lang/audit@v1
+        with:
+          denyWarnings: false
+          createIssues: false

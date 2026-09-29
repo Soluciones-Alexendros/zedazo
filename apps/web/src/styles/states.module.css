@@ -11,6 +11,10 @@
   text-align: center;
 }
 
+.stateCompact {
+  padding: var(--zed-space-4) 0;
+}
+
 .stateTitle {
   margin: 0;
   color: var(--zed-fg-strong);
@@ -21,7 +25,7 @@
 .stateBody {
   margin: 0;
   color: var(--zed-fg-muted);
-  max-width: 36rem;
+  max-width: var(--zed-prose-max);
 }
 
 .skeleton {
@@ -30,7 +34,7 @@
 }
 
 .skeletonLine {
-  height: 0.85rem;
+  height: var(--zed-space-3);
   border-radius: var(--zed-radius-xs);
   background: var(--zed-bg-muted);
 }
@@ -45,15 +49,15 @@
   display: inline-flex;
   align-items: center;
   gap: var(--zed-space-2);
-  min-height: 2rem;
-  padding: 0.25rem 0.6rem;
+  min-height: calc(var(--zed-target-min) + var(--zed-space-2));
+  padding: var(--zed-space-1) var(--zed-space-2);
   border-radius: var(--zed-radius-pill);
-  border: 1px solid var(--zed-border-default);
+  border: var(--zed-border-width) solid var(--zed-border-default);
   background: var(--zed-bg-subtle);
   color: var(--zed-fg-default);
   font-size: var(--zed-text-sm);
 }
 
 .live {
-  min-height: 1.25rem;
+  min-height: var(--zed-space-5);
 }

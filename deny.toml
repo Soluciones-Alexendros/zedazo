@@ -2,6 +2,9 @@
 # Ver ADR-0013 (aceptada) en DECISIONS.md
 
 [advisories]
+# Alineado con `.cargo/audit.toml` y `.github/workflows/audit.yml`:
+# vulnerability → deny; unmaintained/unsound/yanked → no bloquean el audit job.
+# Cada ignore: motivo, fecha y revisión; mismo ID en `.cargo/audit.toml`.
 ignore = []
 
 [licenses]
@@ -15,6 +18,10 @@ allow = [
     "Unicode-3.0",
     "Unicode-DFS-2016",
     "Zlib",
+    # webpki-roots (reqwest rustls-tls en zedazo-carddav, ADR-0018)
+    "CDLA-Permissive-2.0",
+    # ring (backend TLS de rustls; ISC+MIT+OpenSSL en algunas versiones)
+    "OpenSSL",
 ]
 
 [bans]

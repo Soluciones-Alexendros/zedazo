@@ -1,0 +1,349 @@
+{
+  "$description": "Rampas OKLCH primitivas. Los componentes no consumen esta capa; solo semantic/build.",
+  "color": {
+    "paper": {
+      "0": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [1, 0, 0] },
+        "$description": "Blanco de superficie elevada (claro)"
+      },
+      "50": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.985, 0.008, 257] },
+        "$description": "Papel / canvas claro"
+      },
+      "75": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.98, 0.006, 257] },
+        "$description": "Texto inverso sobre tinta (claro)"
+      },
+      "80": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.96, 0.012, 257] },
+        "$description": "Superficie inversa oscura (oscuro)"
+      },
+      "90": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.95, 0.012, 257] },
+        "$description": "Texto fuerte / selección (oscuro)"
+      },
+      "100": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.965, 0.012, 257] },
+        "$description": "Fondo sutil claro"
+      },
+      "200": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.93, 0.018, 257] },
+        "$description": "Fondo muted claro"
+      },
+      "300": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.89, 0.014, 257] },
+        "$description": "Borde sutil claro"
+      },
+      "400": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.81, 0.022, 257] },
+        "$description": "Borde por defecto claro"
+      },
+      "code": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.92, 0.02, 257] },
+        "$description": "Texto de código sobre tinta"
+      },
+      "code-soft": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.9, 0.02, 257] },
+        "$description": "Texto de código (oscuro)"
+      }
+    },
+    "ink": {
+      "50": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.86, 0.018, 250] },
+        "$description": "Texto por defecto (oscuro)"
+      },
+      "100": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.71, 0.025, 250] },
+        "$description": "Texto muted (oscuro)"
+      },
+      "200": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.58, 0.03, 250] },
+        "$description": "Texto sutil (oscuro)"
+      },
+      "300": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.5, 0.045, 258] },
+        "$description": "Borde fuerte (oscuro)"
+      },
+      "350": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.36, 0.035, 258] },
+        "$description": "Borde por defecto (oscuro)"
+      },
+      "400": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.29, 0.03, 258] },
+        "$description": "Borde sutil (oscuro)"
+      },
+      "450": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.24, 0.032, 258] },
+        "$description": "Fondo muted (oscuro)"
+      },
+      "500": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.215, 0.028, 258] },
+        "$description": "Superficie elevada (oscuro)"
+      },
+      "550": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.22, 0.03, 258] },
+        "$description": "Fondo de código (claro)"
+      },
+      "600": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.19, 0.028, 258] },
+        "$description": "Fondo sutil (oscuro)"
+      },
+      "650": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.18, 0.03, 258] },
+        "$description": "Texto sobre acento (oscuro)"
+      },
+      "700": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.16, 0.025, 258] },
+        "$description": "Canvas (oscuro)"
+      },
+      "750": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.14, 0.025, 258] },
+        "$description": "Fondo de código (oscuro)"
+      },
+      "fg-subtle": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.61, 0.022, 258] },
+        "$description": "Texto sutil (claro)"
+      },
+      "fg-muted": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.49, 0.028, 258] },
+        "$description": "Texto muted (claro)"
+      },
+      "fg-default": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.34, 0.03, 258] },
+        "$description": "Texto por defecto (claro)"
+      },
+      "fg-strong": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.22, 0.035, 258] },
+        "$description": "Texto fuerte / canvas inverso (claro)"
+      },
+      "border-strong": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.69, 0.03, 258] },
+        "$description": "Borde fuerte (claro)"
+      },
+      "shadow": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.18, 0.04, 255] },
+        "$description": "Tinta de elevación"
+      }
+    },
+    "accent": {
+      "soft-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.93, 0.045, 257] }
+      },
+      "selection-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.87, 0.075, 257] }
+      },
+      "focus-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.6, 0.18, 257] }
+      },
+      "500": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.53, 0.16, 257] }
+      },
+      "600": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.47, 0.16, 257] }
+      },
+      "700": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.41, 0.145, 257] }
+      },
+      "selection-fg-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.24, 0.05, 257] }
+      },
+      "soft-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.3, 0.07, 257] }
+      },
+      "selection-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.37, 0.09, 257] }
+      },
+      "400": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.69, 0.14, 257] }
+      },
+      "300": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.76, 0.13, 257] }
+      },
+      "200": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.82, 0.12, 257] }
+      },
+      "focus-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.79, 0.14, 257] }
+      }
+    },
+    "success": {
+      "on-soft-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.3, 0.075, 157] }
+      },
+      "700": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.42, 0.105, 157] }
+      },
+      "600": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.48, 0.115, 157] }
+      },
+      "soft-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.94, 0.04, 157] }
+      },
+      "soft-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.29, 0.065, 157] }
+      },
+      "400": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.76, 0.105, 157] }
+      },
+      "300": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.83, 0.095, 157] }
+      },
+      "on-soft-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.88, 0.065, 157] }
+      }
+    },
+    "warning": {
+      "on-soft-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.34, 0.085, 72] }
+      },
+      "700": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.51, 0.125, 78] }
+      },
+      "600": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.58, 0.13, 78] }
+      },
+      "soft-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.95, 0.055, 86] }
+      },
+      "soft-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.32, 0.07, 78] }
+      },
+      "400": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.8, 0.13, 86] }
+      },
+      "300": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.87, 0.115, 86] }
+      },
+      "on-soft-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.93, 0.085, 88] }
+      }
+    },
+    "danger": {
+      "on-soft-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.32, 0.1, 25] }
+      },
+      "700": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.45, 0.15, 25] }
+      },
+      "600": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.52, 0.16, 25] }
+      },
+      "soft-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.95, 0.045, 25] }
+      },
+      "soft-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.31, 0.075, 25] }
+      },
+      "400": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.77, 0.13, 25] }
+      },
+      "300": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.84, 0.115, 25] }
+      },
+      "on-soft-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.92, 0.06, 25] }
+      }
+    },
+    "info": {
+      "on-soft-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.31, 0.075, 228] }
+      },
+      "700": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.46, 0.1, 228] }
+      },
+      "600": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.53, 0.105, 228] }
+      },
+      "soft-light": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.94, 0.035, 228] }
+      },
+      "soft-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.29, 0.055, 228] }
+      },
+      "400": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.78, 0.09, 228] }
+      },
+      "300": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.85, 0.08, 228] }
+      },
+      "on-soft-dark": {
+        "$type": "color",
+        "$value": { "colorSpace": "oklch", "components": [0.89, 0.05, 228] }
+      }
+    }
+  }
+}

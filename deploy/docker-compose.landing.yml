@@ -1,0 +1,24 @@
+# Landing pública (ADR-0014 / #50). Sin API, sin GUI, sin auth.
+# Uso (en el host destino del CNAME `zedazo`):
+#   docker compose -f docker-compose.landing.yml up -d
+# Requiere puertos 80 y 443 públicos (Let's Encrypt HTTP-01).
+#
+# No mezclar con docker-compose.remote.yml en el mismo hostname:
+# la GUI remota usa Caddyfile.public (same-origin). Ver docs/gui/deploy.md.
+
+services:
+  landing:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.landing:/etc/caddy/Caddyfile:ro
+      - ../apps/landing:/srv/landing:ro
+      - landing-caddy-data:/data
+      - landing-caddy-config:/config
+
+volumes:
+  landing-caddy-data:
+  landing-caddy-config:

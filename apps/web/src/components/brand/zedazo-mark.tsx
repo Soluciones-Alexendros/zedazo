@@ -1,23 +1,33 @@
+import { ZEDAZO_WORDMARK } from "./zedazo-wordmark";
+
 type Props = {
   size?: 16 | 20 | 24 | 32 | 48;
   title?: string;
   className?: string;
+  /** Junto al wordmark el logomark es decorativo (como en la landing). */
+  decorative?: boolean;
 };
 
 /** Marca vectorial: tres nodos conectados con trazo en Z sutil. */
-export function ZedazoMark({ size = 24, title, className }: Props) {
-  const label = title ?? "Zedazo";
+export function ZedazoMark({
+  size = 24,
+  title,
+  className,
+  decorative = false,
+}: Props) {
+  const label = title ?? ZEDAZO_WORDMARK;
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 32 32"
-      role="img"
-      aria-label={label}
       className={className}
       fill="none"
+      {...(decorative
+        ? { "aria-hidden": true as const }
+        : { role: "img" as const, "aria-label": label })}
     >
-      <title>{label}</title>
+      {decorative ? null : <title>{label}</title>}
       <path
         d="M8 7h12L10 16h11"
         stroke="currentColor"

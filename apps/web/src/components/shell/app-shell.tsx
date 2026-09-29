@@ -5,6 +5,7 @@ import { AppSidebar } from "./app-sidebar";
 import { MobileNavigation } from "./mobile-navigation";
 import { Topbar } from "./topbar";
 import { Statusbar } from "./statusbar";
+import { LocalAdapterBanner } from "./local-adapter-banner";
 import { useApiHealth } from "@/lib/hooks/use-api-health";
 import styles from "@/styles/shell.module.css";
 
@@ -30,6 +31,7 @@ export function AppShell({ children }: Props) {
       <MobileNavigation open={navOpen} onClose={() => setNavOpen(false)} />
       <div className={styles.main}>
         <div id="contenido-principal" className={styles.mainInner} tabIndex={-1}>
+          {state === "local" ? <LocalAdapterBanner /> : null}
           {children}
         </div>
       </div>
@@ -39,7 +41,7 @@ export function AppShell({ children }: Props) {
         storageMode={health?.storage_mode}
         apiVersion={health?.api_version}
         coreVersion={health?.core_version}
-        retentionHint="Retención: configurable por job"
+        retentionHint="Retención: configurable por ejecución"
       />
     </div>
   );

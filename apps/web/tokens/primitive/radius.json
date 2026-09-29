@@ -1,0 +1,44 @@
+{
+  "radius": {
+    "$type": "dimension",
+    "xs": {
+      "$value": { "value": 0.25, "unit": "rem" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-radius-xs" } }
+    },
+    "sm": {
+      "$value": { "value": 0.5, "unit": "rem" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-radius-sm" } }
+    },
+    "md": {
+      "$value": { "value": 0.75, "unit": "rem" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-radius-md" } }
+    },
+    "lg": {
+      "$value": { "value": 1, "unit": "rem" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-radius-lg" } }
+    },
+    "xl": {
+      "$value": { "value": 1.5, "unit": "rem" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-radius-xl" } }
+    },
+    "pill": {
+      "$value": { "value": 999, "unit": "px" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-radius-pill" } }
+    }
+  },
+  "stroke": {
+    "$type": "dimension",
+    "border": {
+      "$value": { "value": 1, "unit": "px" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-border-width" } }
+    },
+    "focus": {
+      "$value": { "value": 3, "unit": "px" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-focus-width" } }
+    },
+    "focusOffset": {
+      "$value": { "value": 3, "unit": "px" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-focus-offset" } }
+    }
+  }
+}

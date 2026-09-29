@@ -7,9 +7,13 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",
-    "test": "node --test src/lib/api.test.mjs",
+    "tokens:build": "node scripts/design-tokens/build.mjs",
+    "tokens:check": "node scripts/design-tokens/build.mjs --check",
+    "tokens:contrast": "node scripts/design-tokens/contrast.mjs",
+    "test": "node --test src/lib/api.test.mjs src/lib/design-tokens-contrast.test.mjs src/lib/atoms-contract.test.mjs src/lib/local-fixtures.test.mjs",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test e2e/a11y.spec.ts",
+    "test:visual": "playwright test e2e/visual.spec.ts",
     "typecheck": "tsc --noEmit"
   },
   "pnpm": {
@@ -28,8 +32,6 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
-    "@fontsource/atkinson-hyperlegible-next": "^5.3.0",
-    "@fontsource/ibm-plex-mono": "^5.3.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",

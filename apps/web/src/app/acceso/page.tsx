@@ -7,6 +7,7 @@ import { ProductLockup } from "@/components/brand/product-lockup";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
 import { Card } from "@/components/ui/card";
+import { ErrorState } from "@/components/ui/error-state";
 import formStyles from "@/styles/forms.module.css";
 
 export default function AccesoPage() {
@@ -52,18 +53,11 @@ export default function AccesoPage() {
   }
 
   return (
-    <div
-      className="zed-stack zed-animate-fade"
-      style={{
-        maxWidth: "28rem",
-        margin: "4rem auto",
-        padding: "0 1rem",
-      }}
-    >
+    <div className="zed-stack zed-animate-fade zed-auth-layout">
       <ProductLockup href="" subtitle="Archivo Vivo · acceso self-hosted" />
       <Card variant="document" className={formStyles.form}>
         <h1 className="zed-title-section">Acceso</h1>
-        <p className="zed-muted" style={{ marginTop: 0 }}>
+        <p className="zed-muted zed-flush">
           Instancia self-hosted de un solo operador. Introduce el token
           configurado en <code className="zed-mono">ZEDAZO_AUTH_TOKEN</code>.
         </p>
@@ -88,11 +82,7 @@ export default function AccesoPage() {
               required
             />
           </div>
-          {error ? (
-            <p className="zed-muted" role="alert">
-              {error}
-            </p>
-          ) : null}
+          {error ? <ErrorState title="No se pudo entrar" message={error} /> : null}
           <Button type="submit" loading={busy} disabled={!token.trim()}>
             Entrar
           </Button>

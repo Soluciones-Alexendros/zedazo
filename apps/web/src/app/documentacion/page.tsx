@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/shell/page-header";
 import { Card } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
+import { buttonClassName } from "@/components/ui/button";
 
 export default function DocumentacionPage() {
   return (
@@ -17,7 +18,7 @@ export default function DocumentacionPage() {
       </Callout>
 
       <Card variant="document">
-        <ul className="zed-stack" style={{ listStyle: "disc", paddingLeft: "1.25rem" }}>
+        <ul className="zed-stack zed-prose-list">
           <li>
             Matriz de paridad:{" "}
             <code className="zed-mono">docs/gui/functional-parity-matrix.md</code>
@@ -30,10 +31,27 @@ export default function DocumentacionPage() {
             <code className="zed-mono">zedazo completions bash|zsh|fish</code>
           </li>
           <li>ADR-0015: core compartido + API + web self-hosted.</li>
+          <li>
+            Catálogo del sistema de diseño (átomos y patrones de producto, epic{" "}
+            <a href="https://github.com/Iniciativas-Alexendros/zedazo/issues/59">
+              #59
+            </a>
+            ):{" "}
+            <Link href="/documentacion/ds">/documentacion/ds</Link>
+          </li>
         </ul>
-        <p style={{ marginTop: "1.25rem" }}>
-          <Link className="zed-button zed-button--secondary" href="/procesar">
+        <p className="zed-row zed-catalog-actions">
+          <Link
+            className={buttonClassName({ variant: "secondary" })}
+            href="/procesar"
+          >
             Ir a Procesar
+          </Link>
+          <Link
+            className={buttonClassName({ variant: "tertiary" })}
+            href="/documentacion/ds"
+          >
+            Abrir catálogo
           </Link>
         </p>
       </Card>

@@ -1,3 +1,5 @@
+import { buttonClassName } from "./button";
+
 type Props = {
   href: string;
   label: string;
@@ -7,31 +9,17 @@ type Props = {
 
 export function ArtifactDownload({ href, label, description, meta }: Props) {
   return (
-    <div
-      className="zed-row"
-      style={{
-        justifyContent: "space-between",
-        padding: "0.75rem 0",
-        borderBottom: "1px solid var(--zed-border-subtle)",
-      }}
-    >
+    <div className="zed-row zed-artifact">
       <div>
-        <div style={{ fontWeight: 600 }}>{label}</div>
+        <div className="zed-artifact__label">{label}</div>
         {description ? (
-          <p
-            className="zed-muted"
-            style={{ margin: "0.2rem 0 0", fontSize: "0.875rem" }}
-          >
-            {description}
-          </p>
+          <p className="zed-muted zed-artifact__meta">{description}</p>
         ) : null}
         {meta ? (
-          <p className="zed-mono zed-muted" style={{ margin: "0.2rem 0 0" }}>
-            {meta}
-          </p>
+          <p className="zed-mono zed-muted zed-artifact__meta">{meta}</p>
         ) : null}
       </div>
-      <a className="zed-button zed-button--secondary" href={href}>
+      <a className={buttonClassName({ variant: "secondary" })} href={href}>
         Descargar
       </a>
     </div>

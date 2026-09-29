@@ -25,7 +25,7 @@ export function DuplicateEvidence({ memberUids, auditRows = [] }: Props) {
 
   if (evidence.length === 0) {
     return (
-      <p className="zed-muted" style={{ fontSize: "var(--zed-text-sm)", marginBottom: 0 }}>
+      <p className="zed-muted zed-flush">
         Sin filas FUSIONADO en auditoría para este grupo. Descarga audit.tsv si
         necesitas la traza completa.
       </p>
@@ -33,11 +33,9 @@ export function DuplicateEvidence({ memberUids, auditRows = [] }: Props) {
   }
 
   return (
-    <div className="zed-stack" style={{ gap: "var(--zed-space-2)" }}>
-      <p className="zed-label" style={{ margin: 0 }}>
-        Evidencia de fusión (auditoría)
-      </p>
-      <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+    <div className="zed-stack zed-stack--compact">
+      <p className="zed-label zed-flush">Evidencia de fusión (auditoría)</p>
+      <ul className="zed-prose-list zed-flush">
         {evidence.map((e) => (
           <li key={`${e.uid}-${e.rule}-${e.reason}`}>
             <span className="zed-mono">{e.uid}</span>

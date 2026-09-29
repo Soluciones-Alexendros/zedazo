@@ -47,7 +47,7 @@ export function AuthGate({ children }: Props) {
   }
   if (!ready) {
     return (
-      <div className="zed-stack" style={{ padding: "2rem" }}>
+      <div className="zed-stack zed-gate">
         <LoadingState label="Comprobando acceso…" />
       </div>
     );

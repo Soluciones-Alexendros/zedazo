@@ -1,0 +1,28 @@
+/**
+ * GENERATED — no editar a mano.
+ * Fuente: apps/web/tokens/ (DTCG). Regenerar: pnpm tokens:build
+ */
+
+/* Bridge Web Awesome ← semánticos Zedazo (WA no es fuente de verdad). */
+:root,
+[data-theme="light"],
+[data-theme="dark"] {
+  --wa-color-brand-fill-loud: var(--zed-accent);
+  --wa-color-brand-fill-normal: var(--zed-accent);
+  --wa-color-brand-fill-quiet: var(--zed-accent-soft);
+  --wa-color-brand-on-loud: var(--zed-accent-on);
+  --wa-color-brand-on-normal: var(--zed-accent-on);
+  --wa-color-brand-on-quiet: var(--zed-accent-active);
+  --wa-color-success-fill-loud: var(--zed-success);
+  --wa-color-success-fill-quiet: var(--zed-success-soft);
+  --wa-color-success-on-quiet: var(--zed-success-on-soft);
+  --wa-color-warning-fill-loud: var(--zed-warning);
+  --wa-color-warning-fill-quiet: var(--zed-warning-soft);
+  --wa-color-warning-on-quiet: var(--zed-warning-on-soft);
+  --wa-color-danger-fill-loud: var(--zed-danger);
+  --wa-color-danger-fill-quiet: var(--zed-danger-soft);
+  --wa-color-danger-on-quiet: var(--zed-danger-on-soft);
+  --wa-focus-ring-color: var(--zed-focus-ring);
+  --wa-font-family-body: var(--zed-font-ui);
+  --wa-font-family-code: var(--zed-font-mono);
+}

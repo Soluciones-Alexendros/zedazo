@@ -12,6 +12,7 @@ sbom.json.json
 data/
 apps/web/node_modules/
 apps/web/.next/
+apps/web/tsconfig.tsbuildinfo
 *.vcf
 !crates/zedazo-core/tests/fixtures/sample-contacts.vcf
 !crates/zedazo-core/tests/fixtures/google_*.vcf

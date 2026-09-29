@@ -1,0 +1,101 @@
+/**
+ * GENERATED — no editar a mano.
+ * Fuente: apps/web/tokens/ (DTCG). Regenerar: pnpm tokens:build
+ */
+
+:root,
+[data-theme="light"] {
+  --zed-bg-canvas: oklch(0.985 0.008 257);
+  --zed-bg-subtle: oklch(0.965 0.012 257);
+  --zed-bg-muted: oklch(0.93 0.018 257);
+  --zed-bg-raised: oklch(1 0 0);
+  --zed-bg-inverse: oklch(0.22 0.035 258);
+  --zed-overlay: oklch(0.18 0.04 258 / 0.45);
+  --zed-fg-strong: oklch(0.22 0.035 258);
+  --zed-fg-default: oklch(0.34 0.03 258);
+  --zed-fg-muted: oklch(0.49 0.028 258);
+  --zed-fg-subtle: oklch(0.61 0.022 258);
+  --zed-fg-inverse: oklch(0.98 0.006 257);
+  --zed-border-subtle: oklch(0.89 0.014 257);
+  --zed-border-default: oklch(0.81 0.022 257);
+  --zed-border-strong: oklch(0.69 0.03 258);
+  --zed-accent: oklch(0.53 0.16 257);
+  --zed-accent-hover: oklch(0.47 0.16 257);
+  --zed-accent-active: oklch(0.41 0.145 257);
+  --zed-accent-soft: oklch(0.93 0.045 257);
+  --zed-accent-on: oklch(0.985 0.008 257);
+  --zed-accent-border: oklch(0.53 0.16 257 / 0.28);
+  --zed-success: oklch(0.48 0.115 157);
+  --zed-success-hover: oklch(0.42 0.105 157);
+  --zed-success-soft: oklch(0.94 0.04 157);
+  --zed-success-on-soft: oklch(0.3 0.075 157);
+  --zed-warning: oklch(0.58 0.13 78);
+  --zed-warning-hover: oklch(0.51 0.125 78);
+  --zed-warning-soft: oklch(0.95 0.055 86);
+  --zed-warning-on-soft: oklch(0.34 0.085 72);
+  --zed-danger: oklch(0.52 0.16 25);
+  --zed-danger-hover: oklch(0.45 0.15 25);
+  --zed-danger-soft: oklch(0.95 0.045 25);
+  --zed-danger-on-soft: oklch(0.32 0.1 25);
+  --zed-info: oklch(0.53 0.105 228);
+  --zed-info-hover: oklch(0.46 0.1 228);
+  --zed-info-soft: oklch(0.94 0.035 228);
+  --zed-info-on-soft: oklch(0.31 0.075 228);
+  --zed-focus-ring: oklch(0.6 0.18 257);
+  --zed-selection-bg: oklch(0.87 0.075 257);
+  --zed-selection-fg: oklch(0.24 0.05 257);
+  --zed-code-bg: oklch(0.22 0.03 258);
+  --zed-code-fg: oklch(0.92 0.02 257);
+  --zed-badge-success-border: oklch(0.48 0.115 157 / 0.32);
+  --zed-badge-warning-border: oklch(0.58 0.13 78 / 0.35);
+  --zed-badge-danger-border: oklch(0.52 0.16 25 / 0.32);
+  --zed-badge-info-border: oklch(0.53 0.105 228 / 0.3);
+}
+
+[data-theme="dark"] {
+  --zed-bg-canvas: oklch(0.16 0.025 258);
+  --zed-bg-subtle: oklch(0.19 0.028 258);
+  --zed-bg-muted: oklch(0.24 0.032 258);
+  --zed-bg-raised: oklch(0.215 0.028 258);
+  --zed-bg-inverse: oklch(0.96 0.012 257);
+  --zed-overlay: oklch(0.18 0.04 258 / 0.45);
+  --zed-fg-strong: oklch(0.95 0.012 257);
+  --zed-fg-default: oklch(0.86 0.018 250);
+  --zed-fg-muted: oklch(0.71 0.025 250);
+  --zed-fg-subtle: oklch(0.58 0.03 250);
+  --zed-fg-inverse: oklch(0.22 0.035 258);
+  --zed-border-subtle: oklch(0.29 0.03 258);
+  --zed-border-default: oklch(0.36 0.035 258);
+  --zed-border-strong: oklch(0.5 0.045 258);
+  --zed-accent: oklch(0.76 0.13 257);
+  --zed-accent-hover: oklch(0.82 0.12 257);
+  --zed-accent-active: oklch(0.69 0.14 257);
+  --zed-accent-soft: oklch(0.3 0.07 257);
+  --zed-accent-on: oklch(0.18 0.03 258);
+  --zed-accent-border: oklch(0.76 0.13 257 / 0.28);
+  --zed-success: oklch(0.76 0.105 157);
+  --zed-success-hover: oklch(0.83 0.095 157);
+  --zed-success-soft: oklch(0.29 0.065 157);
+  --zed-success-on-soft: oklch(0.88 0.065 157);
+  --zed-warning: oklch(0.8 0.13 86);
+  --zed-warning-hover: oklch(0.87 0.115 86);
+  --zed-warning-soft: oklch(0.32 0.07 78);
+  --zed-warning-on-soft: oklch(0.93 0.085 88);
+  --zed-danger: oklch(0.77 0.13 25);
+  --zed-danger-hover: oklch(0.84 0.115 25);
+  --zed-danger-soft: oklch(0.31 0.075 25);
+  --zed-danger-on-soft: oklch(0.92 0.06 25);
+  --zed-info: oklch(0.78 0.09 228);
+  --zed-info-hover: oklch(0.85 0.08 228);
+  --zed-info-soft: oklch(0.29 0.055 228);
+  --zed-info-on-soft: oklch(0.89 0.05 228);
+  --zed-focus-ring: oklch(0.79 0.14 257);
+  --zed-selection-bg: oklch(0.37 0.09 257);
+  --zed-selection-fg: oklch(0.95 0.012 257);
+  --zed-code-bg: oklch(0.14 0.025 258);
+  --zed-code-fg: oklch(0.9 0.02 257);
+  --zed-badge-success-border: oklch(0.76 0.105 157 / 0.32);
+  --zed-badge-warning-border: oklch(0.8 0.13 86 / 0.35);
+  --zed-badge-danger-border: oklch(0.77 0.13 25 / 0.32);
+  --zed-badge-info-border: oklch(0.78 0.09 228 / 0.3);
+}

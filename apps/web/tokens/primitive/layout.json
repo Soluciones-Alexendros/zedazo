@@ -1,0 +1,81 @@
+{
+  "$description": "Layout de chrome y breakpoints. --zed-bp-* y --zed-target-min son nuevos en fase 1 (aditivos).",
+  "layout": {
+    "$type": "dimension",
+    "content": {
+      "readable": {
+        "$value": { "value": 74, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-content-readable" } }
+      },
+      "wide": {
+        "$value": { "value": 96, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-content-wide" } }
+      }
+    },
+    "sidebar": {
+      "width": {
+        "$value": { "value": 17, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-sidebar-width" } }
+      }
+    },
+    "topbar": {
+      "height": {
+        "$value": { "value": 3.75, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-topbar-height" } }
+      }
+    },
+    "statusbar": {
+      "height": {
+        "$value": { "value": 2, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-statusbar-height" } }
+      }
+    },
+    "target": {
+      "min": {
+        "$value": { "value": 1.5, "unit": "rem" },
+        "$description": "Diana mínima WCAG 2.2 (24px). Fase 2 la aplicará a átomos.",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-target-min" } }
+      }
+    },
+    "breakpoint": {
+      "md": {
+        "$value": { "value": 56.25, "unit": "rem" },
+        "$description": "900px — shell / tablas actuales",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-bp-md" } }
+      },
+      "lg": {
+        "$value": { "value": 60, "unit": "rem" },
+        "$description": "960px — formularios actuales",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-bp-lg" } }
+      }
+    }
+  },
+  "z": {
+    "$type": "number",
+    "shell": {
+      "$value": 20,
+      "$description": "Topbar / chrome fijo",
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-z-shell" } }
+    },
+    "drawer": {
+      "$value": 40,
+      "$description": "Nav móvil / drawer",
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-z-drawer" } }
+    },
+    "overlay": {
+      "$value": 30,
+      "$description": "Scrim del nav móvil",
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-z-overlay" } }
+    },
+    "modal": {
+      "$value": 50,
+      "$description": "Drawer de contacto / diálogo",
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-z-modal" } }
+    },
+    "skip": {
+      "$value": 60,
+      "$description": "Skip link por encima del modal",
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-z-skip" } }
+    }
+  }
+}

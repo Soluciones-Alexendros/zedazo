@@ -64,7 +64,7 @@ export function AppSidebar({ open, onNavigate }: Props) {
           <Icon name="gear" aria-hidden={true} />
           Ajustes
         </Link>
-        <p style={{ margin: "0.75rem 0 0", paddingInline: "0.75rem" }}>
+        <p className={styles.sidebarNote}>
           Instancia self-hosted · sin cuentas de usuario en V1
         </p>
       </div>

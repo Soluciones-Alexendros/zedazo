@@ -1,0 +1,110 @@
+{
+  "$description": "Pares semánticos para el gate WCAG 2.2 AA. La métrica es luminancia sRGB (no L de OKLCH). fg.muted y fg.subtle se tratan como texto no esencial / UI (3:1) si no alcanzan 4.5:1 — no se oscurecen en fase 1 para evitar regresión visual.",
+  "pairs": [
+    {
+      "id": "fg-strong-on-canvas",
+      "fg": "color.fg.strong",
+      "bg": "color.bg.canvas",
+      "minRatio": 4.5
+    },
+    {
+      "id": "fg-strong-on-raised",
+      "fg": "color.fg.strong",
+      "bg": "color.bg.raised",
+      "minRatio": 4.5
+    },
+    {
+      "id": "fg-default-on-canvas",
+      "fg": "color.fg.default",
+      "bg": "color.bg.canvas",
+      "minRatio": 4.5
+    },
+    {
+      "id": "fg-default-on-raised",
+      "fg": "color.fg.default",
+      "bg": "color.bg.raised",
+      "minRatio": 4.5
+    },
+    {
+      "id": "fg-muted-on-canvas",
+      "fg": "color.fg.muted",
+      "bg": "color.bg.canvas",
+      "minRatio": 4.5,
+      "role": "text"
+    },
+    {
+      "id": "fg-subtle-on-canvas",
+      "fg": "color.fg.subtle",
+      "bg": "color.bg.canvas",
+      "minRatio": 3,
+      "role": "ui"
+    },
+    {
+      "id": "accent-on-canvas",
+      "fg": "color.accent.default",
+      "bg": "color.bg.canvas",
+      "minRatio": 4.5
+    },
+    {
+      "id": "accent-on-accent",
+      "fg": "color.accent.on",
+      "bg": "color.accent.default",
+      "minRatio": 4.5
+    },
+    {
+      "id": "accent-on-accent-hover",
+      "fg": "color.accent.on",
+      "bg": "color.accent.hover",
+      "minRatio": 4.5
+    },
+    {
+      "id": "accent-on-accent-active",
+      "fg": "color.accent.on",
+      "bg": "color.accent.active",
+      "minRatio": 4.5
+    },
+    {
+      "id": "success-on-soft",
+      "fg": "color.success.onSoft",
+      "bg": "color.success.soft",
+      "minRatio": 4.5
+    },
+    {
+      "id": "warning-on-soft",
+      "fg": "color.warning.onSoft",
+      "bg": "color.warning.soft",
+      "minRatio": 4.5
+    },
+    {
+      "id": "danger-on-soft",
+      "fg": "color.danger.onSoft",
+      "bg": "color.danger.soft",
+      "minRatio": 4.5
+    },
+    {
+      "id": "info-on-soft",
+      "fg": "color.info.onSoft",
+      "bg": "color.info.soft",
+      "minRatio": 4.5
+    },
+    {
+      "id": "focus-ring-on-canvas",
+      "fg": "color.focus.ring",
+      "bg": "color.bg.canvas",
+      "minRatio": 3,
+      "role": "ui"
+    },
+    {
+      "id": "inverse-skip-link",
+      "fg": "color.fg.inverse",
+      "bg": "color.bg.inverse",
+      "minRatio": 4.5
+    },
+    {
+      "id": "code-on-code-bg",
+      "fg": "color.code.fg",
+      "bg": "color.code.bg",
+      "minRatio": 4.5
+    }
+  ]
+}

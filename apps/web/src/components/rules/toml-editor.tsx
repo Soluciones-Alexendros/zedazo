@@ -24,7 +24,7 @@ export function TomlEditor({
       spellCheck={false}
       aria-invalid={invalid || undefined}
       aria-describedby={describedBy}
-      placeholder="# Reglas TOML de Zedazo"
+      placeholder="# Reglas TOML de zedazo"
     />
   );
 }

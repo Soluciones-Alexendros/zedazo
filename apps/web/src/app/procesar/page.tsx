@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  cancelJob,
-  createJob,
-  isCancellableStatus,
-  isTerminalStatus,
-  uploadVcf,
-  type JobManifest,
-} from "@/lib/api";
+import { isCancellableStatus, isTerminalStatus, type JobManifest } from "@/lib/api";
+import { cancelJob, createJob, uploadVcf } from "@/lib/data-adapter";
 import { useJobEvents } from "@/lib/hooks/use-job-events";
 import { PageHeader } from "@/components/shell/page-header";
 import { ProgressStepper } from "@/components/ui/progress-stepper";
@@ -20,10 +14,11 @@ import { RulesSourceSelector } from "@/components/rules/rules-source-selector";
 import { TomlEditor } from "@/components/rules/toml-editor";
 import { RetentionNotice } from "@/components/jobs/retention-notice";
 import { JobProgress } from "@/components/jobs/job-progress";
+import { FileDropzone } from "@/components/ui/file-dropzone";
 import formStyles from "@/styles/forms.module.css";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Icon } from "@/components/ui/icon";
+
 const ARTIFACTS = [
   { id: "vcf", label: "VCF" },
   { id: "audit_tsv", label: "TSV auditoría" },
@@ -44,7 +39,6 @@ export default function ProcesarPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [file, setFile] = useState<File | null>(null);
-  const [dragActive, setDragActive] = useState(false);
   const [upload, setUpload] = useState<{
     upload_id: string;
     sha256: string;
@@ -142,41 +136,12 @@ export default function ProcesarPage() {
 
       {step === 0 && (
         <Card variant="document">
-          <div
-            className="zed-dropzone"
-            data-active={dragActive}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragActive(true);
-            }}
-            onDragLeave={() => setDragActive(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragActive(false);
-              const f = e.dataTransfer.files?.[0];
-              if (f) onFile(f);
-            }}
-          >
-            <Icon name="file-arrow-up" style={{ fontSize: "2rem" }} aria-hidden={true} />
-            <p style={{ margin: 0, color: "var(--zed-fg-strong)", fontWeight: 600 }}>
-              Arrastra un archivo VCF o selecciónalo
-            </p>
-            <p className="zed-muted" style={{ margin: 0 }}>
-              Formatos aceptados: .vcf / text/vcard
-            </p>
-            <label className="zed-button zed-button--secondary">
-              Elegir archivo
-              <input
-                className="zed-sr-only"
-                type="file"
-                accept=".vcf,text/vcard"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) onFile(f);
-                }}
-              />
-            </label>
-          </div>
+          <FileDropzone
+            title="Arrastra un archivo VCF o selecciónalo"
+            description="Formatos aceptados: .vcf / text/vcard"
+            buttonLabel="Elegir archivo"
+            onFile={onFile}
+          />
         </Card>
       )}
 
@@ -258,7 +223,7 @@ export default function ProcesarPage() {
               onChange={(e) => setRetention(Number(e.target.value))}
             />
           </div>
-          <fieldset style={{ border: 0, margin: 0, padding: 0 }}>
+          <fieldset className={formStyles.fieldset}>
             <legend className="zed-label">Artefactos de salida</legend>
             <div className={formStyles.checkboxRow}>
               {ARTIFACTS.map((a) => (
@@ -292,12 +257,17 @@ export default function ProcesarPage() {
       {step === 3 && (
         <Card variant="document" className={formStyles.form}>
           <h2 className="zed-title-section">Confirmación</h2>
-          <ul>
-            <li>Archivo: {upload?.original_name}</li>
-            <li>Reglas: {rulesMode === "builtin" ? "integradas" : "TOML"}</li>
-            <li>Artefactos: {artifacts.join(", ")}</li>
-            <li>Retención: {retention} h</li>
-          </ul>
+          <MetadataList
+            items={[
+              { label: "Archivo", value: upload?.original_name || "—" },
+              {
+                label: "Reglas",
+                value: rulesMode === "builtin" ? "integradas" : "TOML",
+              },
+              { label: "Artefactos", value: artifacts.join(", ") },
+              { label: "Retención", value: `${retention} h` },
+            ]}
+          />
           <p className="zed-muted">
             El archivo se procesará según la configuración de esta instancia.
           </p>
@@ -321,7 +291,7 @@ export default function ProcesarPage() {
             phases={phaseLog}
             reconnecting={reconnecting}
           />
-          <div className={formStyles.actions} style={{ marginTop: "1rem" }}>
+          <div className={formStyles.actions}>
             {isCancellableStatus(activeJob.status) ? (
               <Button
                 variant="danger"

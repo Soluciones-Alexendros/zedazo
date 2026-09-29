@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { IconButton } from "@/components/ui/icon-button";
 import { Icon } from "@/components/ui/icon";
+import { buttonClassName } from "@/components/ui/button";
 import { useTheme } from "@/lib/hooks/use-theme";
 import type { ConnectionState } from "@/lib/hooks/use-api-health";
 import styles from "@/styles/shell.module.css";
@@ -39,9 +40,11 @@ export function Topbar({ connection, isLocalProcessing, onOpenNav }: Props) {
   const connectionLabel =
     connection === "connected"
       ? "API conectada"
-      : connection === "disconnected"
-        ? "Sin conexión"
-        : "Comprobando API…";
+      : connection === "local"
+        ? "Adaptador local"
+        : connection === "disconnected"
+          ? "Sin conexión"
+          : "Comprobando API…";
 
   return (
     <header className={styles.topbar}>
@@ -64,13 +67,13 @@ export function Topbar({ connection, isLocalProcessing, onOpenNav }: Props) {
       </nav>
 
       <div className={styles.topbarActions}>
-        <span className="zed-row" style={{ gap: "0.4rem" }}>
+        <span className="zed-row zed-row--tight">
           <span
             className={styles.statusDot}
             data-ok={connection === "connected"}
             aria-hidden
           />
-          <span className="zed-muted" style={{ fontSize: "0.875rem" }}>
+          <span className={`zed-muted ${styles.statusLabel}`}>
             {connectionLabel}
             {connection === "connected" && isLocalProcessing
               ? " · Procesamiento local"
@@ -83,8 +86,7 @@ export function Topbar({ connection, isLocalProcessing, onOpenNav }: Props) {
         </label>
         <select
           id="theme-select"
-          className="zed-input"
-          style={{ width: "auto", minHeight: "2.5rem" }}
+          className="zed-input zed-input--auto"
           value={preference}
           onChange={(e) =>
             setPreference(e.target.value as "system" | "light" | "dark")
@@ -97,7 +99,7 @@ export function Topbar({ connection, isLocalProcessing, onOpenNav }: Props) {
 
         <Link
           href="/documentacion"
-          className="zed-button zed-button--tertiary"
+          className={buttonClassName({ variant: "tertiary" })}
           aria-label="Ayuda y documentación"
         >
           <Icon name="circle-question" aria-hidden={true} />

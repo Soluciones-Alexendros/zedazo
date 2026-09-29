@@ -1,0 +1,15 @@
+{
+  "$description": "Alias semánticos de tipografía. Las custom properties públicas viven en primitive/typography.json.",
+  "typography": {
+    "ui": {
+      "$type": "fontFamily",
+      "$value": "{font.family.ui}",
+      "$description": "Pila de flota system-ui — UI"
+    },
+    "mono": {
+      "$type": "fontFamily",
+      "$value": "{font.family.mono}",
+      "$description": "Pila de flota ui-monospace/Fira Code — hashes, TOML, código"
+    }
+  }
+}

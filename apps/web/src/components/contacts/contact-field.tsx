@@ -12,23 +12,10 @@ type Props = {
 
 export function ContactField({ label, value, mono, copyable }: Props) {
   return (
-    <div
-      className="zed-row"
-      style={{
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        padding: "0.4rem 0",
-        borderBottom: "1px solid var(--zed-border-subtle)",
-      }}
-    >
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div className="zed-label" style={{ margin: 0 }}>
-          {label}
-        </div>
-        <div
-          className={mono ? "zed-mono" : undefined}
-          style={{ overflowWrap: "anywhere" }}
-        >
+    <div className="zed-row zed-contact-field">
+      <div className="zed-contact-field__body">
+        <div className="zed-label zed-flush">{label}</div>
+        <div className={[mono ? "zed-mono" : "", "zed-wrap"].filter(Boolean).join(" ")}>
           {value}
         </div>
       </div>

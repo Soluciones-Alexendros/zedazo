@@ -1,0 +1,42 @@
+{
+  "$description": "Tokens de patrón de pantalla (fase 3). Shell, formularios, drawer, filtros.",
+  "pattern": {
+    "prose": {
+      "max": {
+        "$type": "dimension",
+        "$value": { "value": 36, "unit": "rem" },
+        "$description": "Ancho máximo de empty/error body y lead de page header.",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-prose-max" } }
+      }
+    },
+    "auth": {
+      "width": {
+        "$type": "dimension",
+        "$value": { "value": 28, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-auth-width" } }
+      }
+    },
+    "drawer": {
+      "width": {
+        "$type": "dimension",
+        "$value": { "value": 28, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-drawer-width" } }
+      }
+    },
+    "filter": {
+      "max": {
+        "$type": "dimension",
+        "$value": { "value": 16, "unit": "rem" },
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-filter-max" } }
+      }
+    },
+    "nav": {
+      "indicator": {
+        "$type": "dimension",
+        "$value": { "value": 0.1875, "unit": "rem" },
+        "$description": "3px — barra de nav activa.",
+        "$extensions": { "com.zedazo": { "cssVar": "--zed-nav-indicator" } }
+      }
+    }
+  }
+}

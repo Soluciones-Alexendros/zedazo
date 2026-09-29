@@ -6,6 +6,12 @@ labels: enhancement
 assignees: ''
 ---
 
+### Propósito de este documento
+
+- **Objetivos:** Proponer una feature con problema, solución y alternativas.
+- **Estructura:** Propósito → problema → solución → alternativas.
+- **Contenido a integrar según contexto:** Ancla en SPECS/ROADMAP/ADR. No mezcles CardDAV con dominio/UI.
+
 ## Problema que resuelve
 
 Describe el problema que esta feature resolvería.

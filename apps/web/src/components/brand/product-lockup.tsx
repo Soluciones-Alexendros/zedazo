@@ -17,42 +17,23 @@ export function ProductLockup({
 }: Props) {
   const inner = (
     <>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.65rem" }}>
-        <ZedazoMark size={size} />
+      <span className="zed-lockup__row">
+        <ZedazoMark size={size} decorative />
         <ZedazoWordmark />
       </span>
-      {subtitle ? (
-        <span
-          style={{
-            display: "block",
-            marginTop: "0.15rem",
-            fontSize: "0.875rem",
-            fontWeight: 400,
-            color: "var(--zed-fg-muted)",
-          }}
-        >
-          {subtitle}
-        </span>
-      ) : null}
+      {subtitle ? <span className="zed-lockup__subtitle">{subtitle}</span> : null}
     </>
   );
 
+  const classes = ["zed-lockup", className].filter(Boolean).join(" ");
+
   if (href) {
     return (
-      <Link
-        href={href}
-        className={className}
-        style={{
-          color: "var(--zed-fg-strong)",
-          textDecoration: "none",
-          fontWeight: 700,
-          fontSize: "1.15rem",
-        }}
-      >
+      <Link href={href} className={classes}>
         {inner}
       </Link>
     );
   }
 
-  return <div className={className}>{inner}</div>;
+  return <div className={classes}>{inner}</div>;
 }

@@ -1,0 +1,30 @@
+{
+  "$description": "Tokens de control atómico (fase 2). Recetas .zed-button / .zed-input / spinner.",
+  "control": {
+    "height": {
+      "$type": "dimension",
+      "$value": { "value": 2.5, "unit": "rem" },
+      "$description": "Altura de botón e input (40px). Ya supera --zed-target-min (24px).",
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-control-height" } }
+    },
+    "disabledOpacity": {
+      "$type": "number",
+      "$value": 0.55,
+      "$description": "Opacidad de controles disabled / loading.",
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-disabled-opacity" } }
+    },
+    "textareaMin": {
+      "$type": "dimension",
+      "$value": { "value": 10, "unit": "rem" },
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-textarea-min" } }
+    }
+  },
+  "spin": {
+    "duration": {
+      "$type": "duration",
+      "$value": { "value": 700, "unit": "ms" },
+      "$description": "Vuelta del .zed-spinner (anulada con prefers-reduced-motion).",
+      "$extensions": { "com.zedazo": { "cssVar": "--zed-spin-duration" } }
+    }
+  }
+}

@@ -1,3 +1,5 @@
+import { AuditReason } from "./audit-reason";
+
 type Props = {
   action?: string;
   rule?: string;
@@ -10,7 +12,7 @@ export function AuditEvent({ action, rule, reason, cols }: Props) {
     return (
       <tr>
         {cols.map((c, i) => (
-          <td key={i} className="zed-mono" style={{ overflowWrap: "anywhere" }}>
+          <td key={i} className="zed-mono zed-wrap">
             {c}
           </td>
         ))}
@@ -18,19 +20,10 @@ export function AuditEvent({ action, rule, reason, cols }: Props) {
     );
   }
   return (
-    <article
-      style={{
-        padding: "0.75rem 0",
-        borderBottom: "1px solid var(--zed-border-subtle)",
-      }}
-    >
-      <div style={{ fontWeight: 600 }}>{action || "Evento"}</div>
-      {rule ? <p className="zed-mono" style={{ margin: "0.2rem 0" }}>{rule}</p> : null}
+    <article className="zed-audit-event">
+      <div className="zed-audit-event__action">{action || "Evento"}</div>
+      {rule ? <p className="zed-mono zed-flush">{rule}</p> : null}
       {reason ? <AuditReason text={reason} /> : null}
     </article>
   );
-}
-
-function AuditReason({ text }: { text: string }) {
-  return <p className="zed-muted" style={{ margin: 0 }}>{text}</p>;
 }

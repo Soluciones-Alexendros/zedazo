@@ -9,29 +9,14 @@ type Props = {
 
 export function PageHeader({ title, description, actions, eyebrow }: Props) {
   return (
-    <header
-      className="zed-row"
-      style={{
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        marginBottom: "var(--zed-space-6)",
-        gap: "var(--zed-space-4)",
-      }}
-    >
+    <header className="zed-row zed-page-header">
       <div>
         {eyebrow ? (
-          <p
-            className="zed-label"
-            style={{ margin: "0 0 0.35rem", color: "var(--zed-accent-active)" }}
-          >
-            {eyebrow}
-          </p>
+          <p className="zed-label zed-page-header__eyebrow">{eyebrow}</p>
         ) : null}
         <h1 className="zed-title-page">{title}</h1>
         {description ? (
-          <p className="zed-muted" style={{ margin: 0, maxWidth: "42rem" }}>
-            {description}
-          </p>
+          <p className="zed-muted zed-page-header__lead">{description}</p>
         ) : null}
       </div>
       {actions ? <div className="zed-row">{actions}</div> : null}

@@ -1,4 +1,10 @@
-# Zedazo
+# zedazo
+
+### Propósito de este documento
+
+- **Objetivos:** Presentar el producto (CLI + GUI/API self-hosted), quick start y enlaces a contratos (AGENTS, SPECS, ARCHITECTURE, SECURITY, CONTRIBUTING, CoC, SUPPORT).
+- **Estructura:** Propósito → badges → quick start → GUI → docs → desarrollo → licencia.
+- **Contenido a integrar según contexto:** Conserva copy, wordmark `zedazo` y dual license. No copies un README de landing/SaaS ni tokens/DS de otro paquete. CI canónico = wrappers `quality` / `test` / `smoke` sobre jobs Rust maduros.
 
 [![CI](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/ci.yml/badge.svg)](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/ci.yml)
 [![Security Audit](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/audit.yml/badge.svg)](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/audit.yml)
@@ -9,6 +15,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 **Tu agenda, pasada por el zedazo fino.**
+
+Sitio de producto: [https://zedazo.alexendros.dev](https://zedazo.alexendros.dev) (landing en [`apps/landing/`](apps/landing/index.html); DNS: [docs/gui/deploy.md](docs/gui/deploy.md)). Wordmark: [`docs/brand.md`](docs/brand.md).
 
 Criba, normaliza, clasifica y deduplica contactos VCF exportados desde **ProtonMail**, **Google Contacts** o **Apple iCloud**, con reglas deterministas, deduplicación transitiva y normalización de nombres y teléfonos.
 
@@ -40,7 +48,7 @@ zedazo export limpio.vcf -o contactos.json -f json
 
 ## GUI / API self-hosted (ADR-0015 / ADR-0016)
 
-Workspace: `crates/zedazo-core` · `crates/zedazo-cli` · `crates/zedazo-api` · `apps/web`.
+Workspace: `crates/zedazo-core` · `crates/zedazo-cli` · `crates/zedazo-api` · `crates/zedazo-carddav` · `apps/web`.
 
 ```bash
 # API local (auth disabled solo en loopback)
@@ -59,7 +67,7 @@ docker compose -f deploy/docker-compose.remote.yml --env-file deploy/.env up --b
 # → https://127.0.0.1:8443
 ```
 
-Docs: [docs/gui/](docs/gui/) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi.yaml) · [deploy.md](docs/gui/deploy.md).
+Docs: [docs/gui/](docs/gui/) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi.yaml) · [deploy.md](docs/gui/deploy.md). Tokens GUI (DTCG, ADR-0019): [`apps/web/tokens/`](apps/web/tokens/) · `pnpm --dir apps/web tokens:build`. Catálogo in-app: `/documentacion/ds` (plan [ejecutado](docs/gui/design-system-plan.md)).
 
 ## Capturas
 
@@ -124,6 +132,24 @@ zedazo cribar contactos.vcf --config zedazo.toml
 
 La sección `[cribado]` sigue aceptándose con un warning de deprecación.
 
+## CardDAV (ADR-0018 / v0.4.0)
+
+Cliente RFC 6352 en CLI (`zedazo carddav`): pull, write opt-in, watch (CTag/sync-token) y filtros N1/N2. Sin GUI ni API. Guía: [`docs/carddav.md`](docs/carddav.md).
+
+```bash
+export ZEDAZO_CARDDAV_URL=https://cloud.example.test
+export ZEDAZO_CARDDAV_USERNAME=ada
+export ZEDAZO_CARDDAV_PASSWORD='contraseña-de-aplicación'
+zedazo carddav list
+zedazo carddav pull -o contactos.vcf --category PROF
+zedazo cribar contactos.vcf -o limpio.vcf
+# escritura remota: exige --confirm (no forma parte de cribar)
+zedazo carddav put --href "$HREF" --input ada.vcf --etag "$ETAG" --confirm
+zedazo carddav watch --interval 30 -o contactos.vcf
+```
+
+No uses `ZEDAZO_AUTH_TOKEN` (eso es de la GUI). HTTP 412 se reporta como conflicto; no hay overwrite silencioso.
+
 ## Pipeline
 
 ```
@@ -167,11 +193,13 @@ Por categoría:
 crates/zedazo-core/     Dominio + application + infra I/O (sin HTTP)
 crates/zedazo-cli/      Binario `zedazo` (Clap)
 crates/zedazo-api/      API Axum `/api/v1` (+ auth ADR-0016)
+crates/zedazo-carddav/  Cliente CardDAV (ADR-0018; publish = false)
 apps/web/               GUI Next.js (solo HTTP; sin lógica de cribado)
-deploy/                 Docker Compose local + remoto (Caddy)
+apps/landing/           Ficha pública estática (zedazo.alexendros.dev)
+deploy/                 Docker Compose local + remoto + landing (Caddy)
 ```
 
-→ [`ARCHITECTURE.md`](ARCHITECTURE.md) · ADR-0015 · ADR-0016
+→ [`ARCHITECTURE.md`](ARCHITECTURE.md) · ADR-0015 · ADR-0016 · ADR-0018
 
 ## Documentación
 
@@ -182,7 +210,12 @@ deploy/                 Docker Compose local + remoto (Caddy)
 | [`ROADMAP.md`](ROADMAP.md)                                     | Hitos y criterios de salida                          |
 | [`DECISIONS.md`](DECISIONS.md)                                 | ADR con IDs estables                                 |
 | [`AGENTS.md`](AGENTS.md)                                       | Contrato para agentes de código                      |
-| [`docs/gui/`](docs/gui/)                                       | Paridad O10, deploy, threat-model, retención         |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md)                           | Flujo de contribución y `make ci`                    |
+| [`SECURITY.md`](SECURITY.md)                                   | Avisos privados; no abrir issue público              |
+| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)                     | Código de conducta                                   |
+| [`SUPPORT.md`](SUPPORT.md)                                     | Dónde pedir ayuda                                    |
+| [`docs/gui/`](docs/gui/)                                       | Paridad O10, deploy (incl. DNS del dominio de producto), threat-model, retención, [plan design system](docs/gui/design-system-plan.md) (ejecutado; catálogo GUI `/documentacion/ds`) |
+| [`docs/carddav.md`](docs/carddav.md)                           | CardDAV CLI pull/write/watch (ADR-0018 / #48)            |
 | [`docs/api/openapi.yaml`](docs/api/openapi.yaml)               | Contrato HTTP `/api/v1`                              |
 | [`docs/domain.md`](docs/domain.md)                             | Lenguaje ubicuo, entidades, rules                    |
 | [`docs/implementation-guide.md`](docs/implementation-guide.md) | Guía de implementación (histórico MVP)               |
@@ -200,13 +233,13 @@ make ci        # fmt + clippy + test + check + doc + docs-validate + parity + we
 make release   # build release
 ```
 
-Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para la guía de contribución.
+Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para la guía de contribución. Soporte: [`SUPPORT.md`](SUPPORT.md). Conducta: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Seguridad
 
 Reporta vulnerabilidades de forma privada. Ver [`SECURITY.md`](SECURITY.md).
 
-Ejecutamos `cargo audit` semanalmente vía GitHub Actions.
+Ejecutamos `cargo audit` semanalmente (y en PRs del lockfile). Falla solo ante vulnerabilidades RustSec; ver [`SECURITY.md`](SECURITY.md).
 
 ## Licencia
 

@@ -24,7 +24,7 @@ export function FilterBar({
   liveMessage,
 }: Props) {
   return (
-    <div className="zed-stack" style={{ gap: "0.75rem" }}>
+    <div className="zed-stack zed-stack--compact">
       <div className="zed-row">{children}</div>
       {chips.length > 0 ? (
         <div className={styles.chipRow} aria-label="Filtros activos">
@@ -34,8 +34,8 @@ export function FilterBar({
               {onRemoveChip ? (
                 <IconButton
                   label={`Quitar filtro ${chip.label}`}
+                  size="sm"
                   onClick={() => onRemoveChip(chip.id)}
-                  style={{ minHeight: "1.5rem", minWidth: "1.5rem" }}
                 >
                   <Icon name="xmark" aria-hidden={true} />
                 </IconButton>
