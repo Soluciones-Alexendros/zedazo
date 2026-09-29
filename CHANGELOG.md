@@ -9,19 +9,19 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Added
 - Alineación P1+P2 (canon de flota): meta-sección **Propósito** en docs contractuales; wrappers CI `quality` / `smoke` (el job `test` ya era canónico); `SUPPORT.md` + `ISSUE_TEMPLATE/config.yml`. Jobs Rust maduros intactos (ADR-0020).
-- CardDAV v0.4.0 restante ([#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48), ADR-0018): write opt-in (`zedazo carddav put|delete --confirm`, `If-Match` / ETag, HTTP 412 = conflicto), watch (`CTag` / `sync-token`, sin auto-sync al arrancar) y filtros `--category` N1/N2 client-side; tests con servidor DAV mockeado; [`docs/carddav.md`](docs/carddav.md)
-- GUI DS fase 4: catálogo `/documentacion/ds` de átomos de producto; axe WCAG 2.2 A/AA en todas las rutas + vacío/error/loading/running; regresión visual Playwright (`toHaveScreenshot`, light/dark, desktop + móvil) en `web-ci`; plan marcado ejecutado ([#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59))
-- GUI DS fase 3: patrones de pantalla (shell, formularios, tablas, drawer, jobs, estados) sobre `--zed-*`; axe en rutas de producto; catálogo `/documentacion/ds` con stepper y empty/error/loading ([#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59))
-- GUI DS fase 2: átomos (`Button`/`Badge`/`Card`/`Callout`/input) alineados a `--zed-*`; catálogo mínimo `/documentacion/ds`; frontera Web Awesome acotada ([#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59))
-- GUI DS fase 1: pipeline DTCG → CSS custom properties OKLCH + tipos TS; check de contraste WCAG 2.2 AA en `web-ci` ([ADR-0019](DECISIONS.md), [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59))
-- Plan de modernización del design system GUI (OKLCH / DTCG → GUI profesional) en [`docs/gui/design-system-plan.md`](docs/gui/design-system-plan.md) ([#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59)); sin cambios de UI en este ítem
-- Primer slice CardDAV (ADR-0018 / [#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48), no cierra el issue): crate `zedazo-carddav` (`publish = false`), CLI `zedazo carddav list|pull`, Basic + app-password (`ZEDAZO_CARDDAV_*`), descubrimiento RFC 6764 y perfil Nextcloud; guía [`docs/carddav.md`](docs/carddav.md)
+- CardDAV v0.4.0 restante ([#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48), ADR-0018): write opt-in (`zedazo carddav put|delete --confirm`, `If-Match` / ETag, HTTP 412 = conflicto), watch (`CTag` / `sync-token`, sin auto-sync al arrancar) y filtros `--category` N1/N2 client-side; tests con servidor DAV mockeado; [`docs/carddav.md`](docs/carddav.md)
+- GUI DS fase 4: catálogo `/documentacion/ds` de átomos de producto; axe WCAG 2.2 A/AA en todas las rutas + vacío/error/loading/running; regresión visual Playwright (`toHaveScreenshot`, light/dark, desktop + móvil) en `web-ci`; plan marcado ejecutado ([#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59))
+- GUI DS fase 3: patrones de pantalla (shell, formularios, tablas, drawer, jobs, estados) sobre `--zed-*`; axe en rutas de producto; catálogo `/documentacion/ds` con stepper y empty/error/loading ([#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59))
+- GUI DS fase 2: átomos (`Button`/`Badge`/`Card`/`Callout`/input) alineados a `--zed-*`; catálogo mínimo `/documentacion/ds`; frontera Web Awesome acotada ([#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59))
+- GUI DS fase 1: pipeline DTCG → CSS custom properties OKLCH + tipos TS; check de contraste WCAG 2.2 AA en `web-ci` ([ADR-0019](DECISIONS.md), [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59))
+- Plan de modernización del design system GUI (OKLCH / DTCG → GUI profesional) en [`docs/gui/design-system-plan.md`](docs/gui/design-system-plan.md) ([#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59)); sin cambios de UI en este ítem
+- Primer slice CardDAV (ADR-0018 / [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48), no cierra el issue): crate `zedazo-carddav` (`publish = false`), CLI `zedazo carddav list|pull`, Basic + app-password (`ZEDAZO_CARDDAV_*`), descubrimiento RFC 6764 y perfil Nextcloud; guía [`docs/carddav.md`](docs/carddav.md)
 
 ### Security
 - `rustls` 0.23.44 → 0.23.45 ([RUSTSEC-2026-0285](https://rustsec.org/advisories/RUSTSEC-2026-0285): handshake TLS 1.3 aceptado en el encryption level incorrecto)
 - Política `cargo audit`: el workflow falla solo ante vulnerabilidades; avisos informativos no bloquean; excepciones en `.cargo/audit.toml` + `deny.toml`
 - CardDAV: los hrefs DAV absolutos quedan anclados al origen del servidor; no se reenvía Basic a loopback u otro host inyectado en el 207
-- **ADR-0018** (aceptada): red/proveedor CardDAV como precondición de v0.4.0 / [#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48) — cliente RFC 6352, una cuenta, crate dedicado; sin código de sync en este cambio
+- **ADR-0018** (aceptada): red/proveedor CardDAV como precondición de v0.4.0 / [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48) — cliente RFC 6352, una cuenta, crate dedicado; sin código de sync en este cambio
 - Convención de marca y pesquisa TMview UE clases 9/42 en [`docs/brand.md`](docs/brand.md) (#49)
 - Landing pública estática [`apps/landing/`](apps/landing/index.html) para `https://zedazo.alexendros.dev` (#50)
 - Receta Caddy/Compose [`deploy/Caddyfile.landing`](deploy/Caddyfile.landing) + [`deploy/docker-compose.landing.yml`](deploy/docker-compose.landing.yml)

@@ -33,7 +33,7 @@ export default function DocumentacionPage() {
           <li>ADR-0015: core compartido + API + web self-hosted.</li>
           <li>
             Catálogo del sistema de diseño (átomos y patrones de producto, epic{" "}
-            <a href="https://github.com/Iniciativas-Alexendros/zedazo/issues/59">
+            <a href="https://github.com/Soluciones-Alexendros/zedazo/issues/59">
               #59
             </a>
             ):{" "}

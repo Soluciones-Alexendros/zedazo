@@ -1,6 +1,6 @@
 # CardDAV
 
-**Traza:** [ADR-0018](../DECISIONS.md) (aceptada) · issue [#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48)
+**Traza:** [ADR-0018](../DECISIONS.md) (aceptada) · issue [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48)
 
 Cliente RFC 6352 en el crate `zedazo-carddav` (`publish = false`), consumido por la CLI. `zedazo-core` no tiene HTTP. La API/GUI **no** exponen CardDAV.
 

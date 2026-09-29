@@ -77,7 +77,7 @@ supersedes: "v0.3.1"
 *(antes numerado v0.3.0)*
 
 - CardDAV sync, watch mode, filtros por categoría
-- Precondición: **[ADR-0018](./DECISIONS.md)** (aceptada 2026-09-11) — red/proveedor **antes** de código ([#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48))
+- Precondición: **[ADR-0018](./DECISIONS.md)** (aceptada 2026-09-11) — red/proveedor **antes** de código ([#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48))
 - [x] Primer slice: crate `zedazo-carddav` (`publish = false`); CLI `zedazo carddav list|pull`; RFC 6352 + Basic/app-password; una cuenta; HTTPS TLS 1.2+; ver [docs/carddav.md](./docs/carddav.md)
 - [x] Write opt-in (PUT/DELETE, If-Match/ETag; HTTP 412 = conflicto; `--confirm`)
 - [x] Watch mode (polling CTag / sync-token; sin auto-sync al arrancar)
@@ -107,7 +107,7 @@ supersedes: "v0.3.1"
 
 **Criterio de salida:** O11; despliegue remoto usable sin publicar API/web directamente; CI verde. Tag `v0.5.1` (y bump crates.io) a confirmación humana.
 
-**Nota (v0.5.x, docs):** modernización del design system de la GUI (OKLCH tokenizado → GUI profesional) — plan en [`docs/gui/design-system-plan.md`](./docs/gui/design-system-plan.md) **ejecutado** 2026-09-12, epic [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59). Fases 1–4 aterrizadas (pipeline DTCG + átomos + pantallas `--zed-*` + catálogo `/documentacion/ds` + axe/visual en CI), **separada** de CardDAV ([#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48)).
+**Nota (v0.5.x, docs):** modernización del design system de la GUI (OKLCH tokenizado → GUI profesional) — plan en [`docs/gui/design-system-plan.md`](./docs/gui/design-system-plan.md) **ejecutado** 2026-09-12, epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59). Fases 1–4 aterrizadas (pipeline DTCG + átomos + pantallas `--zed-*` + catálogo `/documentacion/ds` + axe/visual en CI), **separada** de CardDAV ([#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48)).
 
 ### Ops — dominio de producto (`zedazo.alexendros.dev`) — S
 

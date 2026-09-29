@@ -91,7 +91,7 @@ docs-validate: ## Valida documentación canónica (frontmatter, enlaces, stubs, 
 	@test -f apps/landing/index.html || (echo "❌ falta apps/landing/index.html"; exit 1)
 	@test -f apps/landing/favicon.svg || (echo "❌ falta apps/landing/favicon.svg"; exit 1)
 	@test -f deploy/Caddyfile.landing || (echo "❌ falta deploy/Caddyfile.landing"; exit 1)
-	@grep -q "https://github.com/Iniciativas-Alexendros/zedazo" apps/landing/index.html || (echo "❌ landing: falta enlace GitHub"; exit 1)
+	@grep -q "https://github.com/Soluciones-Alexendros/zedazo" apps/landing/index.html || (echo "❌ landing: falta enlace GitHub"; exit 1)
 	@grep -q "https://crates.io/crates/zedazo" apps/landing/index.html || (echo "❌ landing: falta enlace crates.io"; exit 1)
 	@grep -q "https://docs.rs/zedazo" apps/landing/index.html || (echo "❌ landing: falta enlace docs.rs"; exit 1)
 	@grep -q "zedazo.alexendros.dev" apps/landing/index.html || (echo "❌ landing: falta wordmark de dominio"; exit 1)
