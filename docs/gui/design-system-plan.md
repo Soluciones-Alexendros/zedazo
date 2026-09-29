@@ -2,9 +2,9 @@
 
 **Versión:** 0.2.0  
 **Fecha:** 2026-09-12  
-**Estado:** **Ejecutado** (2026-09-12). Fases 1–4 aterrizadas (pipeline DTCG + átomos + pantallas `--zed-*` + catálogo/QA, [ADR-0019](../../DECISIONS.md)). Epic [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59) cerrable si el DoD de §7 se mantiene en CI.  
-**Traza:** ADR-0015 (GUI local), ADR-0016 (remoto HTTPS+token), ADR-0019 (tokens), SPECS O10/O11, identidad «Archivo Vivo», [`docs/brand.md`](../brand.md), epic [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59).  
-**No mezclar** con CardDAV ([#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48) / ADR-0018) ni con cambios de dominio.
+**Estado:** **Ejecutado** (2026-09-12). Fases 1–4 aterrizadas (pipeline DTCG + átomos + pantallas `--zed-*` + catálogo/QA, [ADR-0019](../../DECISIONS.md)). Epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59) cerrable si el DoD de §7 se mantiene en CI.  
+**Traza:** ADR-0015 (GUI local), ADR-0016 (remoto HTTPS+token), ADR-0019 (tokens), SPECS O10/O11, identidad «Archivo Vivo», [`docs/brand.md`](../brand.md), epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59).  
+**No mezclar** con CardDAV ([#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48) / ADR-0018) ni con cambios de dominio.
 
 Este documento es la fuente de verdad del programa de design system (tokens OKLCH `--zed-*` → GUI profesional). Las cuatro fases están **ejecutadas** (2026-09-12). Cambios posteriores son mantenimiento (contraste, snapshots, copy), no un nuevo programa.
 
@@ -207,7 +207,7 @@ Cada fase = uno o más PRs **pequeños**, CI verde, **sin** CardDAV, **sin** cam
 - [x] Decisión A/B Web Awesome (apartado 4.3): **A acotada** — bridge generado + `wa-light`/`wa-dark`; sin `<wa-*>` compuestos.
 - [x] Sin rediseño de pantallas enteras (fase 3). Átomos ajustados de forma uniforme.
 
-**Criterio de salida:** ningún color/spacing hardcodeado en `components/ui`; axe de `/` y `/procesar` sigue a cero violaciones; catálogo mínimo (botón, badge, input, callout, card) en `/documentacion/ds`. *Hecho (2026-09-12).* Epic [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59) — no se cierra.
+**Criterio de salida:** ningún color/spacing hardcodeado en `components/ui`; axe de `/` y `/procesar` sigue a cero violaciones; catálogo mínimo (botón, badge, input, callout, card) en `/documentacion/ds`. *Hecho (2026-09-12).* Epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59) — no se cierra.
 
 ### Fase 3 — Patrones y pantallas
 
@@ -222,7 +222,7 @@ Cada fase = uno o más PRs **pequeños**, CI verde, **sin** CardDAV, **sin** cam
 
 Copy: español, tono archivo (preciso, no marketing). Wordmark intocable (`zedazo` en chrome; prosa «Zedazo»).
 
-**Criterio de salida:** las nueve rutas se sienten del mismo producto en light y dark; O10 y O11 sin cambios de comportamiento. *Hecho (2026-09-12).* Epic [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59) — no se cierra.
+**Criterio de salida:** las nueve rutas se sienten del mismo producto en light y dark; O10 y O11 sin cambios de comportamiento. *Hecho (2026-09-12).* Epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59) — no se cierra.
 
 ### Fase 4 — Acabado y QA
 
@@ -234,7 +234,7 @@ Copy: español, tono archivo (preciso, no marketing). Wordmark intocable (`zedaz
 - [x] DoD de §7 cumplido; este plan marcado **ejecutado** (2026-09-12).
 - [x] README / `/documentacion` enlazan el catálogo. Sin PWA.
 
-**Criterio de salida:** `make ci` verde con la matriz de §6; epic [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59) cerrable. *Hecho (2026-09-12).*
+**Criterio de salida:** `make ci` verde con la matriz de §6; epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59) cerrable. *Hecho (2026-09-12).*
 
 ---
 
@@ -270,7 +270,7 @@ Fixtures: 100 % sintéticos. Jobs de axe contra API local pueden usar el sample 
 
 ## 7. Definition of Done
 
-Checklist del **programa** (no de este PR de docs). Cada fase tiene su propio DoD local; esto cierra [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59).
+Checklist del **programa** (no de este PR de docs). Cada fase tiene su propio DoD local; esto cierra [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59).
 
 - [x] Fuente DTCG única; CSS/TS generados; `--zed-*` públicos documentados. *(fase 1)*
 - [x] OKLCH en origen de tokens; hex solo como fallback generado (`themeColorHex` / `faviconHex`). Los modules aún pueden tener magics (fase 2).
@@ -286,7 +286,7 @@ Checklist del **programa** (no de este PR de docs). Cada fase tiene su propio Do
 - [x] PRs de implementación **no** mezclan CardDAV, dominio ni majors de parser.
 - [x] Docs canónicos: este plan marcado ejecutado (2026-09-12); `docs/brand.md` sigue siendo wordmark, no paleta.
 
-El PR de fase 4 deja el epic [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59) **cerrable** si CI permanece verde. Residuos explícitos (no bloquean): APCA informativo, job `screenshots` opt-in separado, anchos de barra/skeleton como datos inline.
+El PR de fase 4 deja el epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59) **cerrable** si CI permanece verde. Residuos explícitos (no bloquean): APCA informativo, job `screenshots` opt-in separado, anchos de barra/skeleton como datos inline.
 
 ---
 
@@ -294,7 +294,7 @@ El PR de fase 4 deja el epic [#59](https://github.com/Iniciativas-Alexendros/zed
 
 | Ítem | Por qué |
 |------|---------|
-| GUI CardDAV / sync en pantallas | [#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48), ADR-0018; PRs de red **separados** de UI |
+| GUI CardDAV / sync en pantallas | [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48), ADR-0018; PRs de red **separados** de UI |
 | Multi-usuario, colaboración, edición manual de contactos | SPECS §3; no cubierto por ADR-0016 |
 | Cuentas OAuth/OIDC de *producto* Zedazo | SPECS §3; OAuth de *proveedor* Google es otro slice CardDAV, no DS |
 | OpenTelemetry / OTLP | ADR-0017, post-v1.0 |
@@ -308,7 +308,7 @@ El PR de fase 4 deja el epic [#59](https://github.com/Iniciativas-Alexendros/zed
 
 ## 9. Issues y slicing de PRs
 
-Epic: [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59) — *GUI: modernizar design system (OKLCH tokenizado → GUI profesional)*.
+Epic: [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59) — *GUI: modernizar design system (OKLCH tokenizado → GUI profesional)*.
 
 Los títulos siguientes son **sugeridos** para issues/PRs de implementación (no se abren en esta unidad salvo el epic). Cada PR: una fase o un slice de pantalla; base `main`; **sin** archivos CardDAV ni `crates/zedazo-core` de dominio.
 

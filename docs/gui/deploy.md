@@ -150,5 +150,5 @@ No servir landing en un origen y API en otro sin CORS explícito: el modo token 
 Si no hay host todavía, **no** crear un CNAME a un destino inventado. Opciones:
 
 - Esperar al VPS/miniPC y seguir la tabla CNAME de arriba.
-- Redirección HTTP 302/301 desde el proxy hacia `https://github.com/Iniciativas-Alexendros/zedazo` (pierde la ficha propia).
+- Redirección HTTP 302/301 desde el proxy hacia `https://github.com/Soluciones-Alexendros/zedazo` (pierde la ficha propia).
 - GitHub Pages con el mismo `apps/landing/` como puente temporal; al tener host, mover el CNAME al VPS.

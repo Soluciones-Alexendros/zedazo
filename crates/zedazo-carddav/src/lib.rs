@@ -1,6 +1,6 @@
 //! Cliente CardDAV para Zedazo (RFC 6352).
 //!
-//! Adaptador de infraestructura (`publish = false`) según [ADR-0018](https://github.com/Iniciativas-Alexendros/zedazo/blob/main/DECISIONS.md).
+//! Adaptador de infraestructura (`publish = false`) según [ADR-0018](https://github.com/Soluciones-Alexendros/zedazo/blob/main/DECISIONS.md).
 //! Lo consume `zedazo-cli`. **`zedazo-core` no tiene HTTP.**
 //!
 //! # Alcance de este crate

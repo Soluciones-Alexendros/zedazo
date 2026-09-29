@@ -1,6 +1,6 @@
 # Marca zedazo
 
-**Traza:** ADR-0014, [#49](https://github.com/Iniciativas-Alexendros/zedazo/issues/49) (resto de #35).  
+**Traza:** ADR-0014, [#49](https://github.com/Soluciones-Alexendros/zedazo/issues/49) (resto de #35).  
 **Fecha de esta nota:** 2026-09-11.
 
 Esta nota cubre el **wordmark** y la **pesquisa documental** de marca en la UE. No es un dictamen jurídico ni una solicitud de registro.
@@ -18,7 +18,7 @@ El signo visual del producto es **`zedazo` en minúsculas**. No se usa Title Cas
 
 El logomark (tres nodos) es decorativo junto al wordmark (`aria-hidden`); el nombre accesible del lockup es el texto `zedazo`.
 
-Los colores de producción de la GUI se expresan en **OKLCH**. Fuente DTCG: [`apps/web/tokens/`](../apps/web/tokens/) (ADR-0019); custom properties `--zed-*` generadas. Esta nota no define la paleta; el pipeline y el QA visual están en [`docs/gui/design-system-plan.md`](./gui/design-system-plan.md) (ejecutado, [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59)). Catálogo in-app: `/documentacion/ds`.
+Los colores de producción de la GUI se expresan en **OKLCH**. Fuente DTCG: [`apps/web/tokens/`](../apps/web/tokens/) (ADR-0019); custom properties `--zed-*` generadas. Esta nota no define la paleta; el pipeline y el QA visual están en [`docs/gui/design-system-plan.md`](./gui/design-system-plan.md) (ejecutado, [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59)). Catálogo in-app: `/documentacion/ds`.
 
 ## Pesquisa TMview / EUIPO (clases 9 y 42)
 
