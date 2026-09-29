@@ -13,8 +13,8 @@ version = "0.5.1"
 edition = "2021"
 rust-version = "1.80"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/Iniciativas-Alexendros/zedazo"
-homepage = "https://github.com/Iniciativas-Alexendros/zedazo"
+repository = "https://github.com/Soluciones-Alexendros/zedazo"
+homepage = "https://github.com/Soluciones-Alexendros/zedazo"
 
 [workspace.dependencies]
 zedazo-core = { path = "crates/zedazo-core", version = "0.5.1" }

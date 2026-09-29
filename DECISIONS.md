@@ -80,12 +80,12 @@ supersedes: "v0.3.1"
 </details>
 
 <details>
-<summary><strong>ADR-0006</strong> — Transferencia del repositorio a Iniciativas-Alexendros</summary>
+<summary><strong>ADR-0006</strong> — Transferencia del repositorio a Soluciones-Alexendros</summary>
 
 - Estado: aceptada
 - Fecha: 2026-07
 - Contexto: El repo vivía en la cuenta personal `Alexendros`.
-- Decisión: Org `Iniciativas-Alexendros`; actualizar Cargo.toml, badges, changelog y Notion.
+- Decisión: Org `Soluciones-Alexendros`; actualizar Cargo.toml, badges, changelog y Notion.
 - Consecuencias: v0.1.1 republish para corregir crates.io/docs.rs; Coveralls bajo la org nueva.
 
 </details>
@@ -140,7 +140,7 @@ supersedes: "v0.3.1"
 - Estado: aceptada
 - Fecha: 2026-07 / enmienda 2026-09-09
 - Decisión: Job `coverage` en CI genera LCOV con `cargo llvm-cov` y sube a Coveralls.
-- Consecuencias: Proyecto Coveralls bajo org `Iniciativas-Alexendros`; badge restaurado en README; umbral en CI activo (`--fail-under-lines 80`, `--fail-under-regions 75`). Cierra [#25](https://github.com/Iniciativas-Alexendros/zedazo/issues/25).
+- Consecuencias: Proyecto Coveralls bajo org `Soluciones-Alexendros`; badge restaurado en README; umbral en CI activo (`--fail-under-lines 80`, `--fail-under-regions 75`). Cierra [#25](https://github.com/Soluciones-Alexendros/zedazo/issues/25).
 
 </details>
 
@@ -152,7 +152,7 @@ supersedes: "v0.3.1"
 - Contexto: v1.0 promete macOS/Windows; CI de calidad sigue en Linux.
 - Decisión: **(B) `cargo-dist`** — [`dist-workspace.toml`](./dist-workspace.toml) + [`.github/workflows/release.yml`](./.github/workflows/release.yml) (targets `aarch64-apple-darwin`, `x86_64-apple-darwin`, `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `x86_64-pc-windows-msvc`). SBOM y publish crates.io se mantienen como pasos manuales (`allow-dirty = ["ci"]`).
 - Alternativa rechazada: (A) matrix GitHub-hosted pura sin cargo-dist.
-- Consecuencias: Artefactos multiplataforma vía cargo-dist; validar releases reales en el hito v1.0.0. Cierra [#27](https://github.com/Iniciativas-Alexendros/zedazo/issues/27).
+- Consecuencias: Artefactos multiplataforma vía cargo-dist; validar releases reales en el hito v1.0.0. Cierra [#27](https://github.com/Soluciones-Alexendros/zedazo/issues/27).
 
 </details>
 
@@ -162,7 +162,7 @@ supersedes: "v0.3.1"
 - Estado: aceptada
 - Fecha: 2026-08-15 / aceptada 2026-09-09
 - Decisión: `cargo deny check` en CI (job Deny) y `make deny`; SBOM CycloneDX en el workflow de release (`cargo cyclonedx`). Config en [`deny.toml`](./deny.toml).
-- Relacionado: [ROADMAP.md](./ROADMAP.md); cierra [#26](https://github.com/Iniciativas-Alexendros/zedazo/issues/26).
+- Relacionado: [ROADMAP.md](./ROADMAP.md); cierra [#26](https://github.com/Soluciones-Alexendros/zedazo/issues/26).
 
 </details>
 
@@ -177,7 +177,7 @@ supersedes: "v0.3.1"
 - Dominio de producto (cero coste): **`https://zedazo.alexendros.dev`**. DNS/CNAME: operativa #50.
 - Operativa (#50): landing estática [`apps/landing/`](./apps/landing/); CNAME `zedazo` → `<HOST_DESTINO>` (operador) y Caddy/Let's Encrypt en [`docs/gui/deploy.md`](./docs/gui/deploy.md). GUI remota en el mismo host → same-origin (ADR-0016), no este Caddyfile de landing.
 - TMview UE clases 9 y 42 (#49): pesquisa documental 2026-09-11 en [`docs/brand.md`](./docs/brand.md) — sin coincidencia exacta «Zedazo» en índices públicos; TMview oficial y valoración de similitud (p. ej. EUTM **ZEZARO** 009317348) quedan en checklist humano. No bloquea el rename ni el wordmark.
-- Relacionado: issues [#32](https://github.com/Iniciativas-Alexendros/zedazo/issues/32), [#35](https://github.com/Iniciativas-Alexendros/zedazo/issues/35), [#49](https://github.com/Iniciativas-Alexendros/zedazo/issues/49), [#50](https://github.com/Iniciativas-Alexendros/zedazo/issues/50); [ROADMAP.md](./ROADMAP.md), [CHANGELOG.md](./CHANGELOG.md).
+- Relacionado: issues [#32](https://github.com/Soluciones-Alexendros/zedazo/issues/32), [#35](https://github.com/Soluciones-Alexendros/zedazo/issues/35), [#49](https://github.com/Soluciones-Alexendros/zedazo/issues/49), [#50](https://github.com/Soluciones-Alexendros/zedazo/issues/50); [ROADMAP.md](./ROADMAP.md), [CHANGELOG.md](./CHANGELOG.md).
 
 | # | Elemento | Actual | Decisión | Tipo |
 |---|---|---|---|---|
@@ -187,7 +187,7 @@ supersedes: "v0.3.1"
 | I-04 | Subcomando CLI | `cribar` | **Mantener** (verbo de dominio) | Sin cambio |
 | I-05 | Versión debut | — | **v0.2.0** = solo rename/migración | Estrategia |
 | I-06 | Crate antiguo | `vcf-cribador` 0.1.0/0.1.1 en crates.io | Publicar **0.1.2** final con aviso → `zedazo`; **sin yank** | Estrategia |
-| I-07 | Metadata org | Ya `Iniciativas-Alexendros` | Solo actualizar path a `/zedazo` | Fix menor |
+| I-07 | Metadata org | Ya `Soluciones-Alexendros` | Solo actualizar path a `/zedazo` | Fix menor |
 | I-08 | Config file | `cribador.toml` | Doc → `zedazo.toml`; path libre vía `-c` | Docs + convención |
 | I-09 | Sufijo salida help | `<input>_cribado.vcf` | `<input>_zedazo.vcf` | Cosmético |
 | I-10 | JSON export | `cribado_result` | `zedazo_result` | Breaking suave |
@@ -243,7 +243,7 @@ supersedes: "v0.3.1"
 
 - Estado: aceptada (aplazamiento)
 - Fecha: 2026-09-09
-- Contexto: [#24](https://github.com/Iniciativas-Alexendros/zedazo/issues/24) pedía instrumentación OTLP; existe receta en [docs/otel.md](./docs/otel.md) pero no hay feature `otel` ni deps exportables. ADR-0015 exige telemetría remota off por defecto (`ZEDAZO_OTEL_ENABLED=false` en deploy = reservado/no-op).
+- Contexto: [#24](https://github.com/Soluciones-Alexendros/zedazo/issues/24) pedía instrumentación OTLP; existe receta en [docs/otel.md](./docs/otel.md) pero no hay feature `otel` ni deps exportables. ADR-0015 exige telemetría remota off por defecto (`ZEDAZO_OTEL_ENABLED=false` en deploy = reservado/no-op).
 - Decisión: **No** añadir `opentelemetry*` / `tracing-opentelemetry` hasta **post-v1.0**. Logging con `tracing` permanece. Variables `ZEDAZO_OTEL_*` / `OTEL_*` documentadas como reservadas.
 - Consecuencias: Cierra #24 como diferido (no won't-fix); reabrir con ADR de deps cuando toque implementar. Guía en `docs/otel.md` marcada como aplazada.
 
@@ -254,7 +254,7 @@ supersedes: "v0.3.1"
 
 - Estado: **aceptada**
 - Fecha: 2026-09-11
-- Contexto: [#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48) / [ROADMAP.md](./ROADMAP.md) **v0.4.0** exigen un ADR de red/proveedor **antes** de implementar sync. SPECS §3 deja CardDAV, Proton API y Google People como no-objetivo hasta ese hito. El producto ya parsea vCard 3.0/4.0 de **export** Proton / Google / Apple (O1) y opera **single-user self-hosted** (ADR-0015 local, ADR-0016 remoto HTTPS+token). La landing `zedazo.alexendros.dev` (ADR-0014) no es proxy de contactos. El pipeline local sigue **sin red saliente por defecto**.
+- Contexto: [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48) / [ROADMAP.md](./ROADMAP.md) **v0.4.0** exigen un ADR de red/proveedor **antes** de implementar sync. SPECS §3 deja CardDAV, Proton API y Google People como no-objetivo hasta ese hito. El producto ya parsea vCard 3.0/4.0 de **export** Proton / Google / Apple (O1) y opera **single-user self-hosted** (ADR-0015 local, ADR-0016 remoto HTTPS+token). La landing `zedazo.alexendros.dev` (ADR-0014) no es proxy de contactos. El pipeline local sigue **sin red saliente por defecto**.
 - Hallazgo de proveedores (2026-09):
   1. **RFC 6352 genérico** (descubrimiento RFC 6764 `/.well-known/carddav`, `addressbook-home-set`, sync RFC 6578): cubre Nextcloud/SabreDAV, Fastmail y hosts DAV ordinarios. Auth típica: HTTP Basic + **contraseña de aplicación**.
   2. **Apple iCloud:** CardDAV nativo (`https://contacts.icloud.com` → shard `pNN-contacts.icloud.com`); Basic + app-specific password; vCard 3.0. Encaja con O1.
@@ -278,7 +278,7 @@ supersedes: "v0.3.1"
   - Tratar Proton o Google People como primer proveedor CardDAV: Proton no tiene DAV; People no es CardDAV.
   - Push automático tras `cribar`: viola I7 y el principio de red saliente opt-in.
 - Consecuencias: desbloquea implementación de #48 (PRs de código posteriores; este ADR no incluye sync). SPECS §3 / ROADMAP v0.4.0 apuntan aquí. Primer slice verificable: pull RFC + Basic contra fixture/servidor de prueba (Nextcloud o DAV genérico), sin GUI. OTel sigue post-v1.0 (ADR-0017).
-- Relacionado: [SPECS.md](./SPECS.md) §3, [ROADMAP.md](./ROADMAP.md) v0.4.0, [ARCHITECTURE.md](./ARCHITECTURE.md), ADR-0014, ADR-0015, ADR-0016, [#48](https://github.com/Iniciativas-Alexendros/zedazo/issues/48).
+- Relacionado: [SPECS.md](./SPECS.md) §3, [ROADMAP.md](./ROADMAP.md) v0.4.0, [ARCHITECTURE.md](./ARCHITECTURE.md), ADR-0014, ADR-0015, ADR-0016, [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48).
 - **Hunches** (etiquetados; no bloquean el ADR si se enmiendan):
   - Nextcloud + iCloud cubren al operador self-hosted y a O1 Apple mejor que perseguir Proton DAV.
   - Un subcomando CLI (`zedazo carddav …`) antes que pantalla GUI.
@@ -291,7 +291,7 @@ supersedes: "v0.3.1"
 
 - Estado: **aceptada**
 - Fecha: 2026-09-11
-- Contexto: La GUI (ADR-0015/0016) ya usa custom properties `--zed-*` en OKLCH, escritas a mano. El [plan de design system](./docs/gui/design-system-plan.md) (epic [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59)) exige un origen DTCG, CSS/TS generados y contraste WCAG 2.2 AA en CI. Style Dictionary v4 + `@tokens-studio/sd-transforms` era la hipótesis; AGENTS §4 pide confirmación para deps nuevas.
+- Contexto: La GUI (ADR-0015/0016) ya usa custom properties `--zed-*` en OKLCH, escritas a mano. El [plan de design system](./docs/gui/design-system-plan.md) (epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59)) exige un origen DTCG, CSS/TS generados y contraste WCAG 2.2 AA en CI. Style Dictionary v4 + `@tokens-studio/sd-transforms` era la hipótesis; AGENTS §4 pide confirmación para deps nuevas.
 - Decisión:
   1. **Fuente DTCG** en [`apps/web/tokens/`](./apps/web/tokens/) (primitivo → semántico; componente = stub en fase 1). Color de origen: objeto `{ colorSpace: "oklch", components: [L, C, H] }`. Sin hex/rgb/hsl en la fuente.
   2. **Build propio en Node 22** ([`apps/web/scripts/design-tokens/`](./apps/web/scripts/design-tokens/)): passthrough OKLCH → `--zed-*` + `src/lib/design-tokens.ts`. **Sin** `style-dictionary` ni otras deps npm. Revisitar SD solo si aparece sync Figma/Tokens Studio o el volumen de transforms lo justifica.
@@ -305,7 +305,7 @@ supersedes: "v0.3.1"
   - Generate-on-CI sin commitear: peor revisión de diffs visuales y CI más opaco.
   - Retirar Web Awesome ahora: es decisión de inventario (fase 2), no de pipeline.
 - Consecuencias: `make web-ci` incluye check de artefactos + contraste. `apps/landing/` y `zedazo-api` no consumen estos tokens. PRs de CardDAV (#48) no tocan `tokens/` ni `design-system/`.
-- Relacionado: ADR-0015, ADR-0016, [SPECS.md](./SPECS.md) O10, [ROADMAP.md](./ROADMAP.md) v0.5.x, [docs/gui/design-system-plan.md](./docs/gui/design-system-plan.md), [#59](https://github.com/Iniciativas-Alexendros/zedazo/issues/59).
+- Relacionado: ADR-0015, ADR-0016, [SPECS.md](./SPECS.md) O10, [ROADMAP.md](./ROADMAP.md) v0.5.x, [docs/gui/design-system-plan.md](./docs/gui/design-system-plan.md), [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59).
 
 </details>
 
@@ -314,7 +314,7 @@ supersedes: "v0.3.1"
 
 - Estado: **aceptada**
 - Fecha: 2026-09-24
-- Contexto: Oleada de alineación a `Iniciativas-Alexendros/repo-standard` (main). Este repo ya es gold en governance (dual license, CoC, Renovate, SPECS/ARCHITECTURE/AGENTS, jobs Rust maduros). El canon pide jobs `quality` / `test` / `smoke` y meta-sección **Propósito**. Reescribir `fmt`/`clippy`/`test`/`check`/`parity`/`web` rompería CI.
+- Contexto: Oleada de alineación a `Soluciones-Alexendros/repo-standard` (main). Este repo ya es gold en governance (dual license, CoC, Renovate, SPECS/ARCHITECTURE/AGENTS, jobs Rust maduros). El canon pide jobs `quality` / `test` / `smoke` y meta-sección **Propósito**. Reescribir `fmt`/`clippy`/`test`/`check`/`parity`/`web` rompería CI.
 - Decisión:
   1. Añadir wrappers `quality` (fmt+clippy+docs-validate) y `smoke` (health+check). El job `test` ya es canónico.
   2. Documentar la equivalencia en [`AGENTS.md`](./AGENTS.md). No mover ADRs fuera de este archivo.

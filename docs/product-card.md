@@ -14,7 +14,7 @@
 | **MSRV** | Rust 1.80+ |
 | **Lenguaje** | Rust (edition 2021) + TypeScript (Next.js) |
 | **Tipo** | CLI + API HTTP + GUI web self-hosted |
-| **Repositorio** | https://github.com/Iniciativas-Alexendros/zedazo |
+| **Repositorio** | https://github.com/Soluciones-Alexendros/zedazo |
 | **Dominio producto** | https://zedazo.alexendros.dev (cero coste; ADR-0014; landing `apps/landing/`; DNS en [deploy.md](./gui/deploy.md); marca: [brand.md](./brand.md)) |
 | **crates.io** | https://crates.io/crates/zedazo |
 | **Documentación** | https://docs.rs/zedazo · [docs/gui/](./gui/) |
@@ -154,7 +154,7 @@ cd deploy && docker compose up --build
 
 ## Enlaces
 
-- GitHub: https://github.com/Iniciativas-Alexendros/zedazo
+- GitHub: https://github.com/Soluciones-Alexendros/zedazo
 - crates.io: https://crates.io/crates/zedazo
 - Documentación: https://docs.rs/zedazo
 - Dependencias: Renovate (no Dependabot)

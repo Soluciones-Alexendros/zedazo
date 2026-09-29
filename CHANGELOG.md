@@ -71,13 +71,13 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [0.3.0] - 2026-09-02
 
 ### Añadido
-- Reglas de cribado C1 (contacto sin datos útiles), C5 (capitalización sospechosa), C7 (vCard malformada), E4 (duplicado por email normalizado), E6 (teléfono no normalizable) con tests (`screening.rs:272-465`, [#21](https://github.com/Iniciativas-Alexendros/zedazo/issues/21))
+- Reglas de cribado C1 (contacto sin datos útiles), C5 (capitalización sospechosa), C7 (vCard malformada), E4 (duplicado por email normalizado), E6 (teléfono no normalizable) con tests (`screening.rs:272-465`, [#21](https://github.com/Soluciones-Alexendros/zedazo/issues/21))
 - Verificación post-escritura I4/I5/I6: `domain::verification::verify_post` valida salida VCF 4.0 (folding ≤75 octetos, VERSION 4.0, sin AGENT/LABEL/MAILER) y `audit.tsv` (11 columnas, filas, UID/REGLA) integrada en `cribar.rs:258` (warnings no críticos)
 - 6 tests de verificación I4/I5/I6 + `verify_post` (`verification.rs:420-512`)
 
 ### Changed
 - Columna CSV: `CRIBADO_RESULT` → `CLASSIFY_RESULT` (inglés, coherente con cabeceras vCard; ADR-0014 I-12). JSON `zedazo_result` y props `X-ZEDAZO-*` sin cambio.
-- README: badge Coveralls oculto hasta [#25](https://github.com/Iniciativas-Alexendros/zedazo/issues/25).
+- README: badge Coveralls oculto hasta [#25](https://github.com/Soluciones-Alexendros/zedazo/issues/25).
 - Docs canónicos alineados a 0.3.0: `SPECS`/`ROADMAP`/`DECISIONS`/`AGENTS` (v0.3.0 2026-09-02)
 - ROADMAP: hito v0.3.0 marcado completo; estado tests 150 + 17 integración
 
@@ -90,7 +90,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Campo JSON export: `cribado_result` → `zedazo_result`
 - Convención de config documentada: `zedazo.toml` (path libre vía `-c`)
 - Help CLI: sufijo de salida `<input>_zedazo.vcf`
-- URLs de repo/docs → `Iniciativas-Alexendros/zedazo`
+- URLs de repo/docs → `Soluciones-Alexendros/zedazo`
 - ROADMAP: rename = **v0.2.0**; integraciones → **v0.4.0**
 
 ### Añadido
@@ -118,7 +118,7 @@ El crate `vcf-cribador` en crates.io permanece publicado (sin yank); la última 
 ## [0.1.1] - 2026-08-15
 
 ### Corregido
-- Metadata `repository`/`homepage` en `Cargo.toml` tras transferencia a la org `Iniciativas-Alexendros`
+- Metadata `repository`/`homepage` en `Cargo.toml` tras transferencia a la org `Soluciones-Alexendros`
 - Badges y enlaces del README apuntando a la cuenta personal antigua
 - Enlace de licencia dual (`LICENSE-MIT` / `LICENSE-APACHE`)
 - Fecha incorrecta de `0.1.0` en el changelog (2025 → 2026)
@@ -149,10 +149,10 @@ El crate `vcf-cribador` en crates.io permanece publicado (sin yank); la última 
 - Release automatizado con binario + SHA256
 - 129 tests unitarios y de integración
 
-[Unreleased]: https://github.com/Iniciativas-Alexendros/zedazo/compare/v0.5.1...HEAD
-[0.5.1]: https://github.com/Iniciativas-Alexendros/zedazo/compare/v0.3.0...v0.5.1
-[0.5.0]: https://github.com/Iniciativas-Alexendros/zedazo/compare/v0.3.0...v0.5.1
-[0.3.0]: https://github.com/Iniciativas-Alexendros/zedazo/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/Iniciativas-Alexendros/zedazo/compare/v0.1.1...v0.2.0
-[0.1.1]: https://github.com/Iniciativas-Alexendros/zedazo/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/Iniciativas-Alexendros/zedazo/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Soluciones-Alexendros/zedazo/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/Soluciones-Alexendros/zedazo/compare/v0.3.0...v0.5.1
+[0.5.0]: https://github.com/Soluciones-Alexendros/zedazo/compare/v0.3.0...v0.5.1
+[0.3.0]: https://github.com/Soluciones-Alexendros/zedazo/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/Soluciones-Alexendros/zedazo/compare/v0.1.1...v0.2.0
+[0.1.1]: https://github.com/Soluciones-Alexendros/zedazo/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/Soluciones-Alexendros/zedazo/releases/tag/v0.1.0
