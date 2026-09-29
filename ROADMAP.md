@@ -37,14 +37,14 @@ supersedes: "v0.3.1"
 ### v0.1.1 — Metadata y robustez — S
 
 **Criterio de salida:**
-- [x] `repository`/`homepage` y badges → org `Iniciativas-Alexendros`
+- [x] `repository`/`homepage` y badges → org `Soluciones-Alexendros`
 - [x] Sin `unwrap` panic-prone en `domain/` (C-01, C-02)
 - [x] Tag `v0.1.1` + crates.io; aviso rename en **0.1.2** → `zedazo` (sin yank)
 
 ### v0.2.0 — Rename a Zedazo (migración + base phase4/5 ya en main) — M
 
 **Criterio de salida:**
-- [x] Crate/binario `zedazo`; repo `Iniciativas-Alexendros/zedazo`
+- [x] Crate/binario `zedazo`; repo `Soluciones-Alexendros/zedazo`
 - [x] Props `X-ZEDAZO-*`, TOML `[zedazo]` (+ alias `[cribado]`), JSON `zedazo_result`
 - [x] ADR-0014; CHANGELOG con tabla de migración
 - [x] Subcomando `cribar` sin cambio (verbo de dominio)

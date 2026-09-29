@@ -18,7 +18,7 @@ Proteger `main`, estabilizar CI y documentar el estado post-merge.
 | RF-1 | Branch protection en `main` | ✅ |
 | RF-2/3/4 | PRs Dependabot históricos | ✅ / obsoleto |
 | RF-5 | Excluir bumps que suban MSRV | ✅ vía Renovate `allowedVersions` |
-| RF-6 | README badges y docs | ✅ (org Iniciativas-Alexendros en v0.1.1) |
+| RF-6 | README badges y docs | ✅ (org Soluciones-Alexendros en v0.1.1) |
 | RF-7 | Roadmap | ✅ [ROADMAP.md](../../ROADMAP.md) |
 | RF-8 | Arquitectura CI | ✅ [ARCHITECTURE.md](../../ARCHITECTURE.md) |
 | RF-9 | Doc warnings | Revisar en CI |
