@@ -47,6 +47,8 @@ pub async fn create_job(
     State(state): State<AppState>,
     Json(body): Json<CreateJobRequest>,
 ) -> Result<(StatusCode, Json<JobManifest>), (StatusCode, String)> {
+    crate::storage::Storage::validate_id(&body.upload_id)
+        .map_err(|_| (StatusCode::BAD_REQUEST, "upload_id inválido".into()))?;
     let upload_path = state.storage.upload_path(&body.upload_id);
     if !upload_path.exists() {
         return Err((StatusCode::NOT_FOUND, "upload_id desconocido".into()));
@@ -164,18 +166,13 @@ pub async fn delete_job(
     State(state): State<AppState>,
     Path(job_id): Path<String>,
 ) -> Result<StatusCode, StatusCode> {
-    {
-        let mut jobs = state.jobs.write().await;
-        if let Some(rec) = jobs.get_mut(&job_id) {
-            rec.cancel.cancel();
-            rec.manifest.status = JobStatus::Deleted;
-        } else {
-            return Err(StatusCode::NOT_FOUND);
+    use crate::retention::DeleteOutcome;
+    match crate::retention::delete_job_tracked(&state, &job_id).await {
+        DeleteOutcome::Deleted | DeleteOutcome::Idempotent | DeleteOutcome::PendingRetry => {
+            Ok(StatusCode::NO_CONTENT)
         }
-        jobs.remove(&job_id);
+        DeleteOutcome::NotFound => Err(StatusCode::NOT_FOUND),
     }
-    let _ = state.storage.delete_job_dir(&job_id);
-    Ok(StatusCode::NO_CONTENT)
 }
 
 pub async fn cancel_job(

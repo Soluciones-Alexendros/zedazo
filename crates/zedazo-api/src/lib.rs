@@ -5,4 +5,5 @@ pub mod app;
 pub mod auth;
 pub mod dto;
 pub mod jobs;
+pub mod retention;
 pub mod storage;

@@ -79,7 +79,7 @@ fn events_ndjson_replay_filters_by_id() {
 async fn sse_query_last_event_id_replays() {
     let dir = tempdir().unwrap();
     let state = AppState::new(dir.path().to_path_buf(), 1_000_000, 24).unwrap();
-    let job_id = "job-sse-1";
+    let job_id = "01900000-0000-7000-8000-0000000000ff";
     state.storage.ensure_job_dir(job_id).unwrap();
     let events_path = state.storage.job_dir(job_id).join("events.ndjson");
     let ev = JobEvent {
@@ -110,7 +110,7 @@ async fn sse_query_last_event_id_replays() {
                         bytes: 1,
                         source_detected: None,
                         vcard_version: None,
-                        upload_id: "u".into(),
+                        upload_id: "01900000-0000-7000-8000-0000000000fe".into(),
                     },
                     rules: zedazo_api::dto::RulesMeta {
                         mode: "builtin".into(),

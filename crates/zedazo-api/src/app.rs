@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
 use axum::middleware;
@@ -24,6 +25,10 @@ pub struct AppState {
     pub core_version: String,
     pub api_version: String,
     pub auth: AuthConfig,
+    /// Época de wipe: el worker abandona escrituras si no coincide.
+    pub wipe_epoch: Arc<AtomicU64>,
+    /// Tombstones en memoria para DELETE idempotente en la misma vida del proceso.
+    pub deleted_ids: Arc<RwLock<HashSet<String>>>,
 }
 
 impl AppState {
@@ -63,6 +68,7 @@ impl AppState {
         auth: AuthConfig,
     ) -> anyhow::Result<Self> {
         let storage = Storage::new(data_dir)?;
+        let wipe_epoch = storage.read_wipe_epoch();
         Ok(Self {
             storage,
             max_upload_bytes,
@@ -72,7 +78,13 @@ impl AppState {
             core_version: env!("CARGO_PKG_VERSION").to_string(),
             api_version: "v1".to_string(),
             auth,
+            wipe_epoch: Arc::new(AtomicU64::new(wipe_epoch)),
+            deleted_ids: Arc::new(RwLock::new(HashSet::new())),
         })
+    }
+
+    pub fn current_wipe_epoch(&self) -> u64 {
+        self.wipe_epoch.load(std::sync::atomic::Ordering::SeqCst)
     }
 }
 
