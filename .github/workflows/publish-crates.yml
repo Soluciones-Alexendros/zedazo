@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: publish-crates-${{ inputs.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     name: Publish zedazo-core + zedazo
@@ -21,15 +25,27 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
       - uses: dtolnay/rust-toolchain@stable
-      - name: Verify versions
+      - name: Verify versions (Cargo metadata)
         run: |
           set -euo pipefail
-          ver=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
-          echo "workspace version=$ver (ref=${{ inputs.ref }})"
-          test -n "$ver"
+          core=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name=="zedazo-core") | .version')
+          cli=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name=="zedazo") | .version')
+          echo "zedazo-core=$core zedazo=$cli ref=${{ inputs.ref }}"
+          test -n "$core" && test "$core" = "$cli"
       - name: Publish zedazo-core
         run: cargo publish -p zedazo-core --token ${{ secrets.CRATES_IO_TOKEN }}
       - name: Wait for crates.io index
-        run: sleep 45
+        shell: bash
+        run: |
+          set -euo pipefail
+          ver=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name=="zedazo-core") | .version')
+          for i in $(seq 1 30); do
+            if curl -fsS "https://crates.io/api/v1/crates/zedazo-core/$ver" >/dev/null; then
+              echo "zedazo-core $ver visible"
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
       - name: Publish zedazo
         run: cargo publish -p zedazo --token ${{ secrets.CRATES_IO_TOKEN }}

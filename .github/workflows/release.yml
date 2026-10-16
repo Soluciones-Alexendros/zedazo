@@ -17,6 +17,11 @@ name: Release
 permissions:
   "contents": "write"
 
+# Evitar dos publicaciones concurrentes de la misma etiqueta.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 # This task will run whenever you push a git tag that looks like a version
 # like "1.0.0", "v0.1.0-prerelease.1", "my-app/0.1.0", "releases/v1.0.0", etc.
 # Various formats will be parsed into a VERSION and an optional PACKAGE_NAME, where
@@ -49,7 +54,11 @@ jobs:
   plan:
     runs-on: "ubuntu-22.04"
     outputs:
-      val: ${{ steps.plan.outputs.manifest }}
+      # Solo la matriz (compacta). El manifiesto completo en GITHUB_OUTPUT se filtraba
+      # como secreto (v0.5.1: builds skipped → release sin binarios).
+      matrix: ${{ steps.plan.outputs.matrix }}
+      has-matrix: ${{ steps.plan.outputs.has_matrix }}
+      pr-run-mode: ${{ steps.plan.outputs.pr_run_mode }}
       tag: ${{ !github.event.pull_request && github.ref_name || '' }}
       tag-flag: ${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }}
       publishing: ${{ !github.event.pull_request }}
@@ -70,17 +79,18 @@ jobs:
         with:
           name: cargo-dist-cache
           path: ~/.cargo/bin/dist
-      # sure would be cool if github gave us proper conditionals...
-      # so here's a doubly-nested ternary-via-truthiness to try to provide the best possible
-      # functionality based on whether this is a pull_request, and whether it's from a fork.
-      # (PRs run on the *source* but secrets are usually on the *target* -- that's *good*
-      # but also really annoying to build CI around when it needs secrets to work right.)
       - id: plan
+        shell: bash
         run: |
+          set -euo pipefail
           dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', github.ref_name)) || 'plan' }} --output-format=json > plan-dist-manifest.json
           echo "dist ran successfully"
-          cat plan-dist-manifest.json
-          echo "manifest=$(jq -c "." plan-dist-manifest.json)" >> "$GITHUB_OUTPUT"
+          jq -e '.ci.github.artifacts_matrix.include | length > 0' plan-dist-manifest.json
+          # Matriz sola (sin changelog/body) para evitar filtrado de outputs.
+          MATRIX=$(jq -c '.ci.github.artifacts_matrix' plan-dist-manifest.json)
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "has_matrix=true" >> "$GITHUB_OUTPUT"
+          echo "pr_run_mode=$(jq -r '.ci.github.pr_run_mode // empty' plan-dist-manifest.json)" >> "$GITHUB_OUTPUT"
       - name: "Upload dist-manifest.json"
         uses: actions/upload-artifact@v7
         with:
@@ -93,7 +103,7 @@ jobs:
     # Let the initial task tell us to not run (currently very blunt)
     needs:
       - plan
-    if: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix.include != null && (needs.plan.outputs.publishing == 'true' || fromJson(needs.plan.outputs.val).ci.github.pr_run_mode == 'upload') }}
+    if: ${{ needs.plan.outputs.has-matrix == 'true' && (needs.plan.outputs.publishing == 'true' || needs.plan.outputs.pr-run-mode == 'upload') }}
     strategy:
       fail-fast: false
       # Target platforms/runners are computed by dist in create-release.
@@ -106,7 +116,7 @@ jobs:
       # Typically there will be:
       # - 1 "global" task that builds universal installers
       # - N "local" tasks that build each platform's binaries and platform-specific installers
-      matrix: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix }}
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     container: ${{ matrix.container && matrix.container.image || null }}
     env:
@@ -249,13 +259,12 @@ jobs:
       - build-local-artifacts
       - build-global-artifacts
       - sbom
-    # Only run if we're "publishing", and only if plan, local and global didn't fail (skipped is fine)
-    if: ${{ always() && needs.plan.result == 'success' && needs.plan.outputs.publishing == 'true' && (needs.build-global-artifacts.result == 'skipped' || needs.build-global-artifacts.result == 'success') && (needs.build-local-artifacts.result == 'skipped' || needs.build-local-artifacts.result == 'success') }}
+    # Publicar solo con builds locales y SBOM en success (no skipped).
+    # Global puede ir skipped si no hay installers (dist-workspace installers=[]).
+    if: ${{ always() && needs.plan.result == 'success' && needs.plan.outputs.publishing == 'true' && needs.build-local-artifacts.result == 'success' && needs.sbom.result == 'success' && (needs.build-global-artifacts.result == 'skipped' || needs.build-global-artifacts.result == 'success') }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     runs-on: "ubuntu-22.04"
-    outputs:
-      val: ${{ steps.host.outputs.manifest }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -277,10 +286,14 @@ jobs:
       - id: host
         shell: bash
         run: |
-          dist host ${{ needs.plan.outputs.tag-flag }} --steps=upload --steps=release --output-format=json > dist-manifest.json
-          echo "artifacts uploaded and released successfully"
-          cat dist-manifest.json
-          echo "manifest=$(jq -c "." dist-manifest.json)" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          # Solo upload: la release definitiva la crea `gh release create` tras validar assets.
+          dist host ${{ needs.plan.outputs.tag-flag }} --steps=upload --output-format=json > dist-manifest.json
+          echo "artifacts uploaded successfully"
+          # Metadatos de anuncio desde el manifiesto (archivo, no output gigante).
+          jq -r '.announcement_title // empty' dist-manifest.json > "$RUNNER_TEMP/announcement_title.txt"
+          jq -r '.announcement_github_body // empty' dist-manifest.json > "$RUNNER_TEMP/announcement_body.txt"
+          jq -r 'if .announcement_is_prerelease then "true" else "false" end' dist-manifest.json > "$RUNNER_TEMP/announcement_prerelease.txt"
       - name: "Upload dist-manifest.json"
         uses: actions/upload-artifact@v7
         with:
@@ -298,17 +311,70 @@ jobs:
         run: |
           # Remove the granular manifests
           rm -f artifacts/*-dist-manifest.json
+      - name: Validate release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          ls -la
+          required=(
+            zedazo-aarch64-apple-darwin.tar.xz
+            zedazo-aarch64-apple-darwin.tar.xz.sha256
+            zedazo-x86_64-apple-darwin.tar.xz
+            zedazo-x86_64-apple-darwin.tar.xz.sha256
+            zedazo-x86_64-pc-windows-msvc.zip
+            zedazo-x86_64-pc-windows-msvc.zip.sha256
+            zedazo-aarch64-unknown-linux-gnu.tar.xz
+            zedazo-aarch64-unknown-linux-gnu.tar.xz.sha256
+            zedazo-x86_64-unknown-linux-gnu.tar.xz
+            zedazo-x86_64-unknown-linux-gnu.tar.xz.sha256
+            sbom.json
+            sbom.json.sha256
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [[ ! -f "$f" ]]; then
+              echo "FALTA: $f"
+              missing=1
+            fi
+          done
+          if [[ "$missing" -ne 0 ]]; then
+            echo "Assets incompletos; no se crea la release."
+            exit 1
+          fi
+          # Verificar checksums (cargo-dist: hash o "hash  archivo")
+          for f in zedazo-*.tar.xz zedazo-*.zip; do
+            expected=$(awk '{print $1}' "${f}.sha256")
+            actual=$(sha256sum "$f" | awk '{print $1}')
+            test "$expected" = "$actual" || { echo "checksum mismatch: $f"; exit 1; }
+          done
+          expected_sbom=$(awk '{print $1}' sbom.json.sha256)
+          actual_sbom=$(sha256sum sbom.json | awk '{print $1}')
+          test "$expected_sbom" = "$actual_sbom"
+          jq -e 'type == "object" and (has("bomFormat") or has("components") or has("metadata"))' sbom.json >/dev/null
+          # Smoke del binario Linux x86_64 en el runner
+          tar -xJf zedazo-x86_64-unknown-linux-gnu.tar.xz
+          BIN=$(find . -type f -name zedazo | head -1)
+          test -n "$BIN"
+          "$BIN" --version
       - name: Create GitHub Release
         env:
-          PRERELEASE_FLAG: "${{ fromJson(steps.host.outputs.manifest).announcement_is_prerelease && '--prerelease' || '' }}"
-          ANNOUNCEMENT_TITLE: "${{ fromJson(steps.host.outputs.manifest).announcement_title }}"
-          ANNOUNCEMENT_BODY: "${{ fromJson(steps.host.outputs.manifest).announcement_github_body }}"
           RELEASE_COMMIT: "${{ github.sha }}"
         run: |
-          # Write and read notes from a file to avoid quoting breaking things
-          echo "$ANNOUNCEMENT_BODY" > $RUNNER_TEMP/notes.txt
-
-          gh release create "${{ needs.plan.outputs.tag }}" --target "$RELEASE_COMMIT" $PRERELEASE_FLAG --title "$ANNOUNCEMENT_TITLE" --notes-file "$RUNNER_TEMP/notes.txt" artifacts/*
+          set -euo pipefail
+          PRERELEASE_FLAG=""
+          if [[ "$(cat "$RUNNER_TEMP/announcement_prerelease.txt")" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          TITLE=$(cat "$RUNNER_TEMP/announcement_title.txt")
+          cp "$RUNNER_TEMP/announcement_body.txt" "$RUNNER_TEMP/notes.txt"
+          # Un solo mecanismo de release definitiva tras validar assets.
+          gh release create "${{ needs.plan.outputs.tag }}" \
+            --target "$RELEASE_COMMIT" \
+            $PRERELEASE_FLAG \
+            --title "$TITLE" \
+            --notes-file "$RUNNER_TEMP/notes.txt" \
+            artifacts/*
 
   announce:
     needs:
@@ -337,9 +403,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
+      - name: Verify Cargo versions
+        run: |
+          set -euo pipefail
+          ver=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name=="zedazo") | .version')
+          echo "zedazo version=$ver tag=${{ github.ref_name }}"
+          test -n "$ver"
       - name: Publish zedazo-core
         run: cargo publish -p zedazo-core --token ${{ secrets.CRATES_IO_TOKEN }}
       - name: Wait for crates.io index
-        run: sleep 45
+        shell: bash
+        run: |
+          set -euo pipefail
+          ver=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name=="zedazo-core") | .version')
+          for i in $(seq 1 30); do
+            if curl -fsS "https://crates.io/api/v1/crates/zedazo-core/$ver" >/dev/null; then
+              echo "zedazo-core $ver visible en crates.io"
+              exit 0
+            fi
+            echo "intento $i: esperando índice..."
+            sleep 10
+          done
+          echo "timeout esperando zedazo-core en crates.io"
+          exit 1
       - name: Publish zedazo
         run: cargo publish -p zedazo --token ${{ secrets.CRATES_IO_TOKEN }}

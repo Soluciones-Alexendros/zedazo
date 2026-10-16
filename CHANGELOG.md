@@ -28,6 +28,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Guía DNS CNAME `zedazo` → `<HOST_DESTINO>` (operador) y same-origin futuro en [`docs/gui/deploy.md`](docs/gui/deploy.md)
 
 ### Fixed
+- Release: matriz de cargo-dist en output compacto (evita filtrado de `GITHUB_OUTPUT` que dejó `v0.5.1` sin binarios); `host` exige builds locales + SBOM en success; validación de assets/checksums antes de `gh release create`; espera acotada del índice crates.io ([docs/validation/release-v0.5.1.md](docs/validation/release-v0.5.1.md))
 - Release: job `Publish to crates.io` con `if: always() && needs.host.result == 'success'` (evita skip cuando los builds de cargo-dist se saltan); workflow manual `publish-crates.yml`
 
 ### Changed
