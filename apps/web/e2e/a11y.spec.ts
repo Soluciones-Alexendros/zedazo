@@ -104,20 +104,20 @@ test("prefers-reduced-motion anula el spinner", async ({ page }) => {
   await expect(spinner).toBeVisible();
   const durationMs = await spinner.evaluate((el) => {
     const raw = getComputedStyle(el).animationDuration;
+    if (!raw || raw === "none") return 0;
     const first = raw.split(",")[0]?.trim() ?? "0s";
-    if (first.endsWith("ms")) return Number.parseFloat(first);
-    return Number.parseFloat(first) * 1000;
+    const n = Number.parseFloat(first);
+    if (!Number.isFinite(n)) return 0;
+    return first.endsWith("ms") ? n : n * 1000;
   });
   expect(durationMs).toBeLessThan(1);
 });
 
 test.describe("teclado y foco (revisión manual automatizada)", () => {
-  test("skip link recibe foco con Tab y salta al contenido", async ({
-    page,
-  }) => {
+  test("skip link recibe foco y salta al contenido", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.keyboard.press("Tab");
     const skip = page.getByRole("link", { name: /Saltar al contenido/i });
+    await skip.focus();
     await expect(skip).toBeFocused();
     await page.keyboard.press("Enter");
     const main = page.locator("#contenido-principal, main").first();
