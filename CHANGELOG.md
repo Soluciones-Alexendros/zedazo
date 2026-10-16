@@ -8,6 +8,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Cierre operativo: Docker same-origin canónico; retención/reconcile; gates de release (assets+SBOM); Compose smoke; E2E API real; acta [`docs/validation/acta-cierre-operativo.md`](docs/validation/acta-cierre-operativo.md)
 - Alineación P1+P2 (canon de flota): meta-sección **Propósito** en docs contractuales; wrappers CI `quality` / `smoke` (el job `test` ya era canónico); `SUPPORT.md` + `ISSUE_TEMPLATE/config.yml`. Jobs Rust maduros intactos (ADR-0020).
 - CardDAV v0.4.0 restante ([#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48), ADR-0018): write opt-in (`zedazo carddav put|delete --confirm`, `If-Match` / ETag, HTTP 412 = conflicto), watch (`CTag` / `sync-token`, sin auto-sync al arrancar) y filtros `--category` N1/N2 client-side; tests con servidor DAV mockeado; [`docs/carddav.md`](docs/carddav.md)
 - GUI DS fase 4: catálogo `/documentacion/ds` de átomos de producto; axe WCAG 2.2 A/AA en todas las rutas + vacío/error/loading/running; regresión visual Playwright (`toHaveScreenshot`, light/dark, desktop + móvil) en `web-ci`; plan marcado ejecutado ([#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59))

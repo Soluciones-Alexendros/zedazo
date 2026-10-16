@@ -28,6 +28,10 @@ Estados persistidos en `manifest.json` (UUID v7 como `job_id`):
 | `deleted` | Borrado lógico/físico |
 
 `completed` con contactos `NeedsReview` **no** es `failed`.
+
+## Reinicio e interrupción
+
+Tras un reinicio de la API, los jobs no terminales en disco pasan a `failed` con error estable `proceso_interrumpido` y `completed_at` (sin reanudación). Entran en la política de retención como cualquier terminal. Ver [`retention.md`](retention.md).
 Jobs `cancelled`/`failed`/`expired`: artefactos incompletos no se sirven como resultados definitivos.
 
 ### Reinicio del proceso API

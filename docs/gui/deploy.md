@@ -31,8 +31,20 @@ docker compose up --build
 Entrada única: `https://localhost:8443` (Caddy same-origin: `/` → web, `/api/*` → api; TLS interno para `localhost` y `127.0.0.1`).  
 Auth: `disabled` (solo dentro de la red Docker; el host solo ve el proxy en loopback).
 
+Smoke automatizado: `make compose-smoke` (o `bash deploy/scripts/compose-smoke.sh`).
+
 Diagnóstico (API `:8080` y web `:3000` publicados):  
 `docker compose -f docker-compose.yml -f docker-compose.diag.yml up --build`.
+
+### Desarrollo sin contenedores
+
+1. `ZEDAZO_DATA_DIR=./data ZEDAZO_BIND=127.0.0.1:8080 cargo run -p zedazo-api`
+2. `pnpm --dir apps/web dev` — rewrite de `/api/*` → `http://127.0.0.1:8080` solo en `NODE_ENV=development`.
+3. Abrir `http://127.0.0.1:3000` (mismas rutas relativas `/api/v1/...`).
+
+### Producción (imagen)
+
+Sin rewrite en Next: el navegador habla same-origin con Caddy. No embeber `NEXT_PUBLIC_API_BASE` absoluto en el build.
 
 ## Docker Compose — remoto (ADR-0016)
 
