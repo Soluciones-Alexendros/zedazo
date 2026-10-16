@@ -61,10 +61,13 @@ test.describe("API Rust real", () => {
     expect(status).toBe("completed");
 
     await page.goto(`/ejecuciones/${job_id}`, {
-      waitUntil: "domcontentloaded",
+      waitUntil: "networkidle",
     });
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
+    await expect(
+      page.getByRole("link", { name: /Descargar VCF/i }),
+    ).toBeVisible({ timeout: 15_000 });
   });
 });

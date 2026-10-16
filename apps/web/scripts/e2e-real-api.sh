@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Arranca zedazo-api + next dev (rewrite /api → 8080) y Playwright real-api.
+# Start zedazo-api, Next.js development server, and Playwright real-api.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 WEB="$ROOT/apps/web"
@@ -29,10 +29,11 @@ done
 curl -fsS "http://127.0.0.1:8080/api/v1/health" >/dev/null
 
 cd "$WEB"
-# next dev reescribe /api → loopback (same-origin relativo en el cliente).
-./node_modules/.bin/next dev -p 3000 >/tmp/zedazo-e2e-next.log 2>&1 &
+# Cliente → API real (auth disabled + CORS abierto). Más fiable en CI.
+NEXT_PUBLIC_API_BASE=http://127.0.0.1:8080 \
+  ./node_modules/.bin/next dev -p 3000 >/tmp/zedazo-e2e-next.log 2>&1 &
 WEB_PID=$!
-for _ in $(seq 1 60); do
+for _ in $(seq 1 90); do
   if curl -fsS "http://127.0.0.1:3000" >/dev/null 2>&1; then
     break
   fi
@@ -40,6 +41,6 @@ for _ in $(seq 1 60); do
 done
 
 export ZEDAZO_E2E_REAL_API=1
+export NEXT_PUBLIC_API_BASE=http://127.0.0.1:8080
 export PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000
-# Sin webServer embebido: ya hay next + api.
 ./node_modules/.bin/playwright test e2e/real-api.spec.ts --config=playwright.real-api.config.ts
