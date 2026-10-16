@@ -49,6 +49,28 @@ pub async fn create_job(
 ) -> Result<(StatusCode, Json<JobManifest>), (StatusCode, String)> {
     crate::storage::Storage::validate_id(&body.upload_id)
         .map_err(|_| (StatusCode::BAD_REQUEST, "upload_id inválido".into()))?;
+    if state.max_concurrent_jobs > 0 {
+        let jobs = state.jobs.read().await;
+        let active = jobs
+            .values()
+            .filter(|j| {
+                !matches!(
+                    j.manifest.status,
+                    JobStatus::Completed
+                        | JobStatus::Failed
+                        | JobStatus::Cancelled
+                        | JobStatus::Expired
+                        | JobStatus::Deleted
+                )
+            })
+            .count();
+        if active >= state.max_concurrent_jobs {
+            return Err((
+                StatusCode::TOO_MANY_REQUESTS,
+                "límite de trabajos concurrentes".into(),
+            ));
+        }
+    }
     let upload_path = state.storage.upload_path(&body.upload_id);
     if !upload_path.exists() {
         return Err((StatusCode::NOT_FOUND, "upload_id desconocido".into()));

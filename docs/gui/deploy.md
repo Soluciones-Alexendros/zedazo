@@ -11,6 +11,7 @@
 | `ZEDAZO_STORAGE_MODE` | ephemeral | FS + manifest |
 | `ZEDAZO_DATA_DIR` | `/var/lib/zedazo` | Volumen |
 | `ZEDAZO_MAX_UPLOAD_BYTES` | 52428800 | 50 MiB |
+| `ZEDAZO_MAX_CONCURRENT_JOBS` | `4` | Tope de jobs no terminales; `0` desactiva el límite |
 | `ZEDAZO_JOB_RETENTION_HOURS` | 24 | TTL |
 | `ZEDAZO_AUTH_MODE` | `disabled` | `disabled` solo loopback; `token` en remoto |
 | `ZEDAZO_AUTH_ALLOW_DISABLED_NON_LOOPBACK` | `false` | Solo Docker local: API escucha `0.0.0.0` dentro del contenedor mientras el host publica `127.0.0.1` |
@@ -45,6 +46,8 @@ docker compose -f docker-compose.remote.yml --env-file .env up --build
 - API y web solo en red Docker interna (same-origin: `/` → web, `/api/*` → api).
 - Frontend same-origin (rutas relativas `/api/v1/...`; el bundle no embebe un origen absoluto).
 - Abrir `https://localhost:8443`, aceptar certificado interno, entrar con el token en `/acceso`.
+- **Logout:** borra la cookie `zedazo_auth` del navegador (`HttpOnly`, `Secure`, `SameSite=Strict`). **No** revoca un token estático ya copiado (Bearer/manual); rotar `ZEDAZO_AUTH_TOKEN` y recrear el stack para invalidar copias.
+- Volúmenes `caddy-data` / `caddy-config`: conservar confianza TLS al recrear el contenedor del proxy.
 
 ### Este dispositivo (hoy)
 

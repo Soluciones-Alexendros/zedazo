@@ -45,7 +45,7 @@
 | T9 | Retención indefinida | TTL `ZEDAZO_JOB_RETENTION_HOURS` + borrado verificable |
 | T10 | Sustitución de CLI frágil | No invocar CLI vía Node; core compartido |
 | T11 | Exposición sin auth | Fail-closed: `disabled` solo loopback; arranque aborta si no |
-| T12 | Robo de token/cookie | HTTPS obligatorio en remoto; cookie `Secure; HttpOnly`; token fuera de git |
+| T12 | Robo de token/cookie | HTTPS obligatorio en remoto; cookie `Secure; HttpOnly; SameSite=Strict`; token fuera de git; logout limpia cookie pero no revoca token estático ya copiado (rotar env) |
 | T13 | Publicar API/web al WAN | Solo Caddy (o túnel) publica puertos; profile `remote` |
 | T14 | Filtrar app-password CardDAV / reutilizar token GUI | Env `ZEDAZO_CARDDAV_*` distinto de `ZEDAZO_AUTH_TOKEN`; no loguear secretos; egreso solo CLI opt-in |
 
