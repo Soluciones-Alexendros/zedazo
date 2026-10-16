@@ -1,0 +1,10 @@
+# Override de diagnóstico: publica API y web en loopback (sin pasar por Caddy).
+# Uso: docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.diag.yml up --build
+
+services:
+  api:
+    ports:
+      - "127.0.0.1:8080:8080"
+  web:
+    ports:
+      - "127.0.0.1:3000:3000"

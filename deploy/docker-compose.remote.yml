@@ -1,5 +1,6 @@
 # Despliegue remoto single-user (ADR-0016).
 # Uso: cp .env.example .env && docker compose -f docker-compose.remote.yml --env-file .env up --build
+# URL: https://127.0.0.1:8443 (o dominio con Caddyfile.public)
 
 services:
   api:
@@ -23,18 +24,27 @@ services:
       - /tmp
     security_opt:
       - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "zedazo-api", "--health-check"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     # Sin ports públicos: solo red interna + Caddy
 
   web:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web
-      args:
-        NEXT_PUBLIC_API_BASE: ""
-    environment:
-      NEXT_PUBLIC_API_BASE: ""
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
 
   caddy:
     image: caddy:2-alpine
@@ -42,9 +52,21 @@ services:
       - "127.0.0.1:8443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
     depends_on:
-      - api
-      - web
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://api:8080/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
 volumes:
   zedazo-data:
+  caddy-data:
+  caddy-config:

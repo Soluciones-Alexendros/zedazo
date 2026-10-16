@@ -58,13 +58,14 @@ ZEDAZO_DATA_DIR=./data ZEDAZO_BIND=127.0.0.1:8080 cargo run -p zedazo-api
 pnpm --dir apps/web install
 pnpm --dir apps/web dev
 
-# Docker local
+# Docker local (entrada única same-origin)
 docker compose -f deploy/docker-compose.yml up --build
+# → https://localhost:8443  (certificado interno; también https://127.0.0.1:8443)
 
 # Docker remoto single-user (HTTPS + token)
 cp deploy/.env.example deploy/.env   # editar token
 docker compose -f deploy/docker-compose.remote.yml --env-file deploy/.env up --build
-# → https://127.0.0.1:8443
+# → https://localhost:8443
 ```
 
 Docs: [docs/gui/](docs/gui/) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi.yaml) · [deploy.md](docs/gui/deploy.md). Tokens GUI (DTCG, ADR-0019): [`apps/web/tokens/`](apps/web/tokens/) · `pnpm --dir apps/web tokens:build`. Catálogo in-app: `/documentacion/ds` (plan [ejecutado](docs/gui/design-system-plan.md)).
@@ -90,9 +91,9 @@ Docs: [docs/gui/](docs/gui/) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi
 # Fixture sintético de ejemplo
 cp examples/sample.vcf /tmp/sample.vcf
 
-# Stack local (API :8080, web :3000)
+# Stack local (entrada única)
 docker compose -f deploy/docker-compose.yml up --build
-# Abrir http://127.0.0.1:3000 → Procesar → subir examples/sample.vcf
+# Abrir https://localhost:8443 → Procesar → subir examples/sample.vcf
 
 # O solo CLI
 cargo install zedazo   # o binario de release tras tag v0.5.1

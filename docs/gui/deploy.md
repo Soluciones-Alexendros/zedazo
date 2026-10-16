@@ -27,10 +27,11 @@ cd deploy
 docker compose up --build
 ```
 
-API: `http://127.0.0.1:8080` · Web: `http://127.0.0.1:3000`  
-Auth: `disabled` (puertos solo en loopback del host).
+Entrada única: `https://localhost:8443` (Caddy same-origin: `/` → web, `/api/*` → api; TLS interno para `localhost` y `127.0.0.1`).  
+Auth: `disabled` (solo dentro de la red Docker; el host solo ve el proxy en loopback).
 
-TLS local opcional: `docker compose --profile proxy up --build` → `https://127.0.0.1:8443`.
+Diagnóstico (API `:8080` y web `:3000` publicados):  
+`docker compose -f docker-compose.yml -f docker-compose.diag.yml up --build`.
 
 ## Docker Compose — remoto (ADR-0016)
 
@@ -40,10 +41,10 @@ cp .env.example .env   # editar ZEDAZO_AUTH_TOKEN (openssl rand -hex 32)
 docker compose -f docker-compose.remote.yml --env-file .env up --build
 ```
 
-- Solo **Caddy** publica `127.0.0.1:8443` (HTTPS, `tls internal`).
+- Solo **Caddy** publica `127.0.0.1:8443` (HTTPS, `tls internal` para `localhost`/`127.0.0.1`).
 - API y web solo en red Docker interna (same-origin: `/` → web, `/api/*` → api).
-- Frontend con rutas relativas (`NEXT_PUBLIC_API_BASE` vacío).
-- Abrir `https://127.0.0.1:8443`, aceptar certificado interno, entrar con el token en `/acceso`.
+- Frontend same-origin (rutas relativas `/api/v1/...`; el bundle no embebe un origen absoluto).
+- Abrir `https://localhost:8443`, aceptar certificado interno, entrar con el token en `/acceso`.
 
 ### Este dispositivo (hoy)
 
