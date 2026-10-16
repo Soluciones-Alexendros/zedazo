@@ -110,3 +110,32 @@ test("prefers-reduced-motion anula el spinner", async ({ page }) => {
   });
   expect(durationMs).toBeLessThan(1);
 });
+
+test.describe("teclado y foco (revisión manual automatizada)", () => {
+  test("skip link recibe foco con Tab y salta al contenido", async ({
+    page,
+  }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.keyboard.press("Tab");
+    const skip = page.getByRole("link", { name: /Saltar al contenido/i });
+    await expect(skip).toBeFocused();
+    await page.keyboard.press("Enter");
+    const main = page.locator("#contenido-principal, main").first();
+    await expect(main).toBeVisible();
+  });
+
+  test("navegación de secciones alcanza Procesar con teclado", async ({
+    page,
+  }) => {
+    await gotoSettled(page, "/");
+    const nav = page.getByRole("navigation", { name: "Secciones" });
+    await expect(nav).toBeVisible();
+    const procesar = nav.getByRole("link", { name: /Procesar/i });
+    await procesar.focus();
+    await expect(procesar).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/procesar/);
+    await expect(page.getByRole("heading", { name: "Procesar" })).toBeVisible();
+  });
+});
+
