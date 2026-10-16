@@ -1,4 +1,4 @@
-.PHONY: all check test build release clean hooks version bump fmt clippy doc deny audit help docs-validate parity web-ci
+.PHONY: all check test build release clean hooks version bump fmt clippy doc deny audit help docs-validate parity web-ci compose-smoke
 
 CARGO := cargo
 BINARY := target/release/zedazo
@@ -23,10 +23,13 @@ web-ci: ## Tokens check/contraste + lint + typecheck + unit tests + build + Play
 	cd apps/web && ./node_modules/.bin/next lint
 	cd apps/web && node scripts/design-tokens/build.mjs --check
 	cd apps/web && node scripts/design-tokens/contrast.mjs
-	cd apps/web && node --test src/lib/api.test.mjs src/lib/design-tokens-contrast.test.mjs src/lib/atoms-contract.test.mjs src/lib/local-fixtures.test.mjs
+	cd apps/web && pnpm test
 	cd apps/web && ./node_modules/.bin/next build
 	cd apps/web && ./node_modules/.bin/playwright install --with-deps chromium
-	cd apps/web && ./node_modules/.bin/playwright test --grep-invert screenshots
+	cd apps/web && ./node_modules/.bin/playwright test --grep-invert 'screenshots|real-api'
+
+compose-smoke: ## Smoke Docker Compose (build, health, sample.vcf, descarga, borrado)
+	bash deploy/scripts/compose-smoke.sh
 
 build: ## Compila en modo debug
 	$(CARGO) build --workspace

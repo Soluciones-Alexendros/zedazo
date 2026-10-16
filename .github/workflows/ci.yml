@@ -7,6 +7,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
@@ -127,14 +130,49 @@ jobs:
       - run: ./node_modules/.bin/next lint
       - run: node scripts/design-tokens/build.mjs --check
       - run: node scripts/design-tokens/contrast.mjs
-      - run: node --test src/lib/api.test.mjs src/lib/design-tokens-contrast.test.mjs src/lib/atoms-contract.test.mjs
+      - run: pnpm test
       - run: ./node_modules/.bin/next build
       - name: Install Playwright Chromium
         run: ./node_modules/.bin/playwright install --with-deps chromium
-      - name: Playwright e2e + a11y
-        run: ./node_modules/.bin/playwright test --grep-invert screenshots
+      - name: Playwright e2e + a11y (fixtures mock; sin real-api ni screenshots)
+        run: ./node_modules/.bin/playwright test --grep-invert 'screenshots|real-api'
         env:
           CI: true
+
+  web-real-api:
+    name: Web E2E API real
+    needs: [check, web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/web
+      - run: ./node_modules/.bin/playwright install --with-deps chromium
+        working-directory: apps/web
+      - name: Playwright contra zedazo-api
+        run: bash apps/web/scripts/e2e-real-api.sh
+        env:
+          CI: true
+          CARGO_TARGET_DIR: ${{ github.workspace }}/target
+
+  compose-smoke:
+    name: Compose smoke (Docker)
+    needs: [health]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Smoke stack local
+        run: bash deploy/scripts/compose-smoke.sh
 
   deny:
     name: Deny (cargo-deny)
