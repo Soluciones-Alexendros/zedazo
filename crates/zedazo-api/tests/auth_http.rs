@@ -251,3 +251,37 @@ async fn logout_clears_cookie_flags() {
     assert!(set_cookie.contains("SameSite=Strict"));
     assert!(set_cookie.contains("Secure"));
 }
+
+/// Prove-It: el cliente GUI usa `credentials: "include"`. CORS disabled debe
+/// espejar Origin y permitir credentials sin panicar (Allow-Headers no puede ser *).
+#[tokio::test]
+async fn disabled_mode_cors_mirrors_origin_with_credentials() {
+    let dir = tempdir().unwrap();
+    let state = AppState::new(dir.path().to_path_buf(), 1_000_000, 24).unwrap();
+    let origin = "http://127.0.0.1:3000";
+
+    let res = app::router(state)
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/v1/health")
+                .header(header::ORIGIN, origin)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    assert_eq!(
+        res.headers()
+            .get(header::ACCESS_CONTROL_ALLOW_ORIGIN)
+            .and_then(|v| v.to_str().ok()),
+        Some(origin)
+    );
+    assert_eq!(
+        res.headers()
+            .get(header::ACCESS_CONTROL_ALLOW_CREDENTIALS)
+            .and_then(|v| v.to_str().ok()),
+        Some("true")
+    );
+}
