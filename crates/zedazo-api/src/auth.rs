@@ -216,10 +216,14 @@ fn set_cookie_header(value: &str, secure: bool, clear: bool) -> String {
 
 pub fn cors_layer_for(auth: &AuthConfig) -> CorsLayer {
     match &auth.mode {
+        // Espejar origen + credentials: el cliente GUI siempre usa
+        // `credentials: "include"`. `AllowOrigin::any` es incompatible con eso
+        // y haría fallar el probe same-host/`dev` con API_BASE absoluto.
         AuthMode::Disabled => CorsLayer::new()
-            .allow_origin(Any)
+            .allow_origin(tower_http::cors::AllowOrigin::mirror_request())
             .allow_methods(Any)
-            .allow_headers(Any),
+            .allow_headers(Any)
+            .allow_credentials(true),
         AuthMode::Token(_) => {
             let origins = std::env::var("ZEDAZO_CORS_ORIGIN").unwrap_or_default();
             if origins.trim().is_empty() {

@@ -29,18 +29,28 @@ done
 curl -fsS "http://127.0.0.1:8080/api/v1/health" >/dev/null
 
 cd "$WEB"
-# Cliente → API real (auth disabled + CORS abierto). Más fiable en CI.
-NEXT_PUBLIC_API_BASE=http://127.0.0.1:8080 \
-  ./node_modules/.bin/next dev -p 3000 >/tmp/zedazo-e2e-next.log 2>&1 &
+# Same-origin relativo: Next rewrite /api -> 8080 (NODE_ENV=development).
+./node_modules/.bin/next dev -p 3000 >/tmp/zedazo-e2e-next.log 2>&1 &
 WEB_PID=$!
+
 for _ in $(seq 1 90); do
   if curl -fsS "http://127.0.0.1:3000" >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
+# Esperar rewrite /api (no solo el HTML de Next).
+ok=0
+for _ in $(seq 1 60); do
+  if curl -fsS "http://127.0.0.1:3000/api/v1/health" >/dev/null 2>&1; then
+    ok=1
+    break
+  fi
+  sleep 1
+done
+test "$ok" -eq 1 || { echo "rewrite /api health timeout"; tail -50 /tmp/zedazo-e2e-next.log || true; exit 1; }
 
 export ZEDAZO_E2E_REAL_API=1
-export NEXT_PUBLIC_API_BASE=http://127.0.0.1:8080
+unset NEXT_PUBLIC_API_BASE
 export PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000
 ./node_modules/.bin/playwright test e2e/real-api.spec.ts --config=playwright.real-api.config.ts
