@@ -8,6 +8,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Cierre operativo: Docker same-origin canónico; retención/reconcile; gates de release (assets+SBOM); Compose smoke; E2E API real; acta [`docs/validation/acta-cierre-operativo.md`](docs/validation/acta-cierre-operativo.md)
 - Alineación P1+P2 (canon de flota): meta-sección **Propósito** en docs contractuales; wrappers CI `quality` / `smoke` (el job `test` ya era canónico); `SUPPORT.md` + `ISSUE_TEMPLATE/config.yml`. Jobs Rust maduros intactos (ADR-0020).
 - CardDAV v0.4.0 restante ([#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48), ADR-0018): write opt-in (`zedazo carddav put|delete --confirm`, `If-Match` / ETag, HTTP 412 = conflicto), watch (`CTag` / `sync-token`, sin auto-sync al arrancar) y filtros `--category` N1/N2 client-side; tests con servidor DAV mockeado; [`docs/carddav.md`](docs/carddav.md)
 - GUI DS fase 4: catálogo `/documentacion/ds` de átomos de producto; axe WCAG 2.2 A/AA en todas las rutas + vacío/error/loading/running; regresión visual Playwright (`toHaveScreenshot`, light/dark, desktop + móvil) en `web-ci`; plan marcado ejecutado ([#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59))
@@ -18,6 +19,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Primer slice CardDAV (ADR-0018 / [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48), no cierra el issue): crate `zedazo-carddav` (`publish = false`), CLI `zedazo carddav list|pull`, Basic + app-password (`ZEDAZO_CARDDAV_*`), descubrimiento RFC 6764 y perfil Nextcloud; guía [`docs/carddav.md`](docs/carddav.md)
 
 ### Security
+- `rustls` → 0.23.46 (RUSTSEC-2026-0348 / RUSTSEC-2026-0349); `quinn-proto` → 0.11.19 (RUSTSEC-2026-0338 / 0340 / 0343)
 - `rustls` 0.23.44 → 0.23.45 ([RUSTSEC-2026-0285](https://rustsec.org/advisories/RUSTSEC-2026-0285): handshake TLS 1.3 aceptado en el encryption level incorrecto)
 - Política `cargo audit`: el workflow falla solo ante vulnerabilidades; avisos informativos no bloquean; excepciones en `.cargo/audit.toml` + `deny.toml`
 - CardDAV: los hrefs DAV absolutos quedan anclados al origen del servidor; no se reenvía Basic a loopback u otro host inyectado en el 207
@@ -28,6 +30,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Guía DNS CNAME `zedazo` → `<HOST_DESTINO>` (operador) y same-origin futuro en [`docs/gui/deploy.md`](docs/gui/deploy.md)
 
 ### Fixed
+- Release: matriz de cargo-dist en output compacto (evita filtrado de `GITHUB_OUTPUT` que dejó `v0.5.1` sin binarios); `host` exige builds locales + SBOM en success; validación de assets/checksums antes de `gh release create`; espera acotada del índice crates.io ([docs/validation/release-v0.5.1.md](docs/validation/release-v0.5.1.md))
 - Release: job `Publish to crates.io` con `if: always() && needs.host.result == 'success'` (evita skip cuando los builds de cargo-dist se saltan); workflow manual `publish-crates.yml`
 
 ### Changed

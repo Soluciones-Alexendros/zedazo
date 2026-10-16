@@ -27,7 +27,10 @@ Envía un correo a los mantenedores del proyecto con los detalles. Responderemos
 - **API/GUI remota (ADR-0016)**:
   - Nunca `ZEDAZO_AUTH_MODE=disabled` en interfaz pública (fail-closed fuera de loopback).
   - Remoto: `token` + HTTPS (Caddy o túnel); rotar `ZEDAZO_AUTH_TOKEN` si se filtra.
+  - **Logout** borra la cookie `zedazo_auth` (`HttpOnly`, `Secure`, `SameSite`); **no** revoca un token estático ya copiado (Bearer/manual).
+  - **Rotación:** generar nuevo token (`openssl rand -hex 32`), actualizar `.env` / secreto, recrear el servicio API (y Caddy si aplica). Sesiones con cookie antigua fallan hasta nuevo login.
   - No publicar puertos de `api`/`web` al WAN; solo el reverse proxy.
+  - **Backups opt-in** del volumen `zedazo-data` pueden conservar datos que la app ya borró (retención no forense).
 - **CardDAV (ADR-0018):** credenciales del proveedor (`ZEDAZO_CARDDAV_URL`, `ZEDAZO_CARDDAV_USERNAME`, `ZEDAZO_CARDDAV_PASSWORD`, opcional `ZEDAZO_CARDDAV_ADDRESSBOOK`) distintas de `ZEDAZO_AUTH_TOKEN` (GUI). No viajan por `zedazo.alexendros.dev`. Egreso opt-in vía `zedazo carddav`; el pipeline `cribar` sigue sin red por defecto. Write remoto exige `--confirm` + `If-Match`; HTTP 412 no sobrescribe. HTTPS (TLS 1.2+) obligatorio fuera de loopback; sin `insecure-skip-verify`. Ver [`docs/carddav.md`](docs/carddav.md).
 - **Dependencias**: `cargo audit` semanal (lunes 08:00 UTC) y en PRs/push que toquen el lockfile o la política (`.github/workflows/audit.yml`).
   - **Falla solo** ante vulnerabilidades RustSec. Avisos informativos (`unmaintained`, `unsound`, `yanked`) no fallan el job.

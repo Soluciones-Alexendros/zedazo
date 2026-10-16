@@ -46,7 +46,10 @@ Ver [`ARCHITECTURE.md`](ARCHITECTURE.md) para la arquitectura completa.
 
 ```bash
 make hooks       # instalar pre-commit (fmt + clippy); ver `.githooks/install.sh`
-make ci          # fmt + clippy + test + check + doc + docs-validate + parity + web-ci
+make ci             # fmt + clippy + test + check + doc + docs-validate + parity + web-ci
+make compose-smoke  # Docker: health + sample.vcf + descarga + DELETE (no es el job wrapper `smoke`)
+pnpm --dir apps/web test          # todos los *.test.mjs
+pnpm --dir apps/web test:e2e:real-api  # Playwright + zedazo-api (opcional)
 make deny        # opcional: cargo-deny (licencias/advisories)
 make audit       # opcional: cargo-audit (falla solo en vulnerabilidades RustSec)
 ```

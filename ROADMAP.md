@@ -1,9 +1,9 @@
 ---
-version: "0.3.2"
-date: "2026-09-09"
+version: "0.3.3"
+date: "2026-10-16"
 status: "Activo"
 canonical: true
-supersedes: "v0.3.1"
+supersedes: "v0.3.2"
 ---
 
 # ROADMAP.md
@@ -14,8 +14,8 @@ supersedes: "v0.3.1"
 - **Estructura:** Propósito → reglas → estado actual → hitos.
 - **Contenido a integrar según contexto:** No adelantes features de red o GUI sin ancla. No copies un roadmap de landing/SaaS.
 
-**Versión:** 0.3.2  
-**Fecha:** 2026-09-09  
+**Versión:** 0.3.3  
+**Fecha:** 2026-10-16  
 **Canónico:** este archivo. [`docs/tasks.md`](docs/tasks.md) redirige aquí.
 
 ---
@@ -31,13 +31,14 @@ supersedes: "v0.3.1"
 
 | Dimensión | Estado |
 |-----------|--------|
-| Versión publicada | crates.io pendiente de tag **v0.5.1**; workspace Cargo.toml **0.5.1**; código = hitos v0.5.0 (GUI) + v0.5.1 (remoto ADR-0016) |
-| Tests | unitarios core + verificación I4–I6 + integración; parity O10; `auth_http`; web (`tsc`/`lint`/`next build`) |
-| CI | `ubuntu-latest`; Renovate; `make ci` = fmt + clippy + test + check + doc + docs-validate + parity + web-ci |
-| GUI/API | Local loopback (ADR-0015) + remoto HTTPS+token (ADR-0016, O11) |
-| Branch protection | Activa en `main` |
+| Versión publicada | Tag **v0.5.1** existe (assets/SBOM: ver [`docs/validation/release-v0.5.1.md`](docs/validation/release-v0.5.1.md)); workspace **0.5.1**; GUI ADR-0015 + remoto ADR-0016 |
+| Tests | core + I4–I6; parity O10 ampliada; `auth_http`; retención; web `pnpm test` + Playwright; CardDAV mocks CLI |
+| CI | `ubuntu-latest`; `make ci` + jobs Compose smoke / E2E API real; Renovate |
+| GUI/API | Same-origin Docker (Caddy); local + remoto single-user (O11) |
+| Branch protection | Activa en `main` (hueco Web/Parity/Deny: [`docs/validation/branch-protection-gap.md`](docs/validation/branch-protection-gap.md)) |
 | Dominio producto | Landing `apps/landing` + guía DNS (#50); CNAME a rellenar por el operador |
-| Backlog trazable | Issues GitHub (post-cierre #24–27/#35: TMview oficial residual #49; CardDAV v0.4 ADR-0018/#48; OTel post-v1.0) |
+| Cierre operativo | Acta [`docs/validation/acta-cierre-operativo.md`](docs/validation/acta-cierre-operativo.md) |
+| Backlog trazable | TMview residual #49; OTel post-v1.0; CardDAV CLI cerrado en ADR-0018/#48 (sin GUI/API CardDAV) |
 
 ## Hitos
 
@@ -105,7 +106,7 @@ supersedes: "v0.3.1"
 - [x] Docs: threat-model, deploy (este host → miniPC / túnel / Let's Encrypt)
 - [x] Tests auth + `make ci` (O10 intacto)
 
-**Criterio de salida:** O11; despliegue remoto usable sin publicar API/web directamente; CI verde. Tag `v0.5.1` (y bump crates.io) a confirmación humana.
+**Criterio de salida:** O11; despliegue remoto usable sin publicar API/web directamente; CI verde. Tag `v0.5.1` creado (estado de assets en docs de validación); republicación crates.io / assets a confirmación humana tras gates de `release.yml`.
 
 **Nota (v0.5.x, docs):** modernización del design system de la GUI (OKLCH tokenizado → GUI profesional) — plan en [`docs/gui/design-system-plan.md`](./docs/gui/design-system-plan.md) **ejecutado** 2026-09-12, epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59). Fases 1–4 aterrizadas (pipeline DTCG + átomos + pantallas `--zed-*` + catálogo `/documentacion/ds` + axe/visual en CI), **separada** de CardDAV ([#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48)).
 

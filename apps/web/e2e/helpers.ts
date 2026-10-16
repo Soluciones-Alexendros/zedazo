@@ -87,7 +87,8 @@ export async function installApiFixture(page: Page, fixture: ApiFixture) {
     return;
   }
 
-  await page.route(`${API_ORIGIN}/api/v1/**`, async (route) => {
+  // Same-origin: el cliente pide `/api/v1/...` relativo (no solo loopback:8080).
+  await page.route("**/api/v1/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
     const method = route.request().method();

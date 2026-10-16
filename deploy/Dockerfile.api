@@ -1,5 +1,6 @@
 # API Zedazo
-FROM rust:1.80-bookworm AS build
+# Imagen de build ≥ 1.85 (deps con edition2024). MSRV del crate sigue en 1.80 (CI msrv).
+FROM rust:1.85-bookworm AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
@@ -16,4 +17,6 @@ ENV ZEDAZO_BIND=0.0.0.0:8080 \
     ZEDAZO_OTEL_ENABLED=false
 EXPOSE 8080
 VOLUME ["/var/lib/zedazo"]
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+  CMD ["zedazo-api", "--health-check"]
 CMD ["zedazo-api"]

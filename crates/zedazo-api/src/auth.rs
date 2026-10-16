@@ -1,15 +1,35 @@
 //! Autenticación single-user (ADR-0016).
 
 use axum::extract::{Request, State};
-use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
+use axum::http::{header, HeaderMap, HeaderName, HeaderValue, Method, StatusCode};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use crate::app::AppState;
+
+/// Cabeceras explícitas: tower-http prohíbe `Allow-Headers: *` con credentials.
+fn cors_allow_headers() -> [HeaderName; 4] {
+    [
+        header::AUTHORIZATION,
+        header::CONTENT_TYPE,
+        header::ACCEPT,
+        header::COOKIE,
+    ]
+}
+
+fn cors_allow_methods() -> [Method; 5] {
+    [
+        Method::GET,
+        Method::POST,
+        Method::DELETE,
+        Method::OPTIONS,
+        Method::HEAD,
+    ]
+}
 
 pub const COOKIE_NAME: &str = "zedazo_auth";
 
@@ -216,10 +236,13 @@ fn set_cookie_header(value: &str, secure: bool, clear: bool) -> String {
 
 pub fn cors_layer_for(auth: &AuthConfig) -> CorsLayer {
     match &auth.mode {
+        // Espejar origen + credentials: el cliente GUI usa `credentials: "include"`.
+        // No usar AllowOrigin::any ni Allow-Headers: * (incompatibles con credentials).
         AuthMode::Disabled => CorsLayer::new()
-            .allow_origin(Any)
-            .allow_methods(Any)
-            .allow_headers(Any),
+            .allow_origin(AllowOrigin::mirror_request())
+            .allow_methods(cors_allow_methods())
+            .allow_headers(cors_allow_headers())
+            .allow_credentials(true),
         AuthMode::Token(_) => {
             let origins = std::env::var("ZEDAZO_CORS_ORIGIN").unwrap_or_default();
             if origins.trim().is_empty() {
@@ -234,8 +257,8 @@ pub fn cors_layer_for(auth: &AuthConfig) -> CorsLayer {
                 } else {
                     CorsLayer::new()
                         .allow_origin(list)
-                        .allow_methods(Any)
-                        .allow_headers(Any)
+                        .allow_methods(cors_allow_methods())
+                        .allow_headers(cors_allow_headers())
                         .allow_credentials(true)
                 }
             }

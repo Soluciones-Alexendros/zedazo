@@ -1,4 +1,18 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8080";
+/**
+ * Base de la API. Same-origin por defecto (rutas relativas `/api/v1/...`).
+ * En desarrollo, `next.config` reescribe `/api/*` hacia la API en loopback.
+ * Solo se usa un origen absoluto si `NEXT_PUBLIC_API_BASE` está definido y no vacío
+ * (p. ej. pruebas aisladas); la cadena vacía no cuenta como absoluta.
+ */
+function resolveApiBase(): string {
+  const raw = process.env.NEXT_PUBLIC_API_BASE;
+  if (typeof raw === "string" && raw.trim() !== "") {
+    return raw.replace(/\/$/, "");
+  }
+  return "";
+}
+
+export const API_BASE = resolveApiBase();
 
 export class ApiError extends Error {
   status: number;

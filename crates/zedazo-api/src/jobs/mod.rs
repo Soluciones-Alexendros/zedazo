@@ -12,6 +12,7 @@ use zedazo_core::application::process::{
 use crate::app::AppState;
 use crate::dto::artifact_kind_str;
 pub use crate::dto::{JobEvent, JobManifest, JobRecord, JobStatus};
+use crate::storage::Storage;
 
 pub struct ApiProgress {
     tx: broadcast::Sender<JobEvent>,
@@ -79,25 +80,44 @@ pub fn read_events_after(path: &std::path::Path, after_id: u64) -> Vec<JobEvent>
 }
 
 pub fn spawn_job(state: AppState, job_id: String) {
+    let epoch_at_spawn = state.current_wipe_epoch();
     tokio::task::spawn_blocking(move || {
-        if let Err(e) = run_job_sync(&state, &job_id) {
+        if let Err(e) = run_job_sync(&state, &job_id, epoch_at_spawn) {
             tracing::error!(%job_id, error = %e, "job falló");
             let rt = tokio::runtime::Handle::current();
             rt.block_on(async {
+                if state.current_wipe_epoch() != epoch_at_spawn {
+                    return;
+                }
                 let mut jobs = state.jobs.write().await;
                 if let Some(rec) = jobs.get_mut(&job_id) {
+                    let msg = e.to_string();
+                    let disk_full = msg.contains("No space left")
+                        || msg.contains("espacio")
+                        || msg.contains("ENOSPC");
                     rec.manifest.status = JobStatus::Failed;
-                    rec.manifest.error = Some(e.to_string());
+                    rec.manifest.error = Some(if disk_full { "disco_lleno".into() } else { msg });
                     rec.manifest.completed_at = Some(now_rfc3339());
-                    save_manifest(&state, &rec.manifest);
+                    let _ = save_manifest_result(&state, &rec.manifest);
+                    if disk_full {
+                        // Intentar limpiar parciales; si falla, cola de reintento.
+                        if state.storage.delete_job_dir(&job_id).is_err() {
+                            let _ = state
+                                .storage
+                                .enqueue_pending_delete(crate::storage::PendingKind::Job, &job_id);
+                        }
+                    }
                 }
             });
         }
     });
 }
 
-fn run_job_sync(state: &AppState, job_id: &str) -> anyhow::Result<()> {
+fn run_job_sync(state: &AppState, job_id: &str, epoch_at_spawn: u64) -> anyhow::Result<()> {
     let handle = tokio::runtime::Handle::current();
+    if state.current_wipe_epoch() != epoch_at_spawn {
+        anyhow::bail!("wipe tras spawn; job abandonado");
+    }
     let (rec_snapshot, tx) = handle.block_on(async {
         let jobs = state.jobs.read().await;
         let rec = jobs
@@ -119,6 +139,10 @@ fn run_job_sync(state: &AppState, job_id: &str) -> anyhow::Result<()> {
             r.manifest.started_at = Some(now_rfc3339());
             save_manifest(state, &r.manifest);
         }
+    }
+
+    if state.current_wipe_epoch() != epoch_at_spawn || rec_snapshot.cancel.is_cancelled() {
+        anyhow::bail!("job cancelado o wipe antes de escribir");
     }
 
     let job_dir = state.storage.ensure_job_dir(job_id)?;
@@ -161,7 +185,7 @@ fn run_job_sync(state: &AppState, job_id: &str) -> anyhow::Result<()> {
         progress,
     };
 
-    if rec_snapshot.cancel.is_cancelled() {
+    if rec_snapshot.cancel.is_cancelled() || state.current_wipe_epoch() != epoch_at_spawn {
         handle.block_on(async {
             let mut jobs = state.jobs.write().await;
             if let Some(r) = jobs.get_mut(job_id) {
@@ -174,6 +198,10 @@ fn run_job_sync(state: &AppState, job_id: &str) -> anyhow::Result<()> {
     }
 
     let result = process::run(&req)?;
+
+    if state.current_wipe_epoch() != epoch_at_spawn {
+        anyhow::bail!("wipe durante el procesamiento; no se persisten resultados");
+    }
 
     handle.block_on(async {
         let mut jobs = state.jobs.write().await;
@@ -192,14 +220,18 @@ fn run_job_sync(state: &AppState, job_id: &str) -> anyhow::Result<()> {
                     .map(|a| artifact_kind_str(a.kind).to_string())
                     .collect();
                 let contacts_path = job_dir.join("contacts_view.json");
-                let _ = std::fs::write(
+                let _ = Storage::atomic_write(
                     &contacts_path,
-                    serde_json::to_string_pretty(&result.contact_views).unwrap_or_default(),
+                    serde_json::to_string_pretty(&result.contact_views)
+                        .unwrap_or_default()
+                        .as_bytes(),
                 );
                 let dup_path = job_dir.join("duplicates_view.json");
-                let _ = std::fs::write(
+                let _ = Storage::atomic_write(
                     &dup_path,
-                    serde_json::to_string_pretty(&result.duplicate_groups).unwrap_or_default(),
+                    serde_json::to_string_pretty(&result.duplicate_groups)
+                        .unwrap_or_default()
+                        .as_bytes(),
                 );
             }
             r.manifest.completed_at = Some(now_rfc3339());
@@ -211,13 +243,18 @@ fn run_job_sync(state: &AppState, job_id: &str) -> anyhow::Result<()> {
 }
 
 pub fn save_manifest(state: &AppState, manifest: &JobManifest) {
+    let _ = save_manifest_result(state, manifest);
+}
+
+pub fn save_manifest_result(state: &AppState, manifest: &JobManifest) -> anyhow::Result<()> {
+    crate::storage::Storage::validate_id(&manifest.job_id)?;
     let path = state
         .storage
         .job_dir(&manifest.job_id)
         .join("manifest.json");
-    if let Ok(s) = serde_json::to_string_pretty(manifest) {
-        let _ = std::fs::write(path, s);
-    }
+    state.storage.assert_under_root(&path)?;
+    let s = serde_json::to_string_pretty(manifest)?;
+    Storage::atomic_write(&path, s.as_bytes())
 }
 
 pub fn now_rfc3339() -> String {

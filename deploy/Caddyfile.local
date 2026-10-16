@@ -1,5 +1,6 @@
-# Proxy local opcional (profile proxy en docker-compose.yml).
-:443 {
+# Proxy local canónico (entrada única del stack Docker).
+# Hostnames explícitos para que tls internal emita certificados usables vía IP/localhost.
+https://localhost, https://127.0.0.1 {
 	tls internal
 
 	header {
@@ -9,11 +10,18 @@
 		Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'"
 	}
 
+	@api path /api/*
+	header @api Cache-Control "no-store"
+
 	handle /api/* {
+		request_body {
+			max_size 50MB
+		}
 		reverse_proxy api:8080 {
 			flush_interval -1
 		}
 	}
+
 	handle {
 		reverse_proxy web:3000
 	}

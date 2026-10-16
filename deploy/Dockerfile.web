@@ -1,20 +1,28 @@
+# Frontend Zedazo (Next.js standalone). Bundle same-origin: rutas relativas /api/v1/...
 FROM node:22-bookworm AS deps
 WORKDIR /app
-COPY apps/web/package.json ./
-RUN corepack enable && pnpm install
+RUN corepack enable
+COPY apps/web/package.json apps/web/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM node:22-bookworm AS build
 WORKDIR /app
+RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
 COPY apps/web ./
+# Vacío intencional: el cliente usa rutas relativas; el proxy Caddy enruta /api/*.
 ENV NEXT_PUBLIC_API_BASE=
-RUN corepack enable && pnpm build
+RUN pnpm build
 
 FROM node:22-bookworm-slim
 WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
+ENV NODE_ENV=production \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000
+COPY --from=build --chown=node:node /app/.next/standalone ./
+COPY --from=build --chown=node:node /app/.next/static ./.next/static
 USER node
 EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "server.js"]

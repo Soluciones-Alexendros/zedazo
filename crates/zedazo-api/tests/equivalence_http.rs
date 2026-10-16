@@ -444,3 +444,166 @@ async fn equivalence_rejects_empty_completed_semantics() {
     assert!(!csv.is_empty());
     assert!(!json.is_empty());
 }
+
+/// Entrada vacía: el upload se rechaza (400); no hay job ni artefacto.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn adverse_empty_vcf_upload_rejected() {
+    let dir = tempdir().expect("tempdir");
+    let state = AppState::new(dir.path().to_path_buf(), 52_428_800, 24).expect("state");
+    let (ct, body) = multipart_vcf("empty.vcf", b"");
+    let upload_res = app::router(state)
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/uploads")
+                .header("content-type", ct)
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(upload_res.status(), StatusCode::BAD_REQUEST);
+}
+
+/// TOML de reglas inválido: validate responde ok=false.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn adverse_rules_validate_rejects_invalid_toml() {
+    let dir = tempdir().expect("tempdir");
+    let state = AppState::new(dir.path().to_path_buf(), 52_428_800, 24).expect("state");
+    let res = app::router(state)
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/rules/validate")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::to_vec(&serde_json::json!({
+                        "toml": "[zedazo\nesto = no es toml"
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    let body: Value = body_json(res).await;
+    assert_eq!(body["ok"], false);
+    assert!(body["diagnostics"]
+        .as_array()
+        .map(|a| !a.is_empty())
+        .unwrap_or(false));
+}
+
+/// Cancelar → borrar → segundo DELETE idempotente (204).
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn cancel_then_delete_is_idempotent() {
+    let dir = tempdir().expect("tempdir");
+    let state = AppState::new(dir.path().to_path_buf(), 52_428_800, 24).expect("state");
+    let path = fixture("sample-contacts.vcf");
+    let vcf = std::fs::read(&path).expect("fixture");
+    let (ct, body) = multipart_vcf("sample.vcf", &vcf);
+
+    let upload_res = app::router(state.clone())
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/uploads")
+                .header("content-type", ct)
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let upload: Value = body_json(upload_res).await;
+    let upload_id = upload["upload_id"].as_str().unwrap();
+
+    let create_res = app::router(state.clone())
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/jobs")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::to_vec(&serde_json::json!({
+                        "upload_id": upload_id,
+                        "artifacts": ["vcf", "audit_tsv"]
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let job: Value = body_json(create_res).await;
+    let job_id = job["job_id"].as_str().unwrap().to_string();
+
+    let cancel = app::router(state.clone())
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri(format!("/api/v1/jobs/{job_id}/cancel"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(cancel.status(), StatusCode::ACCEPTED);
+
+    // Esperar estado terminal (cancelled o completed si ganó la carrera).
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
+    loop {
+        assert!(tokio::time::Instant::now() < deadline, "timeout cancel");
+        tokio::time::sleep(Duration::from_millis(40)).await;
+        let get_res = app::router(state.clone())
+            .oneshot(
+                Request::builder()
+                    .method("GET")
+                    .uri(format!("/api/v1/jobs/{job_id}"))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let payload: Value = body_json(get_res).await;
+        let status = payload["job"]["status"].as_str().unwrap_or("");
+        if matches!(status, "cancelled" | "completed" | "failed" | "expired") {
+            break;
+        }
+    }
+
+    let del1 = app::router(state.clone())
+        .oneshot(
+            Request::builder()
+                .method("DELETE")
+                .uri(format!("/api/v1/jobs/{job_id}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(del1.status(), StatusCode::NO_CONTENT);
+
+    let del2 = app::router(state.clone())
+        .oneshot(
+            Request::builder()
+                .method("DELETE")
+                .uri(format!("/api/v1/jobs/{job_id}"))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(del2.status(), StatusCode::NO_CONTENT);
+}
+
+/// Descargar artefactos tras job completed (ruta GUI → API).
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn download_artifacts_after_completed() {
+    let path = fixture("duplicates.vcf");
+    let (_summary, vcf, audit, _stats, csv, json) = api_artifacts(&path).await;
+    assert!(vcf.contains("BEGIN:VCARD"));
+    assert!(audit.contains('\t'));
+    assert!(csv.contains(',') || csv.lines().count() > 0);
+    assert!(json.trim_start().starts_with('[') || json.trim_start().starts_with('{'));
+}

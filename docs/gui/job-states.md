@@ -1,10 +1,10 @@
 # Estados de job
 
-**Versión:** 0.2.0  
-**Fecha:** 2026-09-09  
+**Versión:** 0.3.0  
+**Fecha:** 2026-10-16  
 **Traza:** ADR-0015, ADR-0016
 
-Estados persistidos en `manifest.json`:
+Estados persistidos en `manifest.json` (UUID v7 como `job_id`):
 
 | Estado | Significado |
 |--------|-------------|
@@ -28,4 +28,12 @@ Estados persistidos en `manifest.json`:
 | `deleted` | Borrado lógico/físico |
 
 `completed` con contactos `NeedsReview` **no** es `failed`.
+
+## Reinicio e interrupción
+
+Tras un reinicio de la API, los jobs no terminales en disco pasan a `failed` con error estable `proceso_interrumpido` y `completed_at` (sin reanudación). Entran en la política de retención como cualquier terminal. Ver [`retention.md`](retention.md).
 Jobs `cancelled`/`failed`/`expired`: artefactos incompletos no se sirven como resultados definitivos.
+
+### Reinicio del proceso API
+
+Si el proceso termina mientras un job está en pipeline (`queued` … `writing_artifacts`), al arrancar se marca `failed` con `error: proceso_interrumpido` y `completed_at`. No hay reanudación automática. Los jobs terminales en disco se rehidratan en el registro en memoria; los vencidos se borran en la reconciliación.

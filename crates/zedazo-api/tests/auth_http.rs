@@ -19,6 +19,7 @@ async fn token_mode_rejects_without_credential() {
     let state = AppState::new_with_auth(
         dir.path().to_path_buf(),
         1_000_000,
+        32,
         24,
         AuthConfig::token("secret-token", false),
     )
@@ -42,6 +43,7 @@ async fn token_mode_accepts_bearer() {
     let state = AppState::new_with_auth(
         dir.path().to_path_buf(),
         1_000_000,
+        32,
         24,
         AuthConfig::token("secret-token", false),
     )
@@ -66,6 +68,7 @@ async fn health_remains_public() {
     let state = AppState::new_with_auth(
         dir.path().to_path_buf(),
         1_000_000,
+        32,
         24,
         AuthConfig::token("secret-token", false),
     )
@@ -89,6 +92,7 @@ async fn login_sets_cookie_and_authorizes() {
     let state = AppState::new_with_auth(
         dir.path().to_path_buf(),
         1_000_000,
+        32,
         24,
         AuthConfig::token("secret-token", false),
     )
@@ -137,6 +141,7 @@ async fn login_rejects_bad_token() {
     let state = AppState::new_with_auth(
         dir.path().to_path_buf(),
         1_000_000,
+        32,
         24,
         AuthConfig::token("secret-token", false),
     )
@@ -162,4 +167,121 @@ fn fail_closed_public_bind() {
     let auth = AuthConfig::disabled();
     assert!(auth::validate_bind_auth("0.0.0.0:8080", &auth).is_err());
     assert!(auth::validate_bind_auth("127.0.0.1:8080", &auth).is_ok());
+}
+
+#[tokio::test]
+async fn protected_routes_reject_without_credential() {
+    let dir = tempdir().unwrap();
+    let state = AppState::new_with_auth(
+        dir.path().to_path_buf(),
+        1_000_000,
+        32,
+        24,
+        AuthConfig::token("secret-token", true),
+    )
+    .unwrap();
+    let app = app::router(state);
+    let paths = [
+        ("GET", "/api/v1/jobs"),
+        ("GET", "/api/v1/jobs/01900000-0000-7000-8000-000000000001"),
+        (
+            "DELETE",
+            "/api/v1/jobs/01900000-0000-7000-8000-000000000001",
+        ),
+        (
+            "GET",
+            "/api/v1/jobs/01900000-0000-7000-8000-000000000001/events",
+        ),
+        (
+            "GET",
+            "/api/v1/jobs/01900000-0000-7000-8000-000000000001/artifacts/vcf",
+        ),
+        ("POST", "/api/v1/admin/wipe"),
+    ];
+    for (method, uri) in paths {
+        let res = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(method)
+                    .uri(uri)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(
+            res.status(),
+            StatusCode::UNAUTHORIZED,
+            "{method} {uri} debe exigir credencial"
+        );
+    }
+}
+
+#[tokio::test]
+async fn logout_clears_cookie_flags() {
+    let dir = tempdir().unwrap();
+    let state = AppState::new_with_auth(
+        dir.path().to_path_buf(),
+        1_000_000,
+        32,
+        24,
+        AuthConfig::token("secret-token", true),
+    )
+    .unwrap();
+    let res = app::router(state)
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/auth/logout")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::NO_CONTENT);
+    let set_cookie = res
+        .headers()
+        .get(header::SET_COOKIE)
+        .unwrap()
+        .to_str()
+        .unwrap();
+    assert!(set_cookie.contains("Max-Age=0"));
+    assert!(set_cookie.contains("HttpOnly"));
+    assert!(set_cookie.contains("SameSite=Strict"));
+    assert!(set_cookie.contains("Secure"));
+}
+
+/// Prove-It: el cliente GUI usa `credentials: "include"`. CORS disabled debe
+/// espejar Origin y permitir credentials sin panicar (Allow-Headers no puede ser *).
+#[tokio::test]
+async fn disabled_mode_cors_mirrors_origin_with_credentials() {
+    let dir = tempdir().unwrap();
+    let state = AppState::new(dir.path().to_path_buf(), 1_000_000, 24).unwrap();
+    let origin = "http://127.0.0.1:3000";
+
+    let res = app::router(state)
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/api/v1/health")
+                .header(header::ORIGIN, origin)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+    assert_eq!(
+        res.headers()
+            .get(header::ACCESS_CONTROL_ALLOW_ORIGIN)
+            .and_then(|v| v.to_str().ok()),
+        Some(origin)
+    );
+    assert_eq!(
+        res.headers()
+            .get(header::ACCESS_CONTROL_ALLOW_CREDENTIALS)
+            .and_then(|v| v.to_str().ok()),
+        Some("true")
+    );
 }

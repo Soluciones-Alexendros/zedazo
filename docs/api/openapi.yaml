@@ -7,11 +7,14 @@ info:
     Prefijo /api/v1.
     Auth: `disabled` solo en loopback; `token` exige Bearer o cookie `zedazo_auth`.
     `security` global no aplica a `/api/v1/health` ni `/api/v1/auth/*`.
+    Tras reinicio, jobs no terminales pasan a `failed` con error `proceso_interrumpido`.
+    Tope concurrente: `ZEDAZO_MAX_CONCURRENT_JOBS` (default 4).
+    Same-origin canónico detrás de Caddy: `https://localhost:8443`.
 servers:
   - url: http://127.0.0.1:8080
-    description: Local single-user (auth disabled)
-  - url: https://127.0.0.1:8443
-    description: Remoto vía Caddy same-origin (auth token)
+    description: Local single-user (auth disabled; diagnóstico)
+  - url: https://localhost:8443
+    description: Entrada canónica Caddy same-origin (local o remoto)
 security:
   - bearerAuth: []
   - cookieAuth: []
