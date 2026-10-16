@@ -1,7 +1,7 @@
 # Acta de cierre operativo Zedazo
 
 **Fecha:** 2026-10-16  
-**SHA de esta rama (tip):** `fc3a1ecbc27466f942f6c99566ab6744da40f596` (actualizar al merge en `main`)  
+**SHA de esta rama (tip):** `5b53209895bebf9cd00a6393a111584d7b19f87a` (actualizar al merge en `main`)  
 **Alcance:** evidencias del plan de cierre (CLI, Docker same-origin, remoto single-user). Sin ampliar producto.
 
 ## Lista de aceptación (con evidencia)
