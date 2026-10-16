@@ -1,0 +1,13 @@
+# make ci — extracto (baseline)
+
+Ejecutado 2026-10-16. Resultado: FAIL en web-ci (pnpm ERR_PNPM_IGNORED_BUILDS).
+Pasos previos (fmt, clippy, test, check, doc, docs-validate, parity): OK.
+
+```
+# make ci — extracto (baseline)
+
+Ejecutado 2026-10-16. Resultado: FAIL en web-ci (pnpm ERR_PNPM_IGNORED_BUILDS).
+Pasos previos (fmt, clippy, test, check, doc, docs-validate, parity): OK.
+
+```
+```
