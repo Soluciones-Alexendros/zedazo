@@ -224,10 +224,7 @@ mod tests {
         assert_eq!(cfg.username, "ada");
         assert_eq!(cfg.password, "super-secreto");
         let dbg = format!("{cfg:?}");
-        assert!(
-            !dbg.contains("super-secreto"),
-            "debug no debe filtrar el secreto: {dbg}"
-        );
+        assert!(!dbg.contains("super-secreto"));
         assert!(dbg.contains("***"));
     }
 
