@@ -100,18 +100,22 @@ cargo llvm-cov --lcov --output-path coverage/lcov.info
 - Wordmark lowercase **`zedazo`** (lockups/pestaña/README H1); prosa «Zedazo»; ids `zedazo` / `ZEDAZO_*` / `X-ZEDAZO-*` (ADR-0014, [`docs/brand.md`](./docs/brand.md)).
 - No añadir PWA, notificaciones de job u otras extras de GUI sin ancla en SPECS/ADR.
 - Si pide fusionar o «monitoriza merge», esperar CI verde y dejar el PR listo; en GitHub `main` rechaza merge commits (`allow_merge_commit=false`, solo squash). No hacer squash, no usar `--admin` ni cambiar el método de merge: lo fusiona el operador. No empujar a `main` (PRs draft desde ramas `cursor/`).
+- Features multi-PR: preferir rama de integración (`cursor/…`) + oleadas Multitask; un solo merge a `main` al cerrar, no PRs parciales a `main` por oleada.
+- Destino de prueba del AppImage de escritorio: **Ubuntu 26** (no asumir CachyOS u otras distros).
 - No cambiar protección de ramas, rulesets, secretos ni DNS/Vercel salvo petición explícita.
 - Renovate es el único bot de dependencias (ADR-0007); no añadir `dependabot.yml`.
 
 ## Learned Workspace Facts
 
-- Workspace ADR-0015: `crates/zedazo-core`, `crates/zedazo-cli` (binario `zedazo`), `crates/zedazo-api` (Axum, `/api/v1`, SSE; `publish = false`), `crates/zedazo-carddav` (`publish = false`; pull/write/watch RFC 6352, ADR-0018/#48), `apps/web` (Next.js).
+- Workspace ADR-0015: `crates/zedazo-core`, `crates/zedazo-cli` (binario `zedazo`), `crates/zedazo-api` (Axum, `/api/v1`, SSE; `publish = false`), `crates/zedazo-carddav` (`publish = false`; pull/write/watch RFC 6352, ADR-0018/#48), `apps/web` (Next.js), `apps/desktop` (Tauri v2 / AppImage, ADR-0021).
+- ADR-0021 (escritorio): AppImage Linux x86_64, API same-process embebida, auth token loopback (no modelo ADR-0016), GUI estática en el bundle; destino de prueba Ubuntu 26; guía [`docs/desktop.md`](./docs/desktop.md). No confundir con ADR-0020 (flota CI).
+- `apps/web` usa `output: "export"`; cabeceras/CSP canónicas en la API; `zedazo-api` puede servir la GUI con `static_dir` / `ZEDAZO_STATIC_DIR` (off por defecto en Docker); remoto sigue Caddy (ADR-0016).
 - Dominio de producto ADR-0014: `https://zedazo.alexendros.dev`; landing estática `apps/landing/`; CNAME `zedazo` → host del operador (no Vercel por defecto); guía en `docs/gui/deploy.md`. GUI remota en ese host = `Caddyfile.public` same-origin (ADR-0016), no mezclar con CardDAV/TMview.
 - Remoto ADR-0016: `ZEDAZO_AUTH_MODE=token`, cookie `zedazo_auth`, Compose [`deploy/docker-compose.remote.yml`](deploy/docker-compose.remote.yml) + Caddy same-origin; Docker local usa `ZEDAZO_AUTH_ALLOW_DISABLED_NON_LOOPBACK`.
 - Jobs de la API aíslan datos por directorio de job; modo local sin red saliente por defecto; resultados GUI/API deben equivaler a CLI sobre los mismos fixtures.
 - `make ci` = fmt-check + clippy + test + check + doc + `docs-validate` + `parity` (O10) + `web-ci` (`apps/web`).
 - O10: harness HTTP en `crates/zedazo-api/tests/equivalence_http.rs` vía `make parity`; matriz en `docs/gui/functional-parity-matrix.md`.
-- CI de GitHub Actions corre en `ubuntu-latest`; no hay runners self-hosted registrados.
+- CI en `ubuntu-latest` (sin runners self-hosted); job `ci-gate` agrega el resto de jobs de [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) como check único de auto-merge; release-please (`bump-minor-pre-major`) + cargo-dist = un release por tag.
 - `make web-ci` incluye build de `apps/web` y Playwright e2e/a11y + regresión visual (`e2e/visual.spec.ts`); excluye el spec opt-in `screenshots` (`docs/screenshots/`).
 - Canon de flota P0 (`quality` / `test` / `smoke`) **no sustituye** los jobs Rust maduros. Wrappers en `.github/workflows/ci.yml`:
 
@@ -121,4 +125,4 @@ cargo llvm-cov --lcov --output-path coverage/lcov.info
 | `test` | `test` (ya canónico: `cargo test --workspace --all-features`) |
 | `smoke` | `health` + `check` (compilación workspace) |
 
-  El resto (`msrv`, `doc`, `parity`, `web`, `deny`, `coverage`) sigue siendo la superficie Rust/GUI; no se aplasta. Workflow aparte [`.github/workflows/security.yml`](./.github/workflows/security.yml): jobs `secrets` (gitleaks binario, redactado; no `gitleaks-action`) y `sca`. ADR-0020 (aceptada) es esta alineación de flota; el número no se reutiliza. ADRs en [`DECISIONS.md`](./DECISIONS.md) (no se mueve a `docs/architecture/decisions/`). Renovate (ADR-0007) en [`.github/renovate.json`](./.github/renovate.json); no hay `dependabot.yml`. Dual license MIT OR Apache-2.0 y [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) se conservan.
+  El resto (`msrv`, `doc`, `parity`, `web`, `deny`, `coverage`, AppImage) sigue siendo la superficie Rust/GUI; no se aplasta. Workflow aparte [`.github/workflows/security.yml`](./.github/workflows/security.yml): jobs `secrets` (gitleaks binario, redactado; no `gitleaks-action`) y `sca`. ADR-0020 = alineación de flota (número no reutilizable; escritorio = ADR-0021). ADRs en [`DECISIONS.md`](./DECISIONS.md). Renovate (ADR-0007) en [`.github/renovate.json`](./.github/renovate.json); no hay `dependabot.yml`. Dual license MIT OR Apache-2.0 y [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) se conservan.

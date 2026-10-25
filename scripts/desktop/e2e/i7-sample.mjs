@@ -35,11 +35,13 @@ const browser = await remote({
   hostname: "127.0.0.1",
   port: driverPort,
   path: "/",
+  // Sin browserName: WDIO v9 inyectaría webSocketUrl si browserName≠safari;
+  // tauri-driver no lo elimina y WebKitWebDriver responde "Failed to match capabilities".
+  // Canon: docs Tauri WebdriverIO (solo tauri:options).
   capabilities: {
     "tauri:options": {
       application: appimage,
     },
-    browserName: "wry",
   },
   connectionRetryCount: 3,
   connectionRetryTimeout: 180_000,
