@@ -9,20 +9,21 @@ cargo fmt --all -- --check || {
     exit 1
 }
 
-echo "→ cargo clippy --workspace --all-targets --all-features -- -D warnings"
-cargo clippy --workspace --all-targets --all-features -- -D warnings || {
+# zedazo-desktop (Tauri/GTK) fuera del gate local sin WebKit; CI Desktop* lo cubre.
+echo "→ cargo clippy --workspace --all-targets --all-features --exclude zedazo-desktop -- -D warnings"
+cargo clippy --workspace --all-targets --all-features --exclude zedazo-desktop -- -D warnings || {
     echo "⚠️  Clippy encontró problemas."
     exit 1
 }
 
-echo "→ cargo check --workspace --all-features"
-cargo check --workspace --all-features || {
+echo "→ cargo check --workspace --all-features --exclude zedazo-desktop"
+cargo check --workspace --all-features --exclude zedazo-desktop || {
     echo "⚠️  cargo check falló."
     exit 1
 }
 
-echo "→ cargo test --workspace --lib --all-features"
-cargo test --workspace --lib --all-features || {
+echo "→ cargo test --workspace --lib --all-features --exclude zedazo-desktop"
+cargo test --workspace --lib --all-features --exclude zedazo-desktop || {
     echo "⚠️  Tests unitarios fallaron."
     exit 1
 }

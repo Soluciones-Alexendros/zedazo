@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>zedazo</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { margin: 2rem; }
+    code { font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h1>zedazo</h1>
+  <p>Escritorio local (stub). Sustituir por <code>apps/web/out</code> tras export estático (W2).</p>
+  <p id="tok"></p>
+  <script>
+    const t = window.__ZEDAZO_SESSION_TOKEN__;
+    document.getElementById('tok').textContent = t ? 'Sesión lista (Bearer inyectado).' : 'Sin token de sesión.';
+  </script>
+</body>
+</html>

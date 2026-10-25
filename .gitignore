@@ -26,3 +26,5 @@ apps/web/tsconfig.tsbuildinfo
 deploy/.env
 .env
 .env.local
+scripts/desktop/e2e/node_modules/
+.worktrees/

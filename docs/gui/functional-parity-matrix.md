@@ -2,10 +2,11 @@
 
 **Versión:** 0.3.0  
 **Fecha:** 2026-10-16  
-**Traza:** ADR-0015, ADR-0016, ADR-0018, SPECS O10/O11, ROADMAP v0.5.0–v0.5.1
+**Traza:** ADR-0015, ADR-0016, ADR-0018, ADR-0021, SPECS O10/O11, ROADMAP v0.5.0–v0.6.0
 
 La GUI cubre la **paridad de casos de uso**, no sustituye artefactos propios del terminal (`completions`).
 O11 (auth remoto) no altera la semántica del pipeline: O10 sigue válido con `ZEDAZO_AUTH_MODE=token`.
+El AppImage de escritorio (ADR-0021) reutiliza la misma GUI/API loopback: misma matriz O10; guía en [docs/desktop.md](../desktop.md).
 
 | Capacidad | CLI | Endpoint API | Ruta GUI | Test |
 |-----------|-----|--------------|----------|------|

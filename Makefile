@@ -3,16 +3,18 @@
 CARGO := cargo
 BINARY := target/release/zedazo
 PNPM := pnpm --dir apps/web
+# Tauri/GTK: validar con `cargo check -p zedazo-desktop` tras scripts/desktop/install-linux-deps.sh
+EXCLUDE_DESKTOP := --exclude zedazo-desktop
 
 ##@ Desarrollo
 
 all: check test build
 
 check: ## Analiza el código sin compilar binario final
-	$(CARGO) check --workspace --all-features
+	$(CARGO) check --workspace --all-features $(EXCLUDE_DESKTOP)
 
 test: ## Ejecuta todos los tests
-	$(CARGO) test --workspace --all-features
+	$(CARGO) test --workspace --all-features $(EXCLUDE_DESKTOP)
 
 parity: ## Tests de equivalencia CLI↔API HTTP (O10)
 	$(CARGO) test -p zedazo-api --test equivalence_http --all-features
@@ -32,7 +34,7 @@ compose-smoke: ## Smoke Docker Compose (build, health, sample.vcf, descarga, bor
 	bash deploy/scripts/compose-smoke.sh
 
 build: ## Compila en modo debug
-	$(CARGO) build --workspace
+	$(CARGO) build --workspace $(EXCLUDE_DESKTOP)
 
 release: ## Compila en modo release
 	$(CARGO) build -p zedazo --release --locked
@@ -117,7 +119,7 @@ fmt-check: ## Verifica el formateo (CI)
 	$(CARGO) fmt --all -- --check
 
 clippy: ## Linter estricto
-	$(CARGO) clippy --workspace --all-targets --all-features -- -D warnings
+	$(CARGO) clippy --workspace --all-targets --all-features $(EXCLUDE_DESKTOP) -- -D warnings
 
 lint: fmt clippy ## Formatea + linter
 
@@ -145,7 +147,7 @@ bump-major: ## Incrementa versión major (0.1.0 → 1.0.0)
 ci: fmt-check clippy test check doc docs-validate parity web-ci ## Simula CI completa (Rust + O10 + web)
 
 doc: ## Genera documentación
-	$(CARGO) doc --workspace --no-deps --document-private-items
+	$(CARGO) doc --workspace --no-deps --document-private-items $(EXCLUDE_DESKTOP)
 	@echo "Documentación generada en target/doc/"
 
 ##@ Otros

@@ -1,5 +1,5 @@
 # Secret scanning (gitleaks) + SCA (auditoría nativa + OSV).
-# Plantilla de secrets: Alexendros/alexendrosdev (.github/workflows/security.yml).
+# Reutiliza reusable-security.yml (también en el grafo de ci-gate).
 # Sin gitleaks-action@v2 (licencia). Sin continue-on-error.
 name: Security
 
@@ -20,76 +20,12 @@ concurrency:
 jobs:
   secrets:
     name: secrets
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      # Binario gitleaks (no la action de pago). Checksum release v8.30.1.
-      - name: gitleaks
-        run: |
-          set -euo pipefail
-          curl -sSfL -o gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
-          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum -c -
-          tar -xzf gitleaks.tar.gz gitleaks
-          ./gitleaks detect --source . --redact --verbose
+    uses: ./.github/workflows/reusable-security.yml
+    with:
+      suite: secrets
 
   sca:
     name: sca
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Detect lockfiles
-        id: locks
-        run: |
-          set -euo pipefail
-          echo "cargo=$(test -f Cargo.lock && echo yes || echo no)" >> "$GITHUB_OUTPUT"
-          echo "pnpm=$(test -f apps/web/pnpm-lock.yaml && echo yes || echo no)" >> "$GITHUB_OUTPUT"
-
-      - name: Setup pnpm
-        if: steps.locks.outputs.pnpm == 'yes'
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
-
-      - name: Setup Node
-        if: steps.locks.outputs.pnpm == 'yes'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: apps/web/pnpm-lock.yaml
-
-      - name: pnpm audit (prod, high)
-        if: steps.locks.outputs.pnpm == 'yes'
-        working-directory: apps/web
-        run: |
-          set -euo pipefail
-          pnpm install --frozen-lockfile
-          pnpm audit --prod --audit-level=high
-
-      - name: Setup Rust
-        if: steps.locks.outputs.cargo == 'yes'
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: cargo audit
-        if: steps.locks.outputs.cargo == 'yes'
-        uses: actions-rust-lang/audit@v1
-        with:
-          denyWarnings: false
-          createIssues: false
-
-      - name: OSV-Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@19ec1116569a47416e11a45848722b1af31a857b # v1.9.0
-        with:
-          # Sale distinto de 0 si hay vulnerabilidades conocidas en los lockfiles.
-          # El umbral high lo refuerzan pnpm audit y cargo audit arriba.
-          scan-args: |-
-            --lockfile=Cargo.lock
-            --lockfile=apps/web/pnpm-lock.yaml
+    uses: ./.github/workflows/reusable-security.yml
+    with:
+      suite: sca

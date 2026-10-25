@@ -5,6 +5,7 @@ members = [
   "crates/zedazo-cli",
   "crates/zedazo-api",
   "crates/zedazo-carddav",
+  "apps/desktop",
 ]
 default-members = ["crates/zedazo-cli"]
 

@@ -1,8 +1,9 @@
 /**
  * Base de la API. Same-origin por defecto (rutas relativas `/api/v1/...`).
- * En desarrollo, `next.config` reescribe `/api/*` hacia la API en loopback.
- * Solo se usa un origen absoluto si `NEXT_PUBLIC_API_BASE` está definido y no vacío
- * (p. ej. pruebas aisladas); la cadena vacía no cuenta como absoluta.
+ * En `next dev`, usar `NEXT_PUBLIC_API_BASE` (ver `.env.local.example`) o
+ * `scripts/serve-out.mjs` con `ZEDAZO_PROXY_API=1`. Export/Docker: Caddy o proxy.
+ * Solo se usa un origen absoluto si `NEXT_PUBLIC_API_BASE` está definido y no vacío;
+ * la cadena vacía no cuenta como absoluta.
  */
 function resolveApiBase(): string {
   const raw = process.env.NEXT_PUBLIC_API_BASE;
@@ -74,6 +75,42 @@ const defaultInit: RequestInit = {
   credentials: "include",
 };
 
+declare global {
+  interface Window {
+    /** Inyectado por el escritorio Tauri (Bearer; ADR-0021). */
+    __ZEDAZO_SESSION_TOKEN__?: string;
+  }
+}
+
+/** Token de sesión del AppImage (init script). Ausente en browser remoto. */
+export function sessionBearer(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const t = window.__ZEDAZO_SESSION_TOKEN__;
+  return typeof t === "string" && t.length > 0 ? t : undefined;
+}
+
+/** true si hay Bearer de escritorio (EventSource no sirve; usar fetch-stream). */
+export function hasDesktopBearer(): boolean {
+  return Boolean(sessionBearer());
+}
+
+function authHeaders(extra?: HeadersInit): Headers {
+  const headers = new Headers(extra);
+  const bearer = sessionBearer();
+  if (bearer && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${bearer}`);
+  }
+  return headers;
+}
+
+function withAuth(init: RequestInit = {}): RequestInit {
+  return {
+    ...defaultInit,
+    ...init,
+    headers: authHeaders(init.headers),
+  };
+}
+
 async function parseJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const text = await res.text();
@@ -83,7 +120,7 @@ async function parseJson<T>(res: Response): Promise<T> {
 }
 
 export async function getHealth() {
-  const res = await fetch(`${API_BASE}/api/v1/health`, defaultInit);
+  const res = await fetch(`${API_BASE}/api/v1/health`, withAuth());
   return parseJson<{
     status: string;
     api_version: string;
@@ -94,7 +131,7 @@ export async function getHealth() {
 
 /** Sondea sesión (protegido). 401 → requiere login en modo token. */
 export async function getVersion() {
-  const res = await fetch(`${API_BASE}/api/v1/version`, defaultInit);
+  const res = await fetch(`${API_BASE}/api/v1/version`, withAuth());
   return parseJson<{
     version: string;
     git_sha: string;
@@ -105,10 +142,11 @@ export async function getVersion() {
 
 export async function loginWithToken(token: string) {
   const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
-    ...defaultInit,
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token }),
+    ...withAuth({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    }),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -117,10 +155,10 @@ export async function loginWithToken(token: string) {
 }
 
 export async function logoutSession() {
-  const res = await fetch(`${API_BASE}/api/v1/auth/logout`, {
-    ...defaultInit,
-    method: "POST",
-  });
+  const res = await fetch(
+    `${API_BASE}/api/v1/auth/logout`,
+    withAuth({ method: "POST" }),
+  );
   if (!res.ok && res.status !== 204) {
     const text = await res.text();
     throw new ApiError(res.status, text || res.statusText);
@@ -130,11 +168,10 @@ export async function logoutSession() {
 export async function uploadVcf(file: File) {
   const fd = new FormData();
   fd.append("file", file);
-  const res = await fetch(`${API_BASE}/api/v1/uploads`, {
-    ...defaultInit,
-    method: "POST",
-    body: fd,
-  });
+  const res = await fetch(
+    `${API_BASE}/api/v1/uploads`,
+    withAuth({ method: "POST", body: fd }),
+  );
   return parseJson<{
     upload_id: string;
     original_name: string;
@@ -150,22 +187,24 @@ export async function createJob(body: {
   rules?: { mode: string; toml?: string };
   retention_hours?: number;
 }) {
-  const res = await fetch(`${API_BASE}/api/v1/jobs`, {
-    ...defaultInit,
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const res = await fetch(
+    `${API_BASE}/api/v1/jobs`,
+    withAuth({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  );
   return parseJson<JobManifest>(res);
 }
 
 export async function listJobs() {
-  const res = await fetch(`${API_BASE}/api/v1/jobs`, defaultInit);
+  const res = await fetch(`${API_BASE}/api/v1/jobs`, withAuth());
   return parseJson<{ items: JobManifest[] }>(res);
 }
 
 export async function getJob(jobId: string) {
-  const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`, defaultInit);
+  const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`, withAuth());
   return parseJson<{
     job: JobManifest;
     warnings: { code: string; message: string }[];
@@ -173,26 +212,26 @@ export async function getJob(jobId: string) {
 }
 
 export async function cancelJob(jobId: string) {
-  const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}/cancel`, {
-    ...defaultInit,
-    method: "POST",
-  });
+  const res = await fetch(
+    `${API_BASE}/api/v1/jobs/${jobId}/cancel`,
+    withAuth({ method: "POST" }),
+  );
   if (!res.ok) throw new ApiError(res.status, await res.text());
 }
 
 export async function wipeAllData() {
-  const res = await fetch(`${API_BASE}/api/v1/admin/wipe`, {
-    ...defaultInit,
-    method: "POST",
-  });
+  const res = await fetch(
+    `${API_BASE}/api/v1/admin/wipe`,
+    withAuth({ method: "POST" }),
+  );
   return parseJson<{ wiped: boolean }>(res);
 }
 
 export async function deleteJob(jobId: string) {
-  const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`, {
-    ...defaultInit,
-    method: "DELETE",
-  });
+  const res = await fetch(
+    `${API_BASE}/api/v1/jobs/${jobId}`,
+    withAuth({ method: "DELETE" }),
+  );
   if (!res.ok && res.status !== 204) {
     throw new ApiError(res.status, await res.text());
   }
@@ -204,7 +243,7 @@ export async function listContacts(jobId: string, q?: string, result?: string) {
   if (result) params.set("result", result);
   const res = await fetch(
     `${API_BASE}/api/v1/jobs/${jobId}/contacts?${params}`,
-    defaultInit,
+    withAuth(),
   );
   return parseJson<{ items: ContactView[] }>(res);
 }
@@ -212,7 +251,7 @@ export async function listContacts(jobId: string, q?: string, result?: string) {
 export async function listDuplicates(jobId: string) {
   const res = await fetch(
     `${API_BASE}/api/v1/jobs/${jobId}/duplicates`,
-    defaultInit,
+    withAuth(),
   );
   return parseJson<{
     groups: { canonical_uid: string; member_uids: string[] }[];
@@ -220,12 +259,18 @@ export async function listDuplicates(jobId: string) {
 }
 
 export async function getAudit(jobId: string) {
-  const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}/audit`, defaultInit);
+  const res = await fetch(
+    `${API_BASE}/api/v1/jobs/${jobId}/audit`,
+    withAuth(),
+  );
   return parseJson<{ items: { cols: string[] }[] }>(res);
 }
 
 export async function getStats(jobId: string) {
-  const res = await fetch(`${API_BASE}/api/v1/jobs/${jobId}/stats`, defaultInit);
+  const res = await fetch(
+    `${API_BASE}/api/v1/jobs/${jobId}/stats`,
+    withAuth(),
+  );
   return parseJson<Record<string, unknown>>(res);
 }
 
@@ -234,23 +279,35 @@ export function artifactUrl(jobId: string, kind: string) {
 }
 
 export async function createAudit(upload_id: string, config_toml?: string) {
-  const res = await fetch(`${API_BASE}/api/v1/audits`, {
-    ...defaultInit,
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ upload_id, config_toml }),
-  });
+  const res = await fetch(
+    `${API_BASE}/api/v1/audits`,
+    withAuth({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ upload_id, config_toml }),
+    }),
+  );
   return parseJson<JobManifest>(res);
 }
 
 export async function validateRules(toml: string) {
-  const res = await fetch(`${API_BASE}/api/v1/rules/validate`, {
-    ...defaultInit,
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ toml }),
-  });
+  const res = await fetch(
+    `${API_BASE}/api/v1/rules/validate`,
+    withAuth({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ toml }),
+    }),
+  );
   return parseJson<{ ok: boolean; diagnostics: { message: string }[] }>(res);
+}
+
+/** Cabeceras para SSE por fetch (escritorio Bearer). */
+export function eventsFetchInit(): RequestInit {
+  return withAuth({
+    headers: { Accept: "text/event-stream" },
+    cache: "no-store",
+  });
 }
 
 export function eventsUrl(jobId: string, lastEventId?: string | null) {

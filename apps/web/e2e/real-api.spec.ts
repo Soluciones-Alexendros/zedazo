@@ -3,7 +3,7 @@
  * Activar con ZEDAZO_E2E_REAL_API=1 y API en 127.0.0.1:8080.
  * Las specs con fixtures mock siguen siendo la capa 1 (componentes).
  *
- * Valida el camino navegador → Next (rewrite o API_BASE) → Rust, sin depender
+ * Valida el camino navegador → export estático (proxy /api) → Rust, sin depender
  * del adaptador local-fixtures (que cachea "local" si el primer health falla).
  */
 import { test, expect } from "@playwright/test";
@@ -64,7 +64,7 @@ test.describe("API Rust real", () => {
     }
     expect(status).toBe("completed");
 
-    // Same-origin vía Next (rewrite /api → 8080) o API_BASE absoluto.
+    // Same-origin vía serve-out (proxy /api → 8080) o API_BASE absoluto.
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const fromBrowser = await page.evaluate(async (id) => {
       const health = await fetch("/api/v1/health", { credentials: "include" });

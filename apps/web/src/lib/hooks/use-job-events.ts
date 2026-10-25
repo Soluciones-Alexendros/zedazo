@@ -1,8 +1,76 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { eventsUrl, isTerminalStatus, type JobManifest } from "@/lib/api";
+import {
+  eventsFetchInit,
+  eventsUrl,
+  hasDesktopBearer,
+  isTerminalStatus,
+  type JobManifest,
+} from "@/lib/api";
 import { getJob, probeAdapter } from "@/lib/data-adapter";
+
+type SseHandlers = {
+  onPhase: (data: string, id?: string) => void;
+  onMetric: (data: string, id?: string) => void;
+  onMessage: (data: string, id?: string) => void;
+  onError: () => void;
+};
+
+/** Parseo mínimo de SSE sobre ReadableStream (Bearer; EventSource no envía Authorization). */
+async function consumeFetchSse(
+  url: string,
+  signal: AbortSignal,
+  handlers: SseHandlers,
+): Promise<void> {
+  const res = await fetch(url, { ...eventsFetchInit(), signal });
+  if (!res.ok || !res.body) {
+    handlers.onError();
+    return;
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let eventName = "message";
+  let dataLines: string[] = [];
+  let lastId: string | undefined;
+
+  const dispatch = () => {
+    if (dataLines.length === 0) {
+      eventName = "message";
+      return;
+    }
+    const data = dataLines.join("\n");
+    dataLines = [];
+    const name = eventName;
+    eventName = "message";
+    if (name === "phase") handlers.onPhase(data, lastId);
+    else if (name === "metric") handlers.onMetric(data, lastId);
+    else handlers.onMessage(data, lastId);
+  };
+
+  while (!signal.aborted) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split(/\r?\n/);
+    buffer = parts.pop() ?? "";
+    for (const line of parts) {
+      if (line === "") {
+        dispatch();
+        continue;
+      }
+      if (line.startsWith(":")) continue;
+      if (line.startsWith("event:")) {
+        eventName = line.slice(6).trim() || "message";
+      } else if (line.startsWith("data:")) {
+        dataLines.push(line.slice(5).trimStart());
+      } else if (line.startsWith("id:")) {
+        lastId = line.slice(3).trim();
+      }
+    }
+  }
+}
 
 export function useJobEvents(jobId: string | null) {
   const [job, setJob] = useState<JobManifest | null>(null);
@@ -19,6 +87,30 @@ export function useJobEvents(jobId: string | null) {
     let es: EventSource | null = null;
     let poll: number | undefined;
     let reconnectTimer: number | undefined;
+    let abort: AbortController | null = null;
+
+    const handlers: SseHandlers = {
+      onPhase: (data, id) => {
+        if (id) lastEventId.current = id;
+        setPhases((prev) => [...prev, data]);
+        setReconnecting(false);
+      },
+      onMetric: (data, id) => {
+        if (id) lastEventId.current = id;
+        setMetrics((prev) => [...prev, data]);
+      },
+      onMessage: (data, id) => {
+        if (id) lastEventId.current = id;
+        setMessages((prev) => [...prev, data]);
+      },
+      onError: () => {
+        setReconnecting(true);
+        if (cancelled) return;
+        reconnectTimer = window.setTimeout(() => {
+          if (!cancelled) connect();
+        }, 800);
+      },
+    };
 
     const attachListeners = (source: EventSource) => {
       source.addEventListener("phase", (ev) => {
@@ -49,7 +141,18 @@ export function useJobEvents(jobId: string | null) {
 
     const connect = () => {
       es?.close();
+      abort?.abort();
       const url = eventsUrl(jobId, lastEventId.current);
+
+      // Escritorio: Bearer vía fetch-stream (EventSource no soporta Authorization).
+      if (hasDesktopBearer()) {
+        abort = new AbortController();
+        void consumeFetchSse(url, abort.signal, handlers).catch(() => {
+          if (!cancelled) handlers.onError();
+        });
+        return;
+      }
+
       es = new EventSource(url, { withCredentials: true });
       attachListeners(es);
     };
@@ -77,6 +180,7 @@ export function useJobEvents(jobId: string | null) {
             if (poll) window.clearInterval(poll);
             if (reconnectTimer) window.clearTimeout(reconnectTimer);
             es?.close();
+            abort?.abort();
             setReconnecting(false);
           }
         } catch (e) {
@@ -88,6 +192,7 @@ export function useJobEvents(jobId: string | null) {
     return () => {
       cancelled = true;
       es?.close();
+      abort?.abort();
       if (poll) window.clearInterval(poll);
       if (reconnectTimer) window.clearTimeout(reconnectTimer);
     };
