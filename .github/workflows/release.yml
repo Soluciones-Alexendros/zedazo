@@ -288,7 +288,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Solo upload: la release definitiva la crea `gh release create` tras validar assets.
+          # Solo upload al draft existente (release-please). Sin create/publish.
           dist host ${{ needs.plan.outputs.tag-flag }} --steps=upload --output-format=json > dist-manifest.json
           echo "artifacts uploaded successfully"
           # Metadatos de anuncio desde el manifiesto (archivo, no output gigante).
@@ -359,90 +359,27 @@ jobs:
           test -n "$BIN"
           "$BIN" --version
       - name: Upload to draft GitHub Release
-        env:
-          RELEASE_COMMIT: "${{ github.sha }}"
         run: |
           set -euo pipefail
           TAG="${{ needs.plan.outputs.tag }}"
-          PRERELEASE_FLAG=""
-          if [[ "$(cat "$RUNNER_TEMP/announcement_prerelease.txt")" == "true" ]]; then
-            PRERELEASE_FLAG="--prerelease"
+          # Solo upload al draft de release-please (S-09). Prohibido gh release create.
+          # Si el draft no existe, fallar: lo crea release-please, no este job.
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "error: no existe el draft release '$TAG' (release-please debe crearlo antes)" >&2
+            exit 1
           fi
-          TITLE=$(cat "$RUNNER_TEMP/announcement_title.txt")
-          cp "$RUNNER_TEMP/announcement_body.txt" "$RUNNER_TEMP/notes.txt"
-          # Subir al draft de release-please; nunca publicar ni cargo publish
-          # (crates.io queda en publish-crates.yml manual).
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" artifacts/* --clobber
-          else
-            gh release create "$TAG" \
-              --draft \
-              --target "$RELEASE_COMMIT" \
-              $PRERELEASE_FLAG \
-              --title "$TITLE" \
-              --notes-file "$RUNNER_TEMP/notes.txt" \
-              artifacts/*
-          fi
+          gh release upload "$TAG" artifacts/* --clobber
 
-  # AppImage escritorio (ADR-0021) → mismo draft tras `host` (nunca publica).
-  appimage:
-    name: AppImage (desktop)
-    needs:
-      - plan
-      - host
-    if: ${{ always() && needs.plan.outputs.publishing == 'true' && needs.host.result == 'success' }}
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      NO_STRIP: "true"
-      APPIMAGE_EXTRACT_AND_RUN: "1"
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
-      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
-        with:
-          workspaces: ". -> target"
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
-        with:
-          version: 9.15.9
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: apps/web/pnpm-lock.yaml
-      - name: Deps sistema Tauri/WebKit
-        run: bash scripts/desktop/install-linux-deps.sh
-      - name: Build AppImage
-        env:
-          ZEDAZO_GIT_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          export ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          bash scripts/desktop/build-appimage.sh
-      - name: Upload AppImage al draft release
-        run: |
-          set -euo pipefail
-          TAG="${{ needs.plan.outputs.tag }}"
-          gh release view "$TAG" >/dev/null
-          gh release upload "$TAG" \
-            dist/desktop/*.AppImage \
-            dist/desktop/SHA256SUMS \
-            dist/desktop/build-info.txt \
-            --clobber
+  # AppImage atestado vive en publish.yml (on: release published), no aquí.
 
   announce:
     needs:
       - plan
       - host
-      - appimage
     # use "always() && ..." to allow us to wait for all publish jobs while
     # still allowing individual publish jobs to skip themselves (for prereleases).
     # "host" however must run to completion, no skipping allowed!
-    if: ${{ always() && needs.host.result == 'success' && (needs.appimage.result == 'success' || needs.appimage.result == 'skipped') }}
+    if: ${{ always() && needs.host.result == 'success' }}
     runs-on: "ubuntu-22.04"
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

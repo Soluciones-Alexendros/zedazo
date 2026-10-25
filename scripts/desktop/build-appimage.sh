@@ -50,10 +50,18 @@ rsync -a --delete \
   apps/web/out/ \
   dist/desktop/gui/
 
-if ! command -v cargo-tauri >/dev/null 2>&1; then
-  if ! cargo tauri --version >/dev/null 2>&1; then
-    echo "==> instalando tauri-cli 2"
-    cargo install tauri-cli --version "^2" --locked
+# S-10: tauri-cli pin exacto (no ^2) + herramientas linuxdeploy con SHA256.
+TAURI_CLI_VERSION="${TAURI_CLI_VERSION:-2.11.5}"
+bash "$ROOT/scripts/desktop/prefetch-tauri-tools.sh"
+if ! command -v cargo-tauri >/dev/null 2>&1 && ! cargo tauri --version >/dev/null 2>&1; then
+  echo "==> instalando tauri-cli =${TAURI_CLI_VERSION}"
+  cargo install tauri-cli --version "=${TAURI_CLI_VERSION}" --locked
+else
+  # Reinstalar si la versión instalada no coincide exactamente.
+  INSTALLED="$(cargo tauri --version 2>/dev/null | awk '{print $NF}' || true)"
+  if [[ "$INSTALLED" != "$TAURI_CLI_VERSION" ]]; then
+    echo "==> tauri-cli ${INSTALLED:-ausente} ≠ ${TAURI_CLI_VERSION}; reinstalar"
+    cargo install tauri-cli --version "=${TAURI_CLI_VERSION}" --locked --force
   fi
 fi
 
