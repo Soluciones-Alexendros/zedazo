@@ -111,7 +111,9 @@ Fixtures adicionales (solo tests): `crates/zedazo-core/tests/fixtures/*.vcf` (p.
 
 ## Métricas
 
-Tamaño del AppImage y TTFB de `GET /health` en loopback: [docs/gui/benchmarks.md](gui/benchmarks.md) (placeholders hasta CI W5A/summary).
+Tamaño del AppImage y TTFB de `GET /health` en loopback: [docs/gui/benchmarks.md](gui/benchmarks.md).
+
+Valores actuales: placeholders (`_TBD_`) hasta medir en Ubuntu 26 o rellenar desde el artefacto CI (W5A). Notas de build/gates del crate escritorio: [`apps/desktop/NOTES.md`](../apps/desktop/NOTES.md) (sin cifras de tamaño/TTFB todavía).
 
 ## Ver también
 
@@ -119,3 +121,4 @@ Tamaño del AppImage y TTFB de `GET /health` en loopback: [docs/gui/benchmarks.m
 - [ROADMAP v0.6.0](../ROADMAP.md) — criterio de salida
 - [Matriz de paridad CLI↔GUI](gui/functional-parity-matrix.md)
 - [Deploy self-hosted](gui/deploy.md) — camino Docker/Caddy (no AppImage)
+- [`apps/desktop/NOTES.md`](../apps/desktop/NOTES.md) — gates locales y limitaciones WebKit/build
