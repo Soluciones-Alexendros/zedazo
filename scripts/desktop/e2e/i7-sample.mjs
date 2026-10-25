@@ -212,20 +212,44 @@ try {
   const artBuf = Buffer.from(await artApi.arrayBuffer());
   const artSha = createHash("sha256").update(artBuf).digest("hex");
 
-  await browser.url(`http://${addr}/ejecuciones?job=${encodeURIComponent(jobId)}`);
-  await browser.pause(2500);
-  const downloadBtns = await browser.$$("button");
+  await browser.url(
+    `http://${addr}/ejecuciones?job=${encodeURIComponent(jobId)}`,
+  );
+  // Esperar hidratación del detalle (Descargar VCF en cabecera).
   let clicked = false;
-  for (const btn of downloadBtns) {
-    const text = await btn.getText().catch(() => "");
-    if (/Descargar/i.test(String(text))) {
-      await btn.click();
-      clicked = true;
-      break;
+  for (let i = 0; i < 30; i++) {
+    const btn = await browser.$("button.zed-button--primary");
+    const exists = await btn.isExisting().catch(() => false);
+    if (exists) {
+      const text = await btn.getText().catch(() => "");
+      if (/Descargar/i.test(String(text))) {
+        await btn.click();
+        clicked = true;
+        break;
+      }
     }
+    // Fallback: cualquier botón con texto Descargar
+    const all = await browser.$$("button");
+    for (const b of all) {
+      const t = await b.getText().catch(() => "");
+      if (/Descargar/i.test(String(t))) {
+        await b.click();
+        clicked = true;
+        break;
+      }
+    }
+    if (clicked) break;
+    await browser.pause(500);
   }
   if (!clicked) {
-    throw new Error("no se encontró botón Descargar en detalle de job");
+    const urlNow = await browser.getUrl();
+    const bodySnippet = await browser.execute(() =>
+      // eslint-disable-next-line no-undef
+      (document.body && document.body.innerText || "").slice(0, 400),
+    );
+    throw new Error(
+      `no se encontró botón Descargar en detalle de job (url=${urlNow}): ${bodySnippet}`,
+    );
   }
   await browser.pause(1000);
   const downloadErr = await browser.execute(() => {

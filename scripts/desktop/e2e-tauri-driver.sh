@@ -44,6 +44,31 @@ fi
 if [[ -z "${ZEDAZO_STATIC_DIR:-}" && -f apps/web/out/index.html ]]; then
   export ZEDAZO_STATIC_DIR="$ROOT/apps/web/out"
 fi
+# En CI el job e2e solo descarga el AppImage: run-env puede apuntar a out/ inexistente.
+# Extraer la GUI embebida (frontendDist) para ServeDir + deep links V-01.
+if [[ -z "${ZEDAZO_STATIC_DIR:-}" || ! -f "${ZEDAZO_STATIC_DIR}/index.html" ]]; then
+  echo "==> ZEDAZO_STATIC_DIR inválido; extrayendo GUI del AppImage"
+  EXTRACT_GUI="$(mktemp -d "${TMPDIR:-/tmp}/zedazo-gui-XXXXXX")"
+  (
+    cd "$EXTRACT_GUI"
+    # --appimage-extract escribe squashfs-root/ (no requiere FUSE).
+    "$APPIMAGE" --appimage-extract >/dev/null
+  )
+  GUI_HTML="$(find "$EXTRACT_GUI/squashfs-root" -name 'ejecuciones.html' -type f 2>/dev/null | head -1 || true)"
+  if [[ -z "$GUI_HTML" ]]; then
+    GUI_HTML="$(find "$EXTRACT_GUI/squashfs-root" -path '*/gui/index.html' -type f 2>/dev/null | head -1 || true)"
+  fi
+  if [[ -z "$GUI_HTML" ]]; then
+    GUI_HTML="$(find "$EXTRACT_GUI/squashfs-root" -name 'index.html' -type f 2>/dev/null | head -1 || true)"
+  fi
+  if [[ -z "$GUI_HTML" || ! -f "$GUI_HTML" ]]; then
+    echo "error: no se encontró GUI (index/ejecuciones.html) dentro del AppImage" >&2
+    find "$EXTRACT_GUI/squashfs-root" -name '*.html' 2>/dev/null | head -40 >&2 || true
+    exit 1
+  fi
+  export ZEDAZO_STATIC_DIR="$(cd "$(dirname "$GUI_HTML")" && pwd)"
+  echo "==> ZEDAZO_STATIC_DIR=${ZEDAZO_STATIC_DIR}"
+fi
 
 xvfb-run -a -s "-screen 0 1280x800x24" env \
   APPIMAGE_EXTRACT_AND_RUN="$APPIMAGE_EXTRACT_AND_RUN" \
