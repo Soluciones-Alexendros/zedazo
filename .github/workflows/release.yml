@@ -384,14 +384,65 @@ jobs:
               artifacts/*
           fi
 
+  # AppImage escritorio (ADR-0021) → mismo draft tras `host` (nunca publica).
+  appimage:
+    name: AppImage (desktop)
+    needs:
+      - plan
+      - host
+    if: ${{ always() && needs.plan.outputs.publishing == 'true' && needs.host.result == 'success' }}
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      NO_STRIP: "true"
+      APPIMAGE_EXTRACT_AND_RUN: "1"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
+        with:
+          workspaces: ". -> target"
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - name: Deps sistema Tauri/WebKit
+        run: bash scripts/desktop/install-linux-deps.sh
+      - name: Build AppImage
+        env:
+          ZEDAZO_GIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          export ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          bash scripts/desktop/build-appimage.sh
+      - name: Upload AppImage al draft release
+        run: |
+          set -euo pipefail
+          TAG="${{ needs.plan.outputs.tag }}"
+          gh release view "$TAG" >/dev/null
+          gh release upload "$TAG" \
+            dist/desktop/*.AppImage \
+            dist/desktop/SHA256SUMS \
+            dist/desktop/build-info.txt \
+            --clobber
+
   announce:
     needs:
       - plan
       - host
+      - appimage
     # use "always() && ..." to allow us to wait for all publish jobs while
     # still allowing individual publish jobs to skip themselves (for prereleases).
     # "host" however must run to completion, no skipping allowed!
-    if: ${{ always() && needs.host.result == 'success' }}
+    if: ${{ always() && needs.host.result == 'success' && (needs.appimage.result == 'success' || needs.appimage.result == 'skipped') }}
     runs-on: "ubuntu-22.04"
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
