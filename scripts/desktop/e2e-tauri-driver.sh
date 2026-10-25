@@ -41,34 +41,18 @@ if [[ -f dist/desktop/run-env.sh ]]; then
   # shellcheck disable=SC1091
   source dist/desktop/run-env.sh
 fi
-if [[ -z "${ZEDAZO_STATIC_DIR:-}" && -f apps/web/out/index.html ]]; then
+# ServeDir necesita ficheros en disco. La GUI del AppImage va embebida en el binario
+# Tauri (no hay .html al --appimage-extract); el artefacto sube dist/desktop/gui/.
+if [[ -f dist/desktop/gui/index.html ]]; then
+  export ZEDAZO_STATIC_DIR="$ROOT/dist/desktop/gui"
+elif [[ -f apps/web/out/index.html ]]; then
   export ZEDAZO_STATIC_DIR="$ROOT/apps/web/out"
 fi
-# En CI el job e2e solo descarga el AppImage: run-env puede apuntar a out/ inexistente.
-# Extraer la GUI embebida (frontendDist) para ServeDir + deep links V-01.
 if [[ -z "${ZEDAZO_STATIC_DIR:-}" || ! -f "${ZEDAZO_STATIC_DIR}/index.html" ]]; then
-  echo "==> ZEDAZO_STATIC_DIR inválido; extrayendo GUI del AppImage"
-  EXTRACT_GUI="$(mktemp -d "${TMPDIR:-/tmp}/zedazo-gui-XXXXXX")"
-  (
-    cd "$EXTRACT_GUI"
-    # --appimage-extract escribe squashfs-root/ (no requiere FUSE).
-    "$APPIMAGE" --appimage-extract >/dev/null
-  )
-  GUI_HTML="$(find "$EXTRACT_GUI/squashfs-root" -name 'ejecuciones.html' -type f 2>/dev/null | head -1 || true)"
-  if [[ -z "$GUI_HTML" ]]; then
-    GUI_HTML="$(find "$EXTRACT_GUI/squashfs-root" -path '*/gui/index.html' -type f 2>/dev/null | head -1 || true)"
-  fi
-  if [[ -z "$GUI_HTML" ]]; then
-    GUI_HTML="$(find "$EXTRACT_GUI/squashfs-root" -name 'index.html' -type f 2>/dev/null | head -1 || true)"
-  fi
-  if [[ -z "$GUI_HTML" || ! -f "$GUI_HTML" ]]; then
-    echo "error: no se encontró GUI (index/ejecuciones.html) dentro del AppImage" >&2
-    find "$EXTRACT_GUI/squashfs-root" -name '*.html' 2>/dev/null | head -40 >&2 || true
-    exit 1
-  fi
-  export ZEDAZO_STATIC_DIR="$(cd "$(dirname "$GUI_HTML")" && pwd)"
-  echo "==> ZEDAZO_STATIC_DIR=${ZEDAZO_STATIC_DIR}"
+  echo "error: falta GUI estática (dist/desktop/gui o apps/web/out) para ZEDAZO_STATIC_DIR" >&2
+  exit 1
 fi
+echo "==> ZEDAZO_STATIC_DIR=${ZEDAZO_STATIC_DIR}"
 
 xvfb-run -a -s "-screen 0 1280x800x24" env \
   APPIMAGE_EXTRACT_AND_RUN="$APPIMAGE_EXTRACT_AND_RUN" \
