@@ -1,0 +1,10 @@
+# SHA256 de herramientas AppImage que Tauri 2 consulta en ~/.cache/tauri
+# (tauri-bundler prepare_tools). Arquitectura CI: x86_64.
+# Fuentes versionadas (sin tags continuous):
+# - AppRun: tauri-apps/binary-releases@apprun-old
+# - linuxdeploy: tauri-apps/binary-releases@linuxdeploy-07333c6
+# - plugin-appimage: linuxdeploy/linuxdeploy-plugin-appimage@1-alpha-20250213-1
+#   (renombrado a linuxdeploy-plugin-appimage.AppImage como espera el bundler)
+f30140a43a0a59e46db21bdefdf749b9e9f2c6946e92afabbacf98b8ae73fb4f  AppRun-x86_64
+36a2d7e274d12e1050d0e9ecfe11d339ed54720b2bec464c286d53f8b07f5c62  linuxdeploy-07333c6-x86_64.AppImage
+992d502a248e14ab185448ddf6f6e7d25558cb84d4623c354c3af350c25fccb3  linuxdeploy-plugin-appimage.AppImage

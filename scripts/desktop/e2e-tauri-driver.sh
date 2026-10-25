@@ -23,9 +23,11 @@ export TAURI_DRIVER_PORT="${TAURI_DRIVER_PORT:-4444}"
 export TAURI_APPIMAGE="$APPIMAGE"
 export ZEDAZO_SAMPLE_VCF="${ZEDAZO_SAMPLE_VCF:-$ROOT/examples/sample.vcf}"
 
-if ! command -v tauri-driver >/dev/null 2>&1; then
-  echo "==> instalando tauri-driver"
-  cargo install tauri-driver --locked
+# S-10: tauri-driver pin exacto (no latest / no ^).
+TAURI_DRIVER_VERSION="${TAURI_DRIVER_VERSION:-2.0.6}"
+if ! cargo install --list 2>/dev/null | grep -qE "^tauri-driver v${TAURI_DRIVER_VERSION}:"; then
+  echo "==> instalando tauri-driver =${TAURI_DRIVER_VERSION}"
+  cargo install tauri-driver --version "=${TAURI_DRIVER_VERSION}" --locked --force
 fi
 
 E2E_DIR="$ROOT/scripts/desktop/e2e"
