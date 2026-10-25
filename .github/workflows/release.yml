@@ -8,10 +8,10 @@
 # * checks for a Git Tag that looks like a release
 # * builds artifacts with dist (archives, installers, hashes)
 # * uploads those artifacts to temporary workflow zip
-# * on success, uploads the artifacts to a GitHub Release
+# * on success, uploads the artifacts to the draft GitHub Release
+#   (release-please; never publishes; no cargo publish automático)
 #
-# Note that the GitHub Release will be created with a generated
-# title/body based on your changelogs.
+# Note that title/body come from the dist announcement / existing draft.
 
 name: Release
 permissions:
@@ -83,7 +83,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dist ${{ (!github.event.pull_request && format('host --steps=create --tag={0}', github.ref_name)) || 'plan' }} --output-format=json > plan-dist-manifest.json
+          # Solo plan: la release draft la crea release-please; no host --steps=create (publicaría).
+          dist plan ${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }} --output-format=json > plan-dist-manifest.json
           echo "dist ran successfully"
           jq -e '.ci.github.artifacts_matrix.include | length > 0' plan-dist-manifest.json
           # Matriz sola (sin changelog/body) para evitar filtrado de outputs.
@@ -357,24 +358,31 @@ jobs:
           BIN=$(find . -type f -name zedazo | head -1)
           test -n "$BIN"
           "$BIN" --version
-      - name: Create GitHub Release
+      - name: Upload to draft GitHub Release
         env:
           RELEASE_COMMIT: "${{ github.sha }}"
         run: |
           set -euo pipefail
+          TAG="${{ needs.plan.outputs.tag }}"
           PRERELEASE_FLAG=""
           if [[ "$(cat "$RUNNER_TEMP/announcement_prerelease.txt")" == "true" ]]; then
             PRERELEASE_FLAG="--prerelease"
           fi
           TITLE=$(cat "$RUNNER_TEMP/announcement_title.txt")
           cp "$RUNNER_TEMP/announcement_body.txt" "$RUNNER_TEMP/notes.txt"
-          # Un solo mecanismo de release definitiva tras validar assets.
-          gh release create "${{ needs.plan.outputs.tag }}" \
-            --target "$RELEASE_COMMIT" \
-            $PRERELEASE_FLAG \
-            --title "$TITLE" \
-            --notes-file "$RUNNER_TEMP/notes.txt" \
-            artifacts/*
+          # Subir al draft de release-please; nunca publicar ni cargo publish
+          # (crates.io queda en publish-crates.yml manual).
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" artifacts/* --clobber
+          else
+            gh release create "$TAG" \
+              --draft \
+              --target "$RELEASE_COMMIT" \
+              $PRERELEASE_FLAG \
+              --title "$TITLE" \
+              --notes-file "$RUNNER_TEMP/notes.txt" \
+              artifacts/*
+          fi
 
   announce:
     needs:
@@ -392,39 +400,3 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-
-  publish:
-    name: Publish to crates.io
-    needs:
-      - host
-    # Igual que announce: sin always(), GHA salta el job si builds del grafo de host fueron skipped.
-    if: ${{ always() && needs.host.result == 'success' && !contains(github.ref_name, '-rc') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-beta') }}
-    runs-on: "ubuntu-latest"
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Verify Cargo versions
-        run: |
-          set -euo pipefail
-          ver=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name=="zedazo") | .version')
-          echo "zedazo version=$ver tag=${{ github.ref_name }}"
-          test -n "$ver"
-      - name: Publish zedazo-core
-        run: cargo publish -p zedazo-core --token ${{ secrets.CRATES_IO_TOKEN }}
-      - name: Wait for crates.io index
-        shell: bash
-        run: |
-          set -euo pipefail
-          ver=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name=="zedazo-core") | .version')
-          for i in $(seq 1 30); do
-            if curl -fsS "https://crates.io/api/v1/crates/zedazo-core/$ver" >/dev/null; then
-              echo "zedazo-core $ver visible en crates.io"
-              exit 0
-            fi
-            echo "intento $i: esperando índice..."
-            sleep 10
-          done
-          echo "timeout esperando zedazo-core en crates.io"
-          exit 1
-      - name: Publish zedazo
-        run: cargo publish -p zedazo --token ${{ secrets.CRATES_IO_TOKEN }}
