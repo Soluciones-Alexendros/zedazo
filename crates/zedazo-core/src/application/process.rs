@@ -59,6 +59,11 @@ impl CancellationToken {
         self.cancelled.load(Ordering::SeqCst)
     }
 
+    /// Flag interno compartible con [`crate::domain::identity::DedupCtrl`].
+    pub fn flag(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.cancelled)
+    }
+
     pub fn check(&self) -> Result<(), Cancelled> {
         if self.is_cancelled() {
             Err(Cancelled)
@@ -279,7 +284,17 @@ pub fn run(req: &ProcessRequest) -> Result<ProcessResult, CribaError> {
     let want_vcf = req.requested_artifacts.contains(&ArtifactKind::Vcf);
     let want_audit = req.requested_artifacts.contains(&ArtifactKind::AuditTsv);
 
-    let (stats, contacts) = cribar::execute(
+    let timeout_secs = std::env::var("ZEDAZO_JOB_TIMEOUT_SECS")
+        .ok()
+        .and_then(|s| s.parse::<u64>().ok())
+        .filter(|&s| s > 0);
+    let dedup_ctrl = crate::domain::identity::DedupCtrl {
+        cancelled: Some(req.cancellation.flag()),
+        deadline: timeout_secs
+            .map(|s| std::time::Instant::now() + std::time::Duration::from_secs(s)),
+    };
+
+    let (stats, contacts) = cribar::execute_with_dedup(
         &req.input_path,
         if want_vcf && !req.dry_run {
             Some(out_vcf.as_path())
@@ -296,6 +311,7 @@ pub fn run(req: &ProcessRequest) -> Result<ProcessResult, CribaError> {
         req.dry_run,
         req.strict,
         false,
+        &dedup_ctrl,
     )?;
 
     req.progress.phase(ProcessPhase::WritingArtifacts);
