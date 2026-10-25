@@ -72,7 +72,7 @@ export default function AuditarPage() {
             </p>
             <Link
               className={buttonClassName({ variant: "secondary" })}
-              href={`/ejecuciones/${jobId}`}
+              href={`/ejecuciones?job=${encodeURIComponent(jobId)}`}
             >
               Ver informe
             </Link>

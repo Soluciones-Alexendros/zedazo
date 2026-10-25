@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { JobManifest } from "@/lib/api";
 import { listJobs } from "@/lib/data-adapter";
 import { PageHeader } from "@/components/shell/page-header";
@@ -14,8 +15,26 @@ import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { FilterBar } from "@/components/ui/filter-bar";
 import tableStyles from "@/styles/tables.module.css";
+import { JobDetail } from "./job-detail";
 
 export default function EjecucionesPage() {
+  return (
+    <Suspense fallback={<LoadingState label="Cargando…" />}>
+      <EjecucionesRouter />
+    </Suspense>
+  );
+}
+
+function EjecucionesRouter() {
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get("job");
+  if (jobId) {
+    return <JobDetail jobId={jobId} />;
+  }
+  return <EjecucionesList />;
+}
+
+function EjecucionesList() {
   const [items, setItems] = useState<JobManifest[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

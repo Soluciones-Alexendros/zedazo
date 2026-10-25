@@ -127,7 +127,7 @@ export default function HomePage() {
                     <JobStatus status={j.status} />
                     <Link
                       className={buttonClassName({ variant: "tertiary" })}
-                      href={`/ejecuciones/${j.job_id}`}
+                      href={`/ejecuciones?job=${encodeURIComponent(j.job_id)}`}
                     >
                       Abrir
                     </Link>

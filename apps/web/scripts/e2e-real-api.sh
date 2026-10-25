@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start zedazo-api, Next.js development server, and Playwright real-api.
+# Arranca zedazo-api, sirve el export estático `out/` (proxy /api) y Playwright real-api.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 WEB="$ROOT/apps/web"
@@ -29,26 +29,30 @@ done
 curl -fsS "http://127.0.0.1:8080/api/v1/health" >/dev/null
 
 cd "$WEB"
-# Same-origin relativo: Next rewrite /api -> 8080 (NODE_ENV=development).
-./node_modules/.bin/next dev -p 3000 >/tmp/zedazo-e2e-next.log 2>&1 &
+if [[ ! -d out ]] || [[ "${ZEDAZO_E2E_REBUILD:-}" == "1" ]]; then
+  ./node_modules/.bin/next build
+fi
+
+ZEDAZO_PROXY_API=1 ZEDAZO_API_ORIGIN=http://127.0.0.1:8080 PORT=3000 HOST=127.0.0.1 \
+  node scripts/serve-out.mjs >/tmp/zedazo-e2e-static.log 2>&1 &
 WEB_PID=$!
 
-for _ in $(seq 1 90); do
+for _ in $(seq 1 60); do
   if curl -fsS "http://127.0.0.1:3000" >/dev/null 2>&1; then
     break
   fi
-  sleep 1
+  sleep 0.5
 done
-# Esperar rewrite /api (no solo el HTML de Next).
+
 ok=0
 for _ in $(seq 1 60); do
   if curl -fsS "http://127.0.0.1:3000/api/v1/health" >/dev/null 2>&1; then
     ok=1
     break
   fi
-  sleep 1
+  sleep 0.5
 done
-test "$ok" -eq 1 || { echo "rewrite /api health timeout"; tail -50 /tmp/zedazo-e2e-next.log || true; exit 1; }
+test "$ok" -eq 1 || { echo "proxy /api health timeout"; tail -50 /tmp/zedazo-e2e-static.log || true; exit 1; }
 
 export ZEDAZO_E2E_REAL_API=1
 unset NEXT_PUBLIC_API_BASE

@@ -46,7 +46,7 @@ const AXE_ROUTES = [
   "/",
   "/procesar",
   "/ejecuciones",
-  `/ejecuciones/${SYNTHETIC_JOB_ID}`,
+  `/ejecuciones?job=${SYNTHETIC_JOB_ID}`,
   "/auditar",
   "/reglas",
   "/ajustes",
@@ -83,15 +83,18 @@ test.describe("estados representativos (fixtures sintéticos)", () => {
     await analyzeAxe(page);
   });
 
-  test("/ejecuciones/job-sintetico en curso cumple axe", async ({ page }) => {
+  test("/ejecuciones?job=job-sintetico en curso cumple axe", async ({ page }) => {
     await installApiFixture(page, "running-job");
-    await gotoSettled(page, `/ejecuciones/${SYNTHETIC_JOB_ID}`);
+    await gotoSettled(page, `/ejecuciones?job=${SYNTHETIC_JOB_ID}`);
     await expect(page.getByText("Cribando").first()).toBeVisible();
     await analyzeAxe(page);
   });
 
-  test("/ejecuciones/job-sintetico error cumple axe", async ({ page }) => {
-    await gotoSettled(page, `/ejecuciones/${SYNTHETIC_JOB_ID}?fixture=error`);
+  test("/ejecuciones?job=job-sintetico error cumple axe", async ({ page }) => {
+    await gotoSettled(
+      page,
+      `/ejecuciones?job=${SYNTHETIC_JOB_ID}&fixture=error`,
+    );
     await expect(page.getByRole("alert").first()).toBeVisible();
     await analyzeAxe(page);
   });

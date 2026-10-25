@@ -21,9 +21,8 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    // Prefer prior `next build`. With output:standalone, Next warns on
-    // `next start` but still serves for e2e; Docker uses node server.js.
-    command: "./node_modules/.bin/next start -p 3000",
+    // Export estático: sirve `out/` (SPA fallback solo GUI; sin /api).
+    command: "node scripts/serve-out.mjs",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
