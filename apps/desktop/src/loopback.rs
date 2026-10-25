@@ -1,0 +1,401 @@
+//! Servidor loopback same-process: Host/Origin 403 + Bearer vía AuthConfig token.
+
+use std::net::SocketAddr;
+use std::path::PathBuf;
+use std::sync::Arc;
+
+use axum::extract::{Request, State};
+use axum::http::{header, HeaderMap, StatusCode};
+use axum::middleware::{self, Next};
+use axum::response::{IntoResponse, Response};
+use axum::Router;
+use tokio::net::TcpListener;
+use tokio::sync::oneshot;
+use zedazo_api::app::AppState;
+use zedazo_api::auth::AuthConfig;
+use zedazo_api::serve::ApiConfig;
+
+/// Contexto del guard Host/Origin (solo escritorio).
+#[derive(Clone, Debug)]
+pub struct LoopbackGuard {
+    pub port: u16,
+}
+
+impl LoopbackGuard {
+    fn allowed_host(&self, host: &str) -> bool {
+        let host = host.trim();
+        // Sin puerto implícito 80 — exigimos host:port exacto del listener.
+        let expected = [
+            format!("127.0.0.1:{}", self.port),
+            format!("localhost:{}", self.port),
+            format!("[::1]:{}", self.port),
+        ];
+        expected.iter().any(|e| e.eq_ignore_ascii_case(host))
+    }
+
+    fn allowed_origin(&self, origin: &str) -> bool {
+        let origin = origin.trim();
+        let expected = [
+            format!("http://127.0.0.1:{}", self.port),
+            format!("http://localhost:{}", self.port),
+            format!("http://[::1]:{}", self.port),
+        ];
+        expected.iter().any(|e| e == origin)
+    }
+}
+
+/// 403 si Host no es loopback:puerto; si Origin está presente, debe coincidir.
+pub async fn host_origin_guard(
+    State(guard): State<Arc<LoopbackGuard>>,
+    req: Request,
+    next: Next,
+) -> Response {
+    let headers = req.headers();
+    match check_host_origin(headers, &guard) {
+        Ok(()) => next.run(req).await,
+        Err(status) => status.into_response(),
+    }
+}
+
+fn check_host_origin(headers: &HeaderMap, guard: &LoopbackGuard) -> Result<(), StatusCode> {
+    let host = headers
+        .get(header::HOST)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    if host.is_empty() || !guard.allowed_host(host) {
+        return Err(StatusCode::FORBIDDEN);
+    }
+    if let Some(origin) = headers.get(header::ORIGIN).and_then(|v| v.to_str().ok()) {
+        if !origin.is_empty() && !guard.allowed_origin(origin) {
+            return Err(StatusCode::FORBIDDEN);
+        }
+    }
+    Ok(())
+}
+
+/// Construye el router de escritorio: API + GUI + guard Host/Origin (sin CORS abierto).
+pub fn desktop_router(cfg: ApiConfig, guard: LoopbackGuard) -> Router {
+    let g = Arc::new(guard);
+    cfg.into_router()
+        .layer(middleware::from_fn_with_state(g, host_origin_guard))
+}
+
+/// Arranca `127.0.0.1:0` con token de sesión; devuelve addr, token y canal de shutdown.
+pub async fn start_desktop_server(
+    data_dir: PathBuf,
+    static_dir: PathBuf,
+    session_token: String,
+) -> anyhow::Result<(
+    SocketAddr,
+    oneshot::Sender<()>,
+    tokio::task::JoinHandle<anyhow::Result<()>>,
+)> {
+    let auth = AuthConfig::token(session_token, false);
+    let state = AppState::new_with_auth(data_dir, 52_428_800, 4, 24, auth)?;
+    let cfg = ApiConfig {
+        state,
+        static_dir: Some(static_dir),
+    };
+
+    let listener = TcpListener::bind("127.0.0.1:0").await?;
+    let addr = listener.local_addr()?;
+    if !addr.ip().is_loopback() {
+        anyhow::bail!("bind no-loopback rechazado: {addr}");
+    }
+
+    let guard = LoopbackGuard { port: addr.port() };
+    let app = desktop_router(cfg, guard);
+
+    let (tx, rx) = oneshot::channel::<()>();
+    let handle = tokio::spawn(async move {
+        axum::serve(listener, app)
+            .with_graceful_shutdown(async move {
+                let _ = rx.await;
+            })
+            .await
+            .map_err(|e| anyhow::anyhow!(e))?;
+        Ok(())
+    });
+
+    Ok((addr, tx, handle))
+}
+
+/// Resuelve el directorio GUI: `ZEDAZO_STATIC_DIR`, `apps/web/out` si existe, o stub embebido.
+pub fn resolve_static_dir() -> PathBuf {
+    if let Some(p) = std::env::var_os("ZEDAZO_STATIC_DIR").filter(|v| !v.is_empty()) {
+        return PathBuf::from(p);
+    }
+    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let web_out = manifest.join("../../apps/web/out");
+    if web_out.join("index.html").is_file() {
+        return web_out;
+    }
+    manifest.join("gui")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::session;
+    use axum::body::Body;
+    use http_body_util::BodyExt;
+    use std::fs;
+    use tempfile::tempdir;
+    use tower::ServiceExt;
+    use zedazo_api::app::AppState;
+    use zedazo_api::auth::AuthConfig;
+    use zedazo_api::serve::ApiConfig;
+
+    fn fixture_gui(root: &std::path::Path) {
+        fs::write(
+            root.join("index.html"),
+            "<!doctype html><title>zedazo</title><h1>gui</h1>",
+        )
+        .unwrap();
+    }
+
+    fn app_with_token(
+        data: &std::path::Path,
+        gui: &std::path::Path,
+        token: &str,
+        port: u16,
+    ) -> Router {
+        let state = AppState::new_with_auth(
+            data.to_path_buf(),
+            1_000_000,
+            4,
+            24,
+            AuthConfig::token(token, false),
+        )
+        .unwrap();
+        desktop_router(
+            ApiConfig {
+                state,
+                static_dir: Some(gui.to_path_buf()),
+            },
+            LoopbackGuard { port },
+        )
+    }
+
+    #[tokio::test]
+    async fn protected_without_bearer_is_401() {
+        let data = tempdir().unwrap();
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let app = app_with_token(
+            data.path(),
+            gui.path(),
+            "tokensecret32byteshexpad00000001",
+            9_001,
+        );
+
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/version")
+                    .header(header::HOST, "127.0.0.1:9001")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn protected_with_bearer_ok() {
+        let data = tempdir().unwrap();
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let token = "tokensecret32byteshexpad00000001";
+        let app = app_with_token(data.path(), gui.path(), token, 9_001);
+
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/version")
+                    .header(header::HOST, "127.0.0.1:9001")
+                    .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn foreign_host_is_403() {
+        let data = tempdir().unwrap();
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let token = "tokensecret32byteshexpad00000001";
+        let app = app_with_token(data.path(), gui.path(), token, 9_001);
+
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/health")
+                    .header(header::HOST, "evil.example:9001")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn host_without_port_is_403() {
+        let data = tempdir().unwrap();
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let app = app_with_token(
+            data.path(),
+            gui.path(),
+            "tokensecret32byteshexpad00000001",
+            9_001,
+        );
+
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/health")
+                    .header(header::HOST, "127.0.0.1")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn token_mode_has_no_open_cors() {
+        let data = tempdir().unwrap();
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let app = app_with_token(
+            data.path(),
+            gui.path(),
+            "tokensecret32byteshexpad00000001",
+            9_001,
+        );
+
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .method("OPTIONS")
+                    .uri("/api/v1/health")
+                    .header(header::HOST, "127.0.0.1:9001")
+                    .header(header::ORIGIN, "http://evil.example")
+                    .header(header::ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        // Guard Host/Origin o CORS vacío: nunca ACAO=* / evil.
+        assert_ne!(res.status(), StatusCode::OK);
+        let acao = res
+            .headers()
+            .get(header::ACCESS_CONTROL_ALLOW_ORIGIN)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+        assert!(
+            acao.is_empty() || (acao != "*" && !acao.contains("evil")),
+            "CORS abierto inesperado: {acao:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn foreign_origin_is_403() {
+        let data = tempdir().unwrap();
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let token = "tokensecret32byteshexpad00000001";
+        let app = app_with_token(data.path(), gui.path(), token, 9_001);
+
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/health")
+                    .header(header::HOST, "127.0.0.1:9001")
+                    .header(header::ORIGIN, "http://evil.example")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn loopback_origin_allowed() {
+        let data = tempdir().unwrap();
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let app = app_with_token(
+            data.path(),
+            gui.path(),
+            "tokensecret32byteshexpad00000001",
+            9_001,
+        );
+
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/health")
+                    .header(header::HOST, "127.0.0.1:9001")
+                    .header(header::ORIGIN, "http://127.0.0.1:9001")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn bind_is_loopback_only() {
+        let data = tempdir().unwrap();
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let token = session::generate_session_token().unwrap();
+        let (addr, tx, handle) =
+            start_desktop_server(data.path().to_path_buf(), gui.path().to_path_buf(), token)
+                .await
+                .unwrap();
+        assert!(addr.ip().is_loopback());
+        assert_ne!(addr.port(), 0);
+        let _ = tx.send(());
+        let _ = handle.await;
+    }
+
+    #[tokio::test]
+    async fn gui_served_on_loopback_host() {
+        let data = tempdir().unwrap();
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let app = app_with_token(
+            data.path(),
+            gui.path(),
+            "tokensecret32byteshexpad00000001",
+            9_001,
+        );
+
+        let res = app
+            .oneshot(
+                Request::builder()
+                    .uri("/")
+                    .header(header::HOST, "127.0.0.1:9001")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        let body = res.into_body().collect().await.unwrap().to_bytes();
+        assert!(String::from_utf8_lossy(&body).contains("gui"));
+    }
+}
