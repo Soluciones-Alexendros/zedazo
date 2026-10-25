@@ -83,6 +83,14 @@ Tokens GUI (ADR-0019): fuente DTCG [`apps/web/tokens/`](apps/web/tokens/) → `p
 
 → Ver [ROADMAP.md](./ROADMAP.md) v0.5.0–v0.5.1 y [DECISIONS.md](./DECISIONS.md) (ADR-0015, ADR-0016).
 
+### Escritorio AppImage (ADR-0021)
+
+- Hito [ROADMAP.md](./ROADMAP.md) **v0.6.0**: Tauri v2 empaqueta GUI estática + `zedazo-api` **same-process** (`serve` en `127.0.0.1:0`); token de sesión loopback; CSP `http://127.0.0.1:*`.
+- Docker/Caddy (ADR-0016) sigue siendo el camino remoto/self-hosted; el AppImage **no** incluye Node ni Caddy ni sidecar.
+- Workspace previsto: `apps/desktop` (código en oleadas posteriores a este ADR). Prueba en Ubuntu 26.
+
+→ Ver [DECISIONS.md](./DECISIONS.md) ADR-0021.
+
 ## Capas (histórico v0.2 — CLI única)
 
 ```

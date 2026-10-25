@@ -31,7 +31,7 @@ supersedes: "v0.3.2"
 
 | Dimensión | Estado |
 |-----------|--------|
-| Versión publicada | Tag **v0.5.1** existe (assets/SBOM: ver [`docs/validation/release-v0.5.1.md`](docs/validation/release-v0.5.1.md)); workspace **0.5.1**; GUI ADR-0015 + remoto ADR-0016 |
+| Versión publicada | Tag **v0.5.1** existe (assets/SBOM: ver [`docs/validation/release-v0.5.1.md`](docs/validation/release-v0.5.1.md)); workspace **0.5.1**; GUI ADR-0015 + remoto ADR-0016; escritorio AppImage planificado **v0.6.0** (ADR-0021) |
 | Tests | core + I4–I6; parity O10 ampliada; `auth_http`; retención; web `pnpm test` + Playwright; CardDAV mocks CLI |
 | CI | `ubuntu-latest`; `make ci` + jobs Compose smoke / E2E API real; Renovate |
 | GUI/API | Same-origin Docker (Caddy); local + remoto single-user (O11) |
@@ -109,6 +109,19 @@ supersedes: "v0.3.2"
 **Criterio de salida:** O11; despliegue remoto usable sin publicar API/web directamente; CI verde. Tag `v0.5.1` creado (estado de assets en docs de validación); republicación crates.io / assets a confirmación humana tras gates de `release.yml`.
 
 **Nota (v0.5.x, docs):** modernización del design system de la GUI (OKLCH tokenizado → GUI profesional) — plan en [`docs/gui/design-system-plan.md`](./docs/gui/design-system-plan.md) **ejecutado** 2026-09-12, epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59). Fases 1–4 aterrizadas (pipeline DTCG + átomos + pantallas `--zed-*` + catálogo `/documentacion/ds` + axe/visual en CI), **separada** de CardDAV ([#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48)).
+
+### v0.6.0 — Escritorio AppImage (ADR-0021) — L
+
+- Precondición: **[ADR-0021](./DECISIONS.md)** (aceptada 2026-10-25) — Tauri + API same-process; sin Node/Caddy/Electron/sidecar en el AppImage
+- [ ] AppImage Linux; prueba manual en **Ubuntu 26** (build CI en runner compatible, p. ej. `ubuntu-22.04`)
+- [ ] GUI estática embebida + `zedazo-api` `serve` en el mismo proceso (`127.0.0.1:0`); token de sesión loopback
+- [ ] Flujo operador: `sample.vcf` sintético + invariante **I7** (no sobrescribir origen) vía GUI/escritorio
+- [ ] Config XDG; docs de uso escritorio; ejemplos/fixtures sintéticos alineados
+- [ ] CI: build AppImage + smoke; artefactos al draft de release (sin publicar crates.io desde este hito)
+
+**Criterio de salida:** ADR-0021 cumplido en código; AppImage usable en Ubuntu 26 con el flujo sample+I7; `make ci` / gates de escritorio verdes; tag/draft `v0.6.0` a confirmación humana (no publicación automática).
+
+**Fuera de alcance v0.6.0:** updater Tauri; multi-usuario; CardDAV en GUI; cambiar auth remoto ADR-0016; macOS/Windows nativos (siguen cargo-dist / post-v1.0).
 
 ### Ops — dominio de producto (`zedazo.alexendros.dev`) — S
 
