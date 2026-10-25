@@ -56,7 +56,7 @@ for (const scheme of ["light", "dark"] as const) {
     test("ejecucion-running", async ({ page }) => {
       await applyTheme(page, scheme);
       await installApiFixture(page, "running-job");
-      await gotoSettled(page, `/ejecuciones/${SYNTHETIC_JOB_ID}`);
+      await gotoSettled(page, `/ejecuciones?job=${SYNTHETIC_JOB_ID}`);
       await expect(page.getByText("Cribando").first()).toBeVisible();
       await expect(page).toHaveScreenshot(`ejecucion-running-${scheme}.png`, {
         animations: "disabled",

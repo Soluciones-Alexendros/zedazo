@@ -42,6 +42,39 @@ mod tests {
     use axum::Router;
     use tower::ServiceExt;
 
+    fn assert_caddy_parity(path: &str, contents: &str) {
+        assert!(
+            contents.contains("X-Content-Type-Options nosniff"),
+            "{path}: falta X-Content-Type-Options"
+        );
+        assert!(
+            contents.contains("Referrer-Policy no-referrer"),
+            "{path}: falta Referrer-Policy"
+        );
+        assert!(
+            contents.contains("X-Frame-Options DENY"),
+            "{path}: falta X-Frame-Options"
+        );
+        let quoted = format!("Content-Security-Policy \"{CONTENT_SECURITY_POLICY}\"");
+        assert!(
+            contents.contains(&quoted),
+            "{path}: CSP de Caddy ≠ CONTENT_SECURITY_POLICY"
+        );
+    }
+
+    #[test]
+    fn caddyfiles_match_security_headers() {
+        assert_caddy_parity("Caddyfile", include_str!("../../../deploy/Caddyfile"));
+        assert_caddy_parity(
+            "Caddyfile.local",
+            include_str!("../../../deploy/Caddyfile.local"),
+        );
+        assert_caddy_parity(
+            "Caddyfile.public",
+            include_str!("../../../deploy/Caddyfile.public"),
+        );
+    }
+
     #[tokio::test]
     async fn middleware_sets_caddy_parity_headers() {
         let app = Router::new()

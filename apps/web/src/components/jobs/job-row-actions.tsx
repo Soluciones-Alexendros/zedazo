@@ -16,7 +16,7 @@ export function JobRowActions({ job, onChanged, primary = false }: Props) {
     <div className="zed-row">
       <Link
         className={buttonClassName({ variant: primary ? "primary" : "tertiary" })}
-        href={`/ejecuciones/${job.job_id}`}
+        href={`/ejecuciones?job=${encodeURIComponent(job.job_id)}`}
       >
         Abrir
       </Link>

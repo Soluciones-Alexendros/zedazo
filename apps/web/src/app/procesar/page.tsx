@@ -311,7 +311,11 @@ export default function ProcesarPage() {
             {isTerminalStatus(activeJob.status) &&
             /completed/i.test(activeJob.status) ? (
               <Button
-                onClick={() => router.push(`/ejecuciones/${activeJob.job_id}`)}
+                onClick={() =>
+                  router.push(
+                    `/ejecuciones?job=${encodeURIComponent(activeJob.job_id)}`,
+                  )
+                }
               >
                 Ver resultados
               </Button>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { isCancellableStatus, type ContactView, type JobManifest } from "@/lib/api";
 import {
@@ -47,9 +46,9 @@ const ARTIFACT_META: Record<string, { label: string; description: string }> = {
   json: { label: "JSON", description: "Contactos en JSON" },
 };
 
-export default function JobDetailPage() {
-  const params = useParams();
-  const jobId = String(params.jobId);
+type Props = { jobId: string };
+
+export function JobDetail({ jobId }: Props) {
   const [tab, setTab] = useState<Tab>("resumen");
   const [job, setJob] = useState<JobManifest | null>(null);
   const [contacts, setContacts] = useState<ContactView[]>([]);

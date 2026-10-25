@@ -1,8 +1,9 @@
 /**
  * Base de la API. Same-origin por defecto (rutas relativas `/api/v1/...`).
- * En desarrollo, `next.config` reescribe `/api/*` hacia la API en loopback.
- * Solo se usa un origen absoluto si `NEXT_PUBLIC_API_BASE` está definido y no vacío
- * (p. ej. pruebas aisladas); la cadena vacía no cuenta como absoluta.
+ * En `next dev`, usar `NEXT_PUBLIC_API_BASE` (ver `.env.local.example`) o
+ * `scripts/serve-out.mjs` con `ZEDAZO_PROXY_API=1`. Export/Docker: Caddy o proxy.
+ * Solo se usa un origen absoluto si `NEXT_PUBLIC_API_BASE` está definido y no vacío;
+ * la cadena vacía no cuenta como absoluta.
  */
 function resolveApiBase(): string {
   const raw = process.env.NEXT_PUBLIC_API_BASE;
