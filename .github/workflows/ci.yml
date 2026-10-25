@@ -457,6 +457,12 @@ jobs:
       - smoke
       - secrets
       - sca
+      - desktop-appimage
+      - desktop-smoke
+      - desktop-e2e
+      - desktop-parity
+      - desktop-sbom
+      - desktop-attest
     runs-on: ubuntu-latest
     permissions: {}
     timeout-minutes: 5
