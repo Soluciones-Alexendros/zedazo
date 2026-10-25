@@ -24,7 +24,9 @@ chmod +x "$APPIMAGE"
 
 export APPIMAGE_EXTRACT_AND_RUN="${APPIMAGE_EXTRACT_AND_RUN:-1}"
 export WEBKIT_DISABLE_DMABUF_RENDERER="${WEBKIT_DISABLE_DMABUF_RENDERER:-1}"
-if [[ -z "${ZEDAZO_STATIC_DIR:-}" && -f apps/web/out/index.html ]]; then
+if [[ -f dist/desktop/gui/index.html ]]; then
+  export ZEDAZO_STATIC_DIR="${ROOT}/dist/desktop/gui"
+elif [[ -z "${ZEDAZO_STATIC_DIR:-}" && -f apps/web/out/index.html ]]; then
   export ZEDAZO_STATIC_DIR="${ROOT}/apps/web/out"
 fi
 
