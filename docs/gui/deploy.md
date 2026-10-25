@@ -92,6 +92,19 @@ Wordmark lowercase **`https://zedazo.alexendros.dev`** (ADR-0014). Convención d
 
 Hoy el repo sirve una landing estática en [`apps/landing/`](../../apps/landing/index.html) (pitch, crate, GitHub, docs.rs). El registro DNS lo crea el **operador** en la zona `alexendros.dev`; el destino del CNAME no está fijado en el código.
 
+**Estado (2026-10):** sin host ni CNAME, la URL responde 404. El código de despliegue ya está en `main` ([`deploy/docker-compose.landing.yml`](../../deploy/docker-compose.landing.yml), [`Caddyfile.landing`](../../deploy/Caddyfile.landing)). [`apps/web`](../../apps/web) es la GUI self-hosted (Next.js `output: "standalone"` detrás de Caddy); **no** se despliega en Vercel ni se apunta el CNAME del producto a Vercel.
+
+### Checklist operador (DNS + host)
+
+1. Tener un host con puertos **80** y **443** públicos (VPS, miniPC o Coolify). No crear el CNAME hasta tener ese host.
+2. En la zona DNS de `alexendros.dev`: CNAME `zedazo` → hostname real del host, **TTL 300**. Si solo hay IP, A (y AAAA si aplica). No tocar el apex ni el correo.
+3. Comprobar resolución **antes** de Let's Encrypt: `dig +short CNAME zedazo.alexendros.dev` (o A).
+4. En el host: `cd deploy && docker compose -f docker-compose.landing.yml up -d`.
+5. Verificar: `curl -fsS -o /dev/null -w '%{http_code}\n' https://zedazo.alexendros.dev` → **200**.
+6. Rollback: con TTL bajo, devolver el registro DNS anterior y/o detener el compose de landing.
+
+También: corregir la homepage del repo GitHub (hoy apunta a la org antigua `Iniciativas-Alexendros`). No volver a anunciar la URL en el README hasta que responda 200.
+
 ### DNS (operador)
 
 En el panel DNS de `alexendros.dev`:
