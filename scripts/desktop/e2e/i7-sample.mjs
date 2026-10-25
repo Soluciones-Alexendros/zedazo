@@ -178,15 +178,16 @@ try {
   }
   console.log("OK e2e upload sintético 10 MB");
 
-  // V-04: sin API Tauri global en el webview.
-  const hasTauriInternals = await browser.execute(() => {
+  // V-04: withGlobalTauri=false → sin API global `__TAURI__`.
+  // `__TAURI_INTERNALS__` sigue existiendo (IPC de Tauri 2); no es la superficie prohibida.
+  const hasGlobalTauri = await browser.execute(() => {
     // eslint-disable-next-line no-undef
-    return typeof window.__TAURI_INTERNALS__ !== "undefined";
+    return typeof window.__TAURI__ !== "undefined";
   });
-  if (hasTauriInternals) {
-    throw new Error("window.__TAURI_INTERNALS__ no debe existir (withGlobalTauri=false)");
+  if (hasGlobalTauri) {
+    throw new Error("window.__TAURI__ no debe existir (withGlobalTauri=false)");
   }
-  console.log("OK V-04: sin __TAURI_INTERNALS__");
+  console.log("OK V-04: sin __TAURI__ global");
 
   // V-03: navegación externa no abandona el loopback.
   const urlBefore = await browser.getUrl();
