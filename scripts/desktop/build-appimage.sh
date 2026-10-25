@@ -42,6 +42,14 @@ rsync -a --delete \
   apps/web/out/ \
   apps/desktop/gui/
 
+# Copia para artefacto CI: el AppImage embebe la GUI en el binario (no hay .html
+# sueltos al --appimage-extract). El e2e/smoke sirven ServeDir desde aquí.
+mkdir -p dist/desktop
+rsync -a --delete \
+  --exclude '.git' \
+  apps/web/out/ \
+  dist/desktop/gui/
+
 if ! command -v cargo-tauri >/dev/null 2>&1; then
   if ! cargo tauri --version >/dev/null 2>&1; then
     echo "==> instalando tauri-cli 2"
@@ -82,11 +90,11 @@ chmod +x "$DEST"
   echo "SOURCE_APPIMAGE=$(basename "$SRC")"
 } >"${OUT_DIR}/build-info.txt"
 
-# Env file para smoke/e2e en el mismo checkout (ServeDir + /version).
+# Env file para smoke/e2e. STATIC_DIR relativo al checkout del runner (no path absoluto del builder).
 {
   echo "export ZEDAZO_GIT_SHA=${ZEDAZO_GIT_SHA}"
   echo "export ZEDAZO_BUILD_DATE=${ZEDAZO_BUILD_DATE}"
-  echo "export ZEDAZO_STATIC_DIR=${ROOT}/apps/web/out"
+  echo "# Preferir dist/desktop/gui (artefacto) o apps/web/out en el mismo checkout."
   echo "export APPIMAGE_EXTRACT_AND_RUN=1"
   echo "export WEBKIT_DISABLE_DMABUF_RENDERER=1"
 } >"${OUT_DIR}/run-env.sh"

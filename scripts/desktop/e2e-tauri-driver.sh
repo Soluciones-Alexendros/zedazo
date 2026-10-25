@@ -41,9 +41,18 @@ if [[ -f dist/desktop/run-env.sh ]]; then
   # shellcheck disable=SC1091
   source dist/desktop/run-env.sh
 fi
-if [[ -z "${ZEDAZO_STATIC_DIR:-}" && -f apps/web/out/index.html ]]; then
+# ServeDir necesita ficheros en disco. La GUI del AppImage va embebida en el binario
+# Tauri (no hay .html al --appimage-extract); el artefacto sube dist/desktop/gui/.
+if [[ -f dist/desktop/gui/index.html ]]; then
+  export ZEDAZO_STATIC_DIR="$ROOT/dist/desktop/gui"
+elif [[ -f apps/web/out/index.html ]]; then
   export ZEDAZO_STATIC_DIR="$ROOT/apps/web/out"
 fi
+if [[ -z "${ZEDAZO_STATIC_DIR:-}" || ! -f "${ZEDAZO_STATIC_DIR}/index.html" ]]; then
+  echo "error: falta GUI estática (dist/desktop/gui o apps/web/out) para ZEDAZO_STATIC_DIR" >&2
+  exit 1
+fi
+echo "==> ZEDAZO_STATIC_DIR=${ZEDAZO_STATIC_DIR}"
 
 xvfb-run -a -s "-screen 0 1280x800x24" env \
   APPIMAGE_EXTRACT_AND_RUN="$APPIMAGE_EXTRACT_AND_RUN" \

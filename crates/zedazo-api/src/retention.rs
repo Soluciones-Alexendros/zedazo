@@ -92,7 +92,7 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
         }
 
         // Expirados: borrar ya.
-        if should_expire(&manifest, retention_hours) {
+        if should_expire(&manifest, retention_hours, chrono::Utc::now()) {
             match state.storage.delete_job_dir(&id) {
                 Ok(()) => {
                     tracing::info!(job_id = %id, "job vencido eliminado en reconciliación");
@@ -138,14 +138,19 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn should_expire(manifest: &JobManifest, default_retention: u64) -> bool {
+/// ¿Ha vencido el TTL de retención? Reloj inyectable para tests (S-12).
+pub fn should_expire(
+    manifest: &JobManifest,
+    default_retention: u64,
+    now: chrono::DateTime<chrono::Utc>,
+) -> bool {
     let Some(completed) = manifest.completed_at.as_ref() else {
         return false;
     };
     let Ok(ts) = chrono::DateTime::parse_from_rfc3339(completed) else {
         return false;
     };
-    let age = chrono::Utc::now().signed_duration_since(ts.with_timezone(&chrono::Utc));
+    let age = now.signed_duration_since(ts.with_timezone(&chrono::Utc));
     let hours = if manifest.retention_hours > 0 {
         manifest.retention_hours
     } else {
@@ -280,7 +285,7 @@ pub async fn retention_sweep(state: &AppState) {
     {
         let jobs = state.jobs.read().await;
         for (id, rec) in jobs.iter() {
-            if should_expire(&rec.manifest, retention_hours) {
+            if should_expire(&rec.manifest, retention_hours, chrono::Utc::now()) {
                 to_expire.push(id.clone());
             }
         }
@@ -422,4 +427,75 @@ pub async fn ensure_event_channel(
     let (tx, _) = broadcast::channel(256);
     ev.insert(job_id.to_string(), tx.clone());
     tx
+}
+
+#[cfg(test)]
+mod should_expire_tests {
+    use super::*;
+    use crate::dto::{InputMeta, RulesMeta};
+
+    fn completed_manifest(completed_at: &str, retention_hours: u64) -> JobManifest {
+        JobManifest {
+            job_id: "01900000-0000-7000-8000-0000000000ee".into(),
+            status: JobStatus::Completed,
+            display_name: None,
+            created_at: completed_at.into(),
+            started_at: Some(completed_at.into()),
+            completed_at: Some(completed_at.into()),
+            core_version: "0.5.1".into(),
+            input: InputMeta {
+                original_name: "x.vcf".into(),
+                sha256: "abc".into(),
+                bytes: 1,
+                source_detected: None,
+                vcard_version: None,
+                upload_id: "00000000-0000-7000-8000-000000000001".into(),
+            },
+            rules: RulesMeta {
+                mode: "builtin".into(),
+                sha256: None,
+            },
+            summary: None,
+            artifacts: vec![],
+            error: None,
+            retention_hours,
+        }
+    }
+
+    #[test]
+    fn expires_when_age_reaches_retention() {
+        let completed = "2026-01-01T00:00:00Z";
+        let manifest = completed_manifest(completed, 24);
+        let now = chrono::DateTime::parse_from_rfc3339("2026-01-02T00:00:00Z")
+            .unwrap()
+            .with_timezone(&chrono::Utc);
+        assert!(should_expire(&manifest, 24, now));
+    }
+
+    #[test]
+    fn not_expired_before_retention() {
+        let completed = "2026-01-01T00:00:00Z";
+        let manifest = completed_manifest(completed, 24);
+        let now = chrono::DateTime::parse_from_rfc3339("2026-01-01T12:00:00Z")
+            .unwrap()
+            .with_timezone(&chrono::Utc);
+        assert!(!should_expire(&manifest, 24, now));
+    }
+
+    #[test]
+    fn uses_default_when_manifest_retention_zero() {
+        let completed = "2026-01-01T00:00:00Z";
+        let manifest = completed_manifest(completed, 0);
+        let now = chrono::DateTime::parse_from_rfc3339("2026-01-03T00:00:00Z")
+            .unwrap()
+            .with_timezone(&chrono::Utc);
+        assert!(should_expire(&manifest, 48, now));
+        assert!(!should_expire(
+            &manifest,
+            72,
+            chrono::DateTime::parse_from_rfc3339("2026-01-02T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc)
+        ));
+    }
 }

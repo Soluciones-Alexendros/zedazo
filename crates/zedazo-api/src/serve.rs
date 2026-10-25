@@ -79,6 +79,20 @@ async fn gui_fallback(dir: PathBuf, req: Request) -> Response {
         return StatusCode::METHOD_NOT_ALLOWED.into_response();
     }
 
+    // Next export sin trailingSlash: /ejecuciones → ejecuciones.html (como serve-out.mjs).
+    if let Some(html) = next_export_html(&dir, path) {
+        let method = req.method().clone();
+        let html_req = Request::builder()
+            .method(method)
+            .uri("/index.html")
+            .body(axum::body::Body::empty())
+            .unwrap_or_else(|_| Request::new(axum::body::Body::empty()));
+        match ServeFile::new(html).oneshot(html_req).await {
+            Ok(res) if res.status() != StatusCode::NOT_FOUND => return res.into_response(),
+            _ => {}
+        }
+    }
+
     let index = ServeFile::new(dir.join("index.html"));
     let svc = ServeDir::new(&dir)
         .append_index_html_on_directories(true)
@@ -86,6 +100,26 @@ async fn gui_fallback(dir: PathBuf, req: Request) -> Response {
     match svc.oneshot(req).await {
         Ok(res) => res.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
+}
+
+/// Resuelve `/ruta` → `dir/ruta.html` si existe y queda bajo `dir` (sin `..`).
+fn next_export_html(dir: &std::path::Path, url_path: &str) -> Option<PathBuf> {
+    let rel = url_path.trim_start_matches('/');
+    if rel.is_empty() || rel.contains("..") || rel.contains('\\') || rel.contains('.') {
+        return None;
+    }
+    let candidate = dir.join(format!("{rel}.html"));
+    let Ok(base) = dir.canonicalize() else {
+        return None;
+    };
+    let Ok(canon) = candidate.canonicalize() else {
+        return None;
+    };
+    if canon.starts_with(&base) && canon.is_file() {
+        Some(canon)
+    } else {
+        None
     }
 }
 
@@ -103,6 +137,11 @@ mod tests {
         fs::write(
             root.join("index.html"),
             "<!doctype html><title>zedazo</title><h1>gui</h1>",
+        )
+        .unwrap();
+        fs::write(
+            root.join("ejecuciones.html"),
+            "<!doctype html><title>ejecuciones</title><h1>ejecuciones</h1>",
         )
         .unwrap();
         fs::create_dir_all(root.join("assets")).unwrap();
@@ -179,6 +218,7 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(res.status(), StatusCode::OK);
+        // /procesar sin procesar.html → SPA fallback a index.html
         assert!(body_text(res).await.contains("gui"));
 
         let res = app
@@ -194,6 +234,23 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(res.status(), StatusCode::OK);
+
+        let res = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
+                    .uri("/ejecuciones")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        assert!(
+            body_text(res).await.contains("ejecuciones"),
+            "Next export: /ejecuciones debe servir ejecuciones.html"
+        );
 
         let res = app
             .clone()

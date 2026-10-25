@@ -2,6 +2,7 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::process::Command;
 use std::sync::Mutex;
 
 use tauri::menu::MenuEvent;
@@ -14,6 +15,27 @@ use zedazo_desktop::xdg::XdgPaths;
 
 struct DesktopState {
     shutdown: Mutex<Option<tokio::sync::oneshot::Sender<()>>>,
+    /// Base loopback `http://127.0.0.1:<port>` (sin barra final).
+    api_base: String,
+    session_token: String,
+}
+
+/// V-03: solo navegación al loopback del listener; blob/data/about para descargas.
+fn allow_loopback_navigation(
+    scheme: &str,
+    host: Option<&str>,
+    url_port: Option<u16>,
+    listener_port: u16,
+) -> bool {
+    if scheme == "blob" || scheme == "data" || scheme == "about" {
+        return true;
+    }
+    scheme == "http" && host == Some("127.0.0.1") && url_port == Some(listener_port)
+}
+
+fn open_external_url(url: &str) {
+    // Best-effort: si xdg-open falta (CI mínimo), el webview ya se queda en loopback.
+    let _ = Command::new("xdg-open").arg(url).spawn();
 }
 
 fn main() {
@@ -31,7 +53,7 @@ fn main() {
             let init = init_script(&token)?;
 
             let (addr, shutdown_tx, _server) = tauri::async_runtime::block_on(
-                start_desktop_server(xdg.data.clone(), static_dir.clone(), token),
+                start_desktop_server(xdg.data.clone(), static_dir.clone(), token.clone()),
             )?;
 
             tracing::info!(
@@ -41,12 +63,16 @@ fn main() {
                 "zedazo-desktop: API+GUI en loopback"
             );
 
+            let api_base = format!("http://127.0.0.1:{}", addr.port());
             app.manage(DesktopState {
                 shutdown: Mutex::new(Some(shutdown_tx)),
+                api_base: api_base.clone(),
+                session_token: token,
             });
 
-            let url = format!("http://127.0.0.1:{}/", addr.port());
+            let url = format!("{api_base}/");
             let menu = build_menu(app.handle())?;
+            let port = addr.port();
             WebviewWindowBuilder::new(
                 app,
                 "main",
@@ -55,13 +81,28 @@ fn main() {
             .title("zedazo")
             .inner_size(1100.0, 720.0)
             .initialization_script(&init)
+            .on_navigation(move |nav| {
+                if allow_loopback_navigation(nav.scheme(), nav.host_str(), nav.port(), port) {
+                    true
+                } else {
+                    open_external_url(nav.as_str());
+                    false
+                }
+            })
             .menu(menu)
             .build()?;
 
             Ok(())
         })
         .on_menu_event(|app, event: MenuEvent| {
-            menu_es::on_menu_event(app, event.id().as_ref());
+            let id = event.id().as_ref();
+            if id == "datos_wipe" {
+                if let Some(state) = app.try_state::<DesktopState>() {
+                    menu_es::confirm_and_wipe(app, &state.api_base, &state.session_token);
+                }
+                return;
+            }
+            menu_es::on_menu_event(app, id);
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event {
@@ -76,4 +117,32 @@ fn main() {
         })
         .run(tauri::generate_context!())
         .expect("error al ejecutar zedazo-desktop");
+}
+
+#[cfg(test)]
+mod navigation_tests {
+    use super::allow_loopback_navigation;
+
+    #[test]
+    fn allows_loopback_only() {
+        assert!(allow_loopback_navigation(
+            "http",
+            Some("127.0.0.1"),
+            Some(9876),
+            9876
+        ));
+        assert!(!allow_loopback_navigation(
+            "http",
+            Some("127.0.0.1"),
+            Some(1),
+            9876
+        ));
+        assert!(!allow_loopback_navigation(
+            "https",
+            Some("example.com"),
+            Some(443),
+            9876
+        ));
+        assert!(allow_loopback_navigation("blob", None, None, 9876));
+    }
 }

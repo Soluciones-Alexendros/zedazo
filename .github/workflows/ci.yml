@@ -307,6 +307,7 @@ jobs:
             dist/desktop/SHA256SUMS
             dist/desktop/build-info.txt
             dist/desktop/run-env.sh
+            dist/desktop/gui/**
           if-no-files-found: error
           retention-days: 14
 
