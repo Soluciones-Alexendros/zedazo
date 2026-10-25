@@ -24,6 +24,7 @@ fn main() -> anyhow::Result<()> {
             source,
             dry_run,
             strict,
+            force,
         } => {
             let (stats, _contacts) = cribar::execute(
                 &input,
@@ -33,6 +34,7 @@ fn main() -> anyhow::Result<()> {
                 &source,
                 dry_run,
                 strict,
+                force,
             )?;
 
             println!("{}", stats);

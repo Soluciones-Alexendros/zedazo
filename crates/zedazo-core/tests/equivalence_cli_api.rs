@@ -43,7 +43,7 @@ fn equivalence_multi_fixture_counts_and_artifacts() {
         assert!(input.exists(), "falta fixture {name}");
 
         let (_stats_cli, contacts_cli) =
-            cribar::execute(&input, None, None, None, "auto", true, false).unwrap();
+            cribar::execute(&input, None, None, None, "auto", true, false, false).unwrap();
 
         let dir = tempdir().unwrap();
         let req = ProcessRequest {

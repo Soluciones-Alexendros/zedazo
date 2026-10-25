@@ -5,112 +5,127 @@ use std::path::Path;
 use crate::domain::contact::Contact;
 use crate::domain::screening::ScreeningDecision;
 use crate::error::CribaError;
+use crate::infrastructure::secure_fs::{self, WriteOpts};
 
 /// Exporta contactos conservados y needs_review a CSV.
-pub fn export_csv(contacts: &[Contact], path: &Path) -> Result<(), CribaError> {
-    let mut wtr = csv::Writer::from_path(path)?;
-
-    wtr.write_record([
-        "FN",
-        "N",
-        "ORG",
-        "TEL",
-        "EMAIL",
-        "ADR",
-        "CATEGORIES",
-        "SOURCE",
-        "CLASSIFY_RESULT",
-    ])?;
-
-    for c in contacts {
-        if matches!(
-            &c.decision,
-            ScreeningDecision::Eliminated(_) | ScreeningDecision::Quarantine(_)
-        ) {
-            continue;
-        }
-
-        let n = c
-            .structured_name
-            .as_ref()
-            .map(|sn| {
-                format!(
-                    "{};{};{};{};{}",
-                    sn.family.join(" "),
-                    sn.given.join(" "),
-                    sn.additional.join(" "),
-                    sn.prefix.join(" "),
-                    sn.suffix.join(" ")
-                )
-            })
-            .unwrap_or_default();
-
-        let tels = c
-            .tels
-            .iter()
-            .map(|t| t.value.as_str())
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        let emails = c
-            .emails
-            .iter()
-            .map(|e| e.value.as_str())
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        let addresses = c
-            .addresses
-            .iter()
-            .map(|a| {
-                format!(
-                    "{};{};{};{};{};{};{}",
-                    a.po_box, a.extended, a.street, a.locality, a.region, a.postal_code, a.country
-                )
-            })
-            .collect::<Vec<_>>()
-            .join(" | ");
-
-        let categories = {
-            let mut parts: Vec<&str> = Vec::new();
-            for cat in &c.categories.n1 {
-                parts.push(cat.as_str());
-            }
-            for cat in &c.categories.n2 {
-                parts.push(cat.as_str());
-            }
-            parts.join(", ")
-        };
-
-        let source = match &c.source_detail {
-            crate::domain::contact::SourceDetail::ProtonAutosave => "proton-autosave",
-            crate::domain::contact::SourceDetail::ProtonImport => "proton-import",
-            crate::domain::contact::SourceDetail::ProtonWeb => "proton-web",
-            crate::domain::contact::SourceDetail::Google => "google",
-            crate::domain::contact::SourceDetail::Apple => "apple",
-            crate::domain::contact::SourceDetail::Unknown(s) => s.as_str(),
-        };
-
-        let result = match &c.decision {
-            ScreeningDecision::Conserved => "conserved",
-            ScreeningDecision::NeedsReview(_) => "review",
-            _ => unreachable!(),
-        };
+pub fn export_csv(
+    contacts: &[Contact],
+    path: &Path,
+    opts: WriteOpts<'_>,
+) -> Result<(), CribaError> {
+    let mut buf = Vec::new();
+    {
+        let mut wtr = csv::Writer::from_writer(&mut buf);
 
         wtr.write_record([
-            &c.fn_value,
-            &n,
-            c.org.as_deref().unwrap_or(""),
-            &tels,
-            &emails,
-            &addresses,
-            &categories,
-            source,
-            result,
+            "FN",
+            "N",
+            "ORG",
+            "TEL",
+            "EMAIL",
+            "ADR",
+            "CATEGORIES",
+            "SOURCE",
+            "CLASSIFY_RESULT",
         ])?;
-    }
 
-    wtr.flush()?;
+        for c in contacts {
+            if matches!(
+                &c.decision,
+                ScreeningDecision::Eliminated(_) | ScreeningDecision::Quarantine(_)
+            ) {
+                continue;
+            }
+
+            let n = c
+                .structured_name
+                .as_ref()
+                .map(|sn| {
+                    format!(
+                        "{};{};{};{};{}",
+                        sn.family.join(" "),
+                        sn.given.join(" "),
+                        sn.additional.join(" "),
+                        sn.prefix.join(" "),
+                        sn.suffix.join(" ")
+                    )
+                })
+                .unwrap_or_default();
+
+            let tels = c
+                .tels
+                .iter()
+                .map(|t| t.value.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            let emails = c
+                .emails
+                .iter()
+                .map(|e| e.value.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            let addresses = c
+                .addresses
+                .iter()
+                .map(|a| {
+                    format!(
+                        "{};{};{};{};{};{};{}",
+                        a.po_box,
+                        a.extended,
+                        a.street,
+                        a.locality,
+                        a.region,
+                        a.postal_code,
+                        a.country
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join(" | ");
+
+            let categories = {
+                let mut parts: Vec<&str> = Vec::new();
+                for cat in &c.categories.n1 {
+                    parts.push(cat.as_str());
+                }
+                for cat in &c.categories.n2 {
+                    parts.push(cat.as_str());
+                }
+                parts.join(", ")
+            };
+
+            let source = match &c.source_detail {
+                crate::domain::contact::SourceDetail::ProtonAutosave => "proton-autosave",
+                crate::domain::contact::SourceDetail::ProtonImport => "proton-import",
+                crate::domain::contact::SourceDetail::ProtonWeb => "proton-web",
+                crate::domain::contact::SourceDetail::Google => "google",
+                crate::domain::contact::SourceDetail::Apple => "apple",
+                crate::domain::contact::SourceDetail::Unknown(s) => s.as_str(),
+            };
+
+            let result = match &c.decision {
+                ScreeningDecision::Conserved => "conserved",
+                ScreeningDecision::NeedsReview(_) => "review",
+                _ => unreachable!(),
+            };
+
+            wtr.write_record([
+                &c.fn_value,
+                &n,
+                c.org.as_deref().unwrap_or(""),
+                &tels,
+                &emails,
+                &addresses,
+                &categories,
+                source,
+                result,
+            ])?;
+        }
+
+        wtr.flush()?;
+    }
+    secure_fs::write_bytes(path, &buf, opts)?;
     Ok(())
 }
 
@@ -156,7 +171,12 @@ mod tests {
 
         let dir = std::env::temp_dir();
         let path = dir.join("test_export.csv");
-        export_csv(&[contact], &path).unwrap();
+        export_csv(
+            &[contact],
+            &path,
+            crate::infrastructure::secure_fs::WriteOpts::new(true),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(&path).unwrap();
         assert!(content.contains("FN,N,ORG,TEL,EMAIL,ADR,CATEGORIES,SOURCE,CLASSIFY_RESULT"));
@@ -193,7 +213,12 @@ mod tests {
 
         let dir = std::env::temp_dir();
         let path = dir.join("test_skip.csv");
-        export_csv(&[c], &path).unwrap();
+        export_csv(
+            &[c],
+            &path,
+            crate::infrastructure::secure_fs::WriteOpts::new(true),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(&path).unwrap();
         // Solo header, sin datos

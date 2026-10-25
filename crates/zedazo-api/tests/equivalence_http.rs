@@ -339,14 +339,25 @@ fn cli_artifacts(fixture_path: &Path) -> (Stats, String, String, String, String,
         "auto",
         false,
         false,
+        true,
     )
     .expect("cribar CLI");
 
     let stats_json = stats.to_json().expect("stats json");
     let csv_path = dir.path().join("contacts.csv");
     let json_path = dir.path().join("contacts.json");
-    export_csv(&contacts, &csv_path).expect("csv");
-    export_json(&contacts, &json_path).expect("json");
+    export_csv(
+        &contacts,
+        &csv_path,
+        zedazo_core::infrastructure::secure_fs::WriteOpts::new(true),
+    )
+    .expect("csv");
+    export_json(
+        &contacts,
+        &json_path,
+        zedazo_core::infrastructure::secure_fs::WriteOpts::new(true),
+    )
+    .expect("json");
 
     (
         stats,

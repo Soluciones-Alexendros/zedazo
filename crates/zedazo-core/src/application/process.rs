@@ -2,7 +2,6 @@
 
 use std::collections::BTreeSet;
 use std::fs;
-use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -17,6 +16,7 @@ use crate::domain::screening::ScreeningDecision;
 use crate::error::CribaError;
 use crate::infrastructure::csv_writer::export_csv;
 use crate::infrastructure::json_writer::export_json;
+use crate::infrastructure::secure_fs::{self, WriteOpts};
 
 /// Identificador opaco de trabajo (ULID/UUID string).
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -259,15 +259,14 @@ fn cancelled_err() -> CribaError {
 pub fn run(req: &ProcessRequest) -> Result<ProcessResult, CribaError> {
     req.cancellation.check().map_err(|_| cancelled_err())?;
     req.progress.phase(ProcessPhase::Validating);
-    fs::create_dir_all(&req.working_directory)?;
+    secure_fs::ensure_dir_0700(&req.working_directory)?;
 
     let config_path = match &req.config {
         RulesConfigSource::BuiltIn => None,
         RulesConfigSource::TomlPath(p) => Some(p.clone()),
         RulesConfigSource::TomlInline(s) => {
             let p = req.working_directory.join("config.toml");
-            let mut f = fs::File::create(&p)?;
-            f.write_all(s.as_bytes())?;
+            secure_fs::write_bytes(&p, s.as_bytes(), WriteOpts::new(true))?;
             Some(p)
         }
     };
@@ -296,6 +295,7 @@ pub fn run(req: &ProcessRequest) -> Result<ProcessResult, CribaError> {
         &req.source_override,
         req.dry_run,
         req.strict,
+        false,
     )?;
 
     req.progress.phase(ProcessPhase::WritingArtifacts);
@@ -329,9 +329,10 @@ pub fn run(req: &ProcessRequest) -> Result<ProcessResult, CribaError> {
         });
     }
 
+    let artifact_opts = WriteOpts::new(false).protect(&req.input_path);
     if !req.dry_run && req.requested_artifacts.contains(&ArtifactKind::Csv) {
         let p = req.working_directory.join("contacts.csv");
-        export_csv(&contacts, &p)?;
+        export_csv(&contacts, &p, artifact_opts)?;
         artifacts.push(ArtifactDescriptor {
             kind: ArtifactKind::Csv,
             path: p,
@@ -340,7 +341,7 @@ pub fn run(req: &ProcessRequest) -> Result<ProcessResult, CribaError> {
     }
     if !req.dry_run && req.requested_artifacts.contains(&ArtifactKind::Json) {
         let p = req.working_directory.join("contacts.json");
-        export_json(&contacts, &p)?;
+        export_json(&contacts, &p, artifact_opts)?;
         artifacts.push(ArtifactDescriptor {
             kind: ArtifactKind::Json,
             path: p,
@@ -349,7 +350,7 @@ pub fn run(req: &ProcessRequest) -> Result<ProcessResult, CribaError> {
     }
     if !req.dry_run && req.requested_artifacts.contains(&ArtifactKind::StatsJson) {
         let p = req.working_directory.join("stats.json");
-        fs::write(&p, stats.to_json()?)?;
+        secure_fs::write_bytes(&p, stats.to_json()?.as_bytes(), artifact_opts)?;
         artifacts.push(ArtifactDescriptor {
             kind: ArtifactKind::StatsJson,
             path: p,
@@ -362,7 +363,7 @@ pub fn run(req: &ProcessRequest) -> Result<ProcessResult, CribaError> {
             .contains(&ArtifactKind::StatsMarkdown)
     {
         let p = req.working_directory.join("stats.md");
-        fs::write(&p, stats.to_markdown())?;
+        secure_fs::write_bytes(&p, stats.to_markdown().as_bytes(), artifact_opts)?;
         artifacts.push(ArtifactDescriptor {
             kind: ArtifactKind::StatsMarkdown,
             path: p,

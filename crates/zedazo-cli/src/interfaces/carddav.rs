@@ -238,12 +238,9 @@ fn watch(
 }
 
 fn write_vcf(output: &std::path::Path, vcf: &str) -> anyhow::Result<()> {
-    if let Some(parent) = output.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent)?;
-        }
-    }
-    std::fs::write(output, vcf.as_bytes())?;
+    use zedazo_core::infrastructure::secure_fs::{self, WriteOpts};
+    // pull no pisa un fichero existente (sin --force en CardDAV).
+    secure_fs::write_bytes(output, vcf.as_bytes(), WriteOpts::new(false))?;
     Ok(())
 }
 

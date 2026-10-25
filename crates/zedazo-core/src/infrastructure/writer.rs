@@ -5,13 +5,13 @@
 
 use std::collections::HashMap;
 use std::fmt::Write;
-use std::fs;
 use std::path::Path;
 
 use crate::domain::contact::{CategorySet, Contact, SourceDetail, StructuredName, Tel, TelType};
 use crate::domain::screening::ScreeningDecision;
 use crate::error::CribaError;
 use crate::infrastructure::parser::ParsedVCard;
+use crate::infrastructure::secure_fs::{self, WriteOpts};
 
 /// Escribe los contactos conservados y needs_review a un archivo VCF 4.0.
 /// Si `include_quarantine` es true, los contactos en cuarentena van a
@@ -21,6 +21,7 @@ pub fn write_vcf(
     vcard_map: &HashMap<String, &ParsedVCard>,
     path: &Path,
     include_quarantine: bool,
+    opts: WriteOpts<'_>,
 ) -> Result<(), CribaError> {
     let mut conserved_buf = String::new();
     let mut quarantine_buf = String::new();
@@ -43,7 +44,7 @@ pub fn write_vcf(
         }
     }
 
-    fs::write(path, conserved_buf.as_bytes())?;
+    secure_fs::write_bytes(path, conserved_buf.as_bytes(), opts)?;
     tracing::info!(
         "VCF escrito: {} ({:.1} KB)",
         path.display(),
@@ -51,21 +52,12 @@ pub fn write_vcf(
     );
 
     if include_quarantine && !quarantine_buf.is_empty() {
-        let quarantine_path = quarantine_path(path);
-        fs::write(&quarantine_path, quarantine_buf.as_bytes())?;
+        let quarantine_path = secure_fs::quarantine_sibling(path);
+        secure_fs::write_bytes(&quarantine_path, quarantine_buf.as_bytes(), opts)?;
         tracing::info!("VCF cuarentena escrito: {}", quarantine_path.display());
     }
 
     Ok(())
-}
-
-fn quarantine_path(path: &Path) -> std::path::PathBuf {
-    let stem = path.file_stem().unwrap_or_default().to_string_lossy();
-    let ext = path
-        .extension()
-        .map(|e| format!(".{}", e.to_string_lossy()))
-        .unwrap_or_default();
-    path.with_file_name(format!("{}_cuarentena{}", stem, ext))
 }
 
 fn write_one_contact(
@@ -354,6 +346,7 @@ fn fold_line(line: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     fn make_contact(fn_val: &str) -> Contact {
         Contact {
@@ -548,7 +541,14 @@ mod tests {
 
         let dir = std::env::temp_dir();
         let path = dir.join("test_write_vcf_basic.vcf");
-        write_vcf(std::slice::from_ref(&contact), &map, &path, false).unwrap();
+        write_vcf(
+            std::slice::from_ref(&contact),
+            &map,
+            &path,
+            false,
+            WriteOpts::new(true),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(&path).unwrap();
         assert!(content.contains("BEGIN:VCARD"));
@@ -569,7 +569,14 @@ mod tests {
         let dir = std::env::temp_dir();
         let path = dir.join("test_skip_eliminated.vcf");
         let map = HashMap::new();
-        write_vcf(&[eliminated], &map, &path, false).unwrap();
+        write_vcf(
+            &[eliminated],
+            &map,
+            &path,
+            false,
+            crate::infrastructure::secure_fs::WriteOpts::new(true),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(&path).unwrap();
         assert!(!content.contains("BEGIN:VCARD"));
@@ -585,7 +592,7 @@ mod tests {
         let dir = std::env::temp_dir();
         let path = dir.join("test_quarantine.vcf");
         let map = HashMap::new();
-        write_vcf(&[qu.clone()], &map, &path, true).unwrap();
+        write_vcf(&[qu.clone()], &map, &path, true, WriteOpts::new(true)).unwrap();
 
         // El principal no debe tener el contacto en cuarentena
         let main = fs::read_to_string(&path).unwrap();

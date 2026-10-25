@@ -1,14 +1,18 @@
 //! Auditoría TSV — trazabilidad completa de cada contacto procesado.
 
 use std::fmt::Write;
-use std::fs;
 use std::path::Path;
 
 use crate::domain::audit::{format_categories_tsv, AuditAction, AuditEntry};
 use crate::error::CribaError;
+use crate::infrastructure::secure_fs::{self, WriteOpts};
 
 /// Escribe el archivo de auditoría TSV con una fila por cada entrada.
-pub fn write_audit_tsv(entries: &[AuditEntry], path: &Path) -> Result<(), CribaError> {
+pub fn write_audit_tsv(
+    entries: &[AuditEntry],
+    path: &Path,
+    opts: WriteOpts<'_>,
+) -> Result<(), CribaError> {
     let mut buf = String::with_capacity(entries.len() * 256);
 
     // Header (11 columnas requeridas)
@@ -49,7 +53,7 @@ pub fn write_audit_tsv(entries: &[AuditEntry], path: &Path) -> Result<(), CribaE
         .unwrap();
     }
 
-    fs::write(path, buf.as_bytes())?;
+    secure_fs::write_bytes(path, buf.as_bytes(), opts)?;
     tracing::info!(
         "Auditoría TSV escrita: {} ({} filas)",
         path.display(),
@@ -70,6 +74,7 @@ mod tests {
     use super::*;
     use crate::domain::audit::{AuditAction, AuditEntry};
     use crate::domain::contact::CategorySet;
+    use std::fs;
 
     fn make_audit_entry(
         uid: &str,
@@ -106,7 +111,12 @@ mod tests {
 
         let dir = std::env::temp_dir();
         let path = dir.join("test_tsv_basic.tsv");
-        write_audit_tsv(&entries, &path).unwrap();
+        write_audit_tsv(
+            &entries,
+            &path,
+            crate::infrastructure::secure_fs::WriteOpts::new(true),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(&path).unwrap();
         assert!(content.contains("TIMESTAMP\tUID\tFN_ORIGINAL"));
@@ -128,7 +138,12 @@ mod tests {
 
         let dir = std::env::temp_dir();
         let path = dir.join("test_tsv_eliminated.tsv");
-        write_audit_tsv(&entries, &path).unwrap();
+        write_audit_tsv(
+            &entries,
+            &path,
+            crate::infrastructure::secure_fs::WriteOpts::new(true),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(&path).unwrap();
         assert!(content.contains("ELIMINADO"));
@@ -149,7 +164,12 @@ mod tests {
 
         let dir = std::env::temp_dir();
         let path = dir.join("test_tsv_columns.tsv");
-        write_audit_tsv(&entries, &path).unwrap();
+        write_audit_tsv(
+            &entries,
+            &path,
+            crate::infrastructure::secure_fs::WriteOpts::new(true),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(&path).unwrap();
         let lines: Vec<&str> = content.lines().collect();

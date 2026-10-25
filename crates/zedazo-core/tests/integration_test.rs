@@ -175,7 +175,8 @@ fn test_pipeline_sample_dry_run() {
     let input = fixture("sample-contacts.vcf");
 
     let (pipeline_stats, contacts) =
-        cribar::execute(&input, None, None, None, "auto", true, false).expect("Pipeline failed");
+        cribar::execute(&input, None, None, None, "auto", true, false, false)
+            .expect("Pipeline failed");
 
     assert!(pipeline_stats.total_entrada >= 5);
     assert!(pipeline_stats.conservados > 0);
@@ -209,8 +210,8 @@ fn test_pipeline_google_dry_run() {
 
     let input = fixture("google_contactos.vcf");
 
-    let (stats, _contacts) =
-        cribar::execute(&input, None, None, None, "auto", true, false).expect("Pipeline failed");
+    let (stats, _contacts) = cribar::execute(&input, None, None, None, "auto", true, false, false)
+        .expect("Pipeline failed");
 
     assert!(stats.total_entrada >= 3);
     assert!(stats.conservados > 0 || stats.eliminados > 0);
@@ -230,7 +231,7 @@ fn test_empty_vcf_error() {
     let empty_fixture = std::env::temp_dir().join("empty_test.vcf");
     std::fs::write(&empty_fixture, empty_content).unwrap();
 
-    let result = cribar::execute(&empty_fixture, None, None, None, "auto", true, false);
+    let result = cribar::execute(&empty_fixture, None, None, None, "auto", true, false, false);
     let _ = std::fs::remove_file(&empty_fixture);
     assert!(matches!(result, Err(CribaError::EmptyVcf)));
 }
@@ -313,8 +314,8 @@ fn test_pipeline_duplicates_dry_run() {
 
     let input = fixture("duplicates.vcf");
 
-    let (stats, _contacts) =
-        cribar::execute(&input, None, None, None, "auto", true, false).expect("Pipeline failed");
+    let (stats, _contacts) = cribar::execute(&input, None, None, None, "auto", true, false, false)
+        .expect("Pipeline failed");
 
     assert_eq!(stats.total_entrada, 6);
     // D1 + transitivos deberían fusionarse
@@ -327,8 +328,8 @@ fn test_pipeline_edge_cases_dry_run() {
 
     let input = fixture("edge_cases.vcf");
 
-    let (stats, contacts) =
-        cribar::execute(&input, None, None, None, "auto", true, false).expect("Pipeline failed");
+    let (stats, contacts) = cribar::execute(&input, None, None, None, "auto", true, false, false)
+        .expect("Pipeline failed");
 
     assert_eq!(stats.total_entrada, 6);
     // Contacto con email-only en FN debería ser E1
@@ -348,8 +349,8 @@ fn test_pipeline_proton_dry_run() {
 
     let input = fixture("proton_sample.vcf");
 
-    let (stats, contacts) =
-        cribar::execute(&input, None, None, None, "auto", true, false).expect("Pipeline failed");
+    let (stats, contacts) = cribar::execute(&input, None, None, None, "auto", true, false, false)
+        .expect("Pipeline failed");
 
     assert_eq!(stats.total_entrada, 5);
     assert!(stats.conservados > 0);
