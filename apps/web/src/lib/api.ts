@@ -278,6 +278,32 @@ export function artifactUrl(jobId: string, kind: string) {
   return `${API_BASE}/api/v1/jobs/${jobId}/artifacts/${kind}`;
 }
 
+/** Descarga con Bearer (V-01): fetch → Blob → object URL (no `<a href>` sin auth). */
+export async function downloadArtifact(
+  jobId: string,
+  kind: string,
+  filename: string,
+): Promise<void> {
+  const res = await fetch(artifactUrl(jobId, kind), withAuth());
+  if (!res.ok) {
+    const text = await res.text();
+    throw new ApiError(res.status, text || res.statusText);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export async function createAudit(upload_id: string, config_toml?: string) {
   const res = await fetch(
     `${API_BASE}/api/v1/audits`,

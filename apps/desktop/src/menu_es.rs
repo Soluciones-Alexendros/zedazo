@@ -19,8 +19,54 @@ pub fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let ayuda_item = MenuItem::with_id(app, "ayuda_guia", "Guía rápida", true, None::<&str>)?;
     let acerca = MenuItem::with_id(app, "ayuda_acerca", "Acerca de zedazo", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
-    let submenu = Submenu::with_items(app, "Ayuda", true, &[&ayuda_item, &sep, &acerca])?;
-    Menu::with_items(app, &[&submenu])
+    let submenu_ayuda = Submenu::with_items(app, "Ayuda", true, &[&ayuda_item, &sep, &acerca])?;
+
+    let wipe = MenuItem::with_id(
+        app,
+        "datos_wipe",
+        "Borrar todos los datos",
+        true,
+        None::<&str>,
+    )?;
+    let submenu_datos = Submenu::with_items(app, "Datos", true, &[&wipe])?;
+
+    Menu::with_items(app, &[&submenu_datos, &submenu_ayuda])
+}
+
+/// S-12: confirma en el webview y llama a `POST /api/v1/admin/wipe` con Bearer.
+pub fn confirm_and_wipe(app: &AppHandle, api_base: &str, token: &str) {
+    let Some(win) = app.get_webview_window("main") else {
+        tracing::warn!("wipe: sin ventana main");
+        return;
+    };
+    let base = api_base.trim_end_matches('/').to_string();
+    let tok = token.to_string();
+    let js = format!(
+        r#"(async function(){{
+  try {{
+    if (!window.confirm({confirm})) return;
+    const res = await fetch({url}, {{
+      method: "POST",
+      headers: {{ Authorization: "Bearer " + {token} }}
+    }});
+    if (!res.ok) {{
+      window.alert("Error al borrar datos: HTTP " + res.status);
+      return;
+    }}
+    window.alert("Datos locales borrados.");
+  }} catch (e) {{
+    window.alert("Error al borrar datos: " + String(e));
+  }}
+}})();"#,
+        confirm = serde_json::to_string(
+            "¿Borrar todos los datos locales de esta instancia? Esta acción no se puede deshacer."
+        )
+        .unwrap_or_else(|_| "\"¿Borrar?\"".into()),
+        url = serde_json::to_string(&format!("{base}/api/v1/admin/wipe"))
+            .unwrap_or_else(|_| "\"\"".into()),
+        token = serde_json::to_string(&tok).unwrap_or_else(|_| "\"\"".into()),
+    );
+    let _ = win.eval(&js);
 }
 
 pub fn on_menu_event(app: &AppHandle, id: &str) {

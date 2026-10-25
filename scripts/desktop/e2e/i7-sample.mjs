@@ -178,6 +178,89 @@ try {
   }
   console.log("OK e2e upload sintético 10 MB");
 
+  // V-04: sin API Tauri global en el webview.
+  const hasTauriInternals = await browser.execute(() => {
+    // eslint-disable-next-line no-undef
+    return typeof window.__TAURI_INTERNALS__ !== "undefined";
+  });
+  if (hasTauriInternals) {
+    throw new Error("window.__TAURI_INTERNALS__ no debe existir (withGlobalTauri=false)");
+  }
+  console.log("OK V-04: sin __TAURI_INTERNALS__");
+
+  // V-03: navegación externa no abandona el loopback.
+  const urlBefore = await browser.getUrl();
+  await browser.execute(() => {
+    // eslint-disable-next-line no-undef
+    window.location.href = "https://example.com/";
+  });
+  await browser.pause(1500);
+  const urlAfter = await browser.getUrl();
+  if (!/127\.0\.0\.1:\d+/.test(String(urlAfter))) {
+    throw new Error(
+      `navegación externa escapó del loopback: antes=${urlBefore} después=${urlAfter}`,
+    );
+  }
+  console.log("OK V-03: webview permanece en loopback tras example.com");
+
+  // V-01: clic «Descargar» en GUI; contenido vía fetch+Bearer coincide con API.
+  const artApi = await fetch(`${base}/api/v1/jobs/${jobId}/artifacts/vcf`, { headers });
+  if (!artApi.ok) {
+    throw new Error(`artefacto vcf para V-01 HTTP ${artApi.status}`);
+  }
+  const artBuf = Buffer.from(await artApi.arrayBuffer());
+  const artSha = createHash("sha256").update(artBuf).digest("hex");
+
+  await browser.url(`http://${addr}/ejecuciones?job=${encodeURIComponent(jobId)}`);
+  await browser.pause(2500);
+  const downloadBtns = await browser.$$("button");
+  let clicked = false;
+  for (const btn of downloadBtns) {
+    const text = await btn.getText().catch(() => "");
+    if (/Descargar/i.test(String(text))) {
+      await btn.click();
+      clicked = true;
+      break;
+    }
+  }
+  if (!clicked) {
+    throw new Error("no se encontró botón Descargar en detalle de job");
+  }
+  await browser.pause(1000);
+  const downloadErr = await browser.execute(() => {
+    // eslint-disable-next-line no-undef
+    const err = document.querySelector(".zed-artifact .zed-muted");
+    // Solo fallar si hay mensaje de error de ApiError típico
+    const nodes = Array.from(document.querySelectorAll(".zed-artifact p"));
+    for (const n of nodes) {
+      const t = n.textContent || "";
+      if (/ApiError|HTTP\s+[45]|TypeError|Failed to fetch/i.test(t)) return t;
+    }
+    return null;
+  });
+  if (downloadErr) {
+    throw new Error(`Descargar mostró error: ${downloadErr}`);
+  }
+
+  const guiSha = await browser.execute(async (jid) => {
+    // eslint-disable-next-line no-undef
+    const tok = window.__ZEDAZO_SESSION_TOKEN__;
+    // eslint-disable-next-line no-undef
+    const res = await fetch(`/api/v1/jobs/${jid}/artifacts/vcf`, {
+      headers: { Authorization: `Bearer ${tok}` },
+    });
+    if (!res.ok) throw new Error(`GUI fetch artifact ${res.status}`);
+    const buf = await res.arrayBuffer();
+    const hash = await crypto.subtle.digest("SHA-256", buf);
+    return Array.from(new Uint8Array(hash))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }, jobId);
+  if (guiSha !== artSha) {
+    throw new Error(`V-01 sha mismatch GUI=${guiSha} API=${artSha}`);
+  }
+  console.log("OK V-01: Descargar + contenido Bearer coincide");
+
   if (process.env.ZEDAZO_RUN_PARITY === "1") {
     const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "../../..");
     const parity = join(root, "scripts/desktop/parity-cribar.sh");

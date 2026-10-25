@@ -99,6 +99,20 @@ pub async fn start_desktop_server(
 
     let state = AppState::new_with_auth(data_dir, 52_428_800, 4, 24, auth)?
         .with_host_policy(zedazo_api::host_guard::HostPolicy::for_port(addr.port()));
+
+    // S-12: misma reconciliación/retención que el binario API (primer tick = barrido al arrancar).
+    zedazo_api::retention::reconcile_on_startup(&state).await?;
+    {
+        let st = state.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(std::time::Duration::from_secs(3600));
+            loop {
+                interval.tick().await;
+                zedazo_api::retention::retention_sweep(&st).await;
+            }
+        });
+    }
+
     let cfg = ApiConfig {
         state,
         static_dir: Some(static_dir),

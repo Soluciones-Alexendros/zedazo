@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { isCancellableStatus, type ContactView, type JobManifest } from "@/lib/api";
 import {
-  artifactUrl,
   cancelJob,
+  downloadArtifact,
   getAudit,
   getJob,
   getStats,
@@ -26,7 +26,7 @@ import { Callout } from "@/components/ui/callout";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading-state";
 import { FilterBar } from "@/components/ui/filter-bar";
-import { Button, buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 type Tab =
   | "resumen"
@@ -153,12 +153,14 @@ export function JobDetail({ jobId }: Props) {
                 Cancelar
               </Button>
             ) : null}
-            <a
-              className={buttonClassName({ variant: "primary" })}
-              href={artifactUrl(jobId, "vcf")}
+            <Button
+              variant="primary"
+              onClick={() =>
+                downloadArtifact(jobId, "vcf", `zedazo-${jobId}.vcf`)
+              }
             >
               Descargar VCF
-            </a>
+            </Button>
           </>
         }
       />
@@ -273,12 +275,14 @@ export function JobDetail({ jobId }: Props) {
             >
               Vista técnica
             </Button>
-            <a
-              className={buttonClassName({ variant: "tertiary" })}
-              href={artifactUrl(jobId, "audit_tsv")}
+            <Button
+              variant="tertiary"
+              onClick={() =>
+                downloadArtifact(jobId, "audit_tsv", `zedazo-${jobId}-audit.tsv`)
+              }
             >
               Descargar TSV
-            </a>
+            </Button>
           </div>
           <AuditTimeline items={audit} technical={auditTechnical} />
         </div>
@@ -328,9 +332,15 @@ export function JobDetail({ jobId }: Props) {
           ).map((k) => (
             <ArtifactDownload
               key={k}
-              href={artifactUrl(jobId, k)}
               label={ARTIFACT_META[k]?.label || k}
               description={ARTIFACT_META[k]?.description}
+              onDownload={() =>
+                downloadArtifact(
+                  jobId,
+                  k,
+                  `zedazo-${jobId}.${k === "audit_tsv" ? "tsv" : k}`,
+                )
+              }
             />
           ))}
         </Card>
