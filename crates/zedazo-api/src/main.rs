@@ -1,9 +1,9 @@
 //! Zedazo API — adaptador HTTP sobre zedazo-core (ADR-0015).
 
 use tracing_subscriber::EnvFilter;
-use zedazo_api::app;
 use zedazo_api::auth;
 use zedazo_api::retention;
+use zedazo_api::serve::{serve, ApiConfig};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -15,15 +15,15 @@ async fn main() -> anyhow::Result<()> {
         .with_env_filter(EnvFilter::from_default_env().add_directive("zedazo_api=info".parse()?))
         .init();
 
-    let state = app::AppState::from_env()?;
+    let cfg = ApiConfig::from_env()?;
     let bind = std::env::var("ZEDAZO_BIND").unwrap_or_else(|_| "127.0.0.1:8080".into());
-    auth::validate_bind_auth(&bind, &state.auth)?;
+    auth::validate_bind_auth(&bind, &cfg.state.auth)?;
 
-    retention::reconcile_on_startup(&state).await?;
+    retention::reconcile_on_startup(&cfg.state).await?;
 
     // Barrido periódico de retención (TTL aproximado; no es eliminación al instante exacto).
     {
-        let st = state.clone();
+        let st = cfg.state.clone();
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(std::time::Duration::from_secs(3600));
             loop {
@@ -32,12 +32,43 @@ async fn main() -> anyhow::Result<()> {
             }
         });
     }
-    let app = app::router(state.clone());
 
     let listener = tokio::net::TcpListener::bind(&bind).await?;
-    tracing::info!("zedazo-api escuchando en http://{bind}");
-    axum::serve(listener, app).await?;
+    if let Some(ref dir) = cfg.static_dir {
+        tracing::info!(
+            "zedazo-api escuchando en http://{bind} (GUI estática: {})",
+            dir.display()
+        );
+    } else {
+        tracing::info!("zedazo-api escuchando en http://{bind} (GUI off)");
+    }
+
+    serve(listener, cfg, shutdown_signal()).await?;
     Ok(())
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("installing Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("installing signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }
 
 /// Comprobación de salud para Docker HEALTHCHECK (sin autenticación ni deps HTTP extra).

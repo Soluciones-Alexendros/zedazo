@@ -17,6 +17,7 @@ services:
       ZEDAZO_AUTH_MODE: disabled
       ZEDAZO_AUTH_ALLOW_DISABLED_NON_LOOPBACK: "true"
       ZEDAZO_OTEL_ENABLED: "false"
+      # GUI off por defecto: no fijar ZEDAZO_STATIC_DIR (Caddy sirve el front).
     volumes:
       - zedazo-data:/var/lib/zedazo
     read_only: true
