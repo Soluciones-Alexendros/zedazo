@@ -121,7 +121,7 @@ try {
   for (let i = 0; i < 90; i++) {
     const st = await fetch(`${base}/api/v1/jobs/${jobId}`, { headers });
     const body = await st.json();
-    status = body.status || body.state || "";
+    status = body.job?.status || body.status || body.state || "";
     console.log("job status:", status);
     if (/completed|failed/i.test(String(status))) break;
     await new Promise((r) => setTimeout(r, 1000));

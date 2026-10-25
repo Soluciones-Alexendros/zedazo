@@ -66,15 +66,15 @@ if [[ -n "${ZEDAZO_ADDR:-}" && -n "${ZEDAZO_TOKEN:-}" ]]; then
   JOB_JSON="$(curl -sS "${HDR[@]}" -H "Content-Type: application/json" \
     -d "{\"upload_id\":\"${UPLOAD_ID}\"}" \
     "${BASE}/api/v1/jobs")"
-  JOB_ID="$(echo "$JOB_JSON" | jq -r '.job_id // empty')"
+  JOB_ID="$(echo "$JOB_JSON" | jq -r '.id // .job_id // .job.id // empty')"
   if [[ -z "$JOB_ID" ]]; then
-    echo "error: job sin job_id: $JOB_JSON" >&2
+    echo "error: job sin id: $JOB_JSON" >&2
     exit 1
   fi
 
   STATUS=""
   for _ in $(seq 1 90); do
-    STATUS="$(curl -sS "${HDR[@]}" "${BASE}/api/v1/jobs/${JOB_ID}" | jq -r '.status // empty')"
+    STATUS="$(curl -sS "${HDR[@]}" "${BASE}/api/v1/jobs/${JOB_ID}" | jq -r '.job.status // .status // empty')"
     echo "job status: ${STATUS}"
     case "$STATUS" in
       completed|failed) break ;;
