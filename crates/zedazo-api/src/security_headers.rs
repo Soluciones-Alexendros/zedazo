@@ -82,7 +82,13 @@ mod tests {
             .layer(axum::middleware::from_fn(middleware));
 
         let res = app
-            .oneshot(Request::builder().uri("/ping").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
+                    .uri("/ping")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(res.status(), StatusCode::OK);

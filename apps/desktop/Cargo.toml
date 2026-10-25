@@ -22,6 +22,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 zedazo-api = { path = "../../crates/zedazo-api" }
+zedazo-core = { workspace = true }
 anyhow = { workspace = true }
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.8", features = ["multipart"] }

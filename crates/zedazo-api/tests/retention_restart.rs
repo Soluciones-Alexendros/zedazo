@@ -133,6 +133,7 @@ async fn second_delete_is_idempotent() {
         .clone()
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("DELETE")
                 .uri(format!("/api/v1/jobs/{job_id}"))
                 .body(Body::empty())
@@ -145,6 +146,7 @@ async fn second_delete_is_idempotent() {
     let del2 = app
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("DELETE")
                 .uri(format!("/api/v1/jobs/{job_id}"))
                 .body(Body::empty())
@@ -164,6 +166,7 @@ async fn wipe_bumps_epoch() {
     let res = app
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/admin/wipe")
                 .body(Body::empty())

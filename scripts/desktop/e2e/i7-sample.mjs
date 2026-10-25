@@ -153,6 +153,31 @@ try {
 
   console.log("OK e2e tauri-driver sample.vcf + I7");
 
+  // S-04: VCF sintético ~10 MB (generado en tmp; no se commitea).
+  const tenMb = 10 * 1024 * 1024;
+  let big = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:big10\r\nFN:Big Ten\r\nNOTE:";
+  big += "z".repeat(Math.max(0, tenMb - big.length - 20));
+  big += "\r\nEND:VCARD\r\n";
+  const bigBuf = Buffer.from(big);
+  const bigPath = join(work, "synthetic-10mb.vcf");
+  writeFileSync(bigPath, bigBuf);
+  const bigSha = createHash("sha256").update(bigBuf).digest("hex");
+  const form10 = new FormData();
+  form10.append("file", new Blob([bigBuf], { type: "text/vcard" }), "synthetic-10mb.vcf");
+  const up10 = await fetch(`${base}/api/v1/uploads`, {
+    method: "POST",
+    headers,
+    body: form10,
+  });
+  if (up10.status !== 201) {
+    throw new Error(`upload 10MB HTTP ${up10.status}: ${await up10.text()}`);
+  }
+  const up10json = await up10.json();
+  if (up10json.sha256 !== bigSha) {
+    throw new Error(`sha256 10MB mismatch: ${up10json.sha256} vs ${bigSha}`);
+  }
+  console.log("OK e2e upload sintético 10 MB");
+
   if (process.env.ZEDAZO_RUN_PARITY === "1") {
     const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "../../..");
     const parity = join(root, "scripts/desktop/parity-cribar.sh");

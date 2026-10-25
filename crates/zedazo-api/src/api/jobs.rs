@@ -86,6 +86,15 @@ pub async fn create_job(
 
     let job_id = Uuid::now_v7().to_string();
     let retention = body.retention_hours.unwrap_or(state.retention_hours);
+    if !(1..=state.retention_max_hours).contains(&retention) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            format!(
+                "retention_hours fuera de rango 1..={}",
+                state.retention_max_hours
+            ),
+        ));
+    }
     let rules_mode = body
         .rules
         .as_ref()
