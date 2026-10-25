@@ -1,0 +1,41 @@
+[package]
+name = "zedazo-desktop"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Escritorio AppImage de Zedazo (Tauri + API same-process, ADR-0021)"
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+
+[[bin]]
+name = "zedazo-desktop"
+path = "src/main.rs"
+
+[lib]
+name = "zedazo_desktop"
+path = "src/lib.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+zedazo-api = { path = "../../crates/zedazo-api" }
+anyhow = { workspace = true }
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.8", features = ["multipart"] }
+tower = "0.5"
+getrandom = "0.2"
+hex = "0.4"
+directories = "5"
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tauri = { version = "2", features = [] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+
+[dev-dependencies]
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }

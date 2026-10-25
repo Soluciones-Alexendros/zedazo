@@ -22,6 +22,8 @@ allow = [
     "CDLA-Permissive-2.0",
     # ring (backend TLS de rustls; ISC+MIT+OpenSSL en algunas versiones)
     "OpenSSL",
+    # selectors (transitiva Tauri/wry vía dom_query; ADR-0021 apps/desktop)
+    "MPL-2.0",
 ]
 
 [bans]
