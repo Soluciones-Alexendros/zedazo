@@ -3,6 +3,8 @@
 ## Gates locales
 
 ```bash
+# Requiere WebKitGTK (scripts/desktop/install-linux-deps.sh). El workspace
+# excluye este crate en `make check` / CI Check|Clippy|Test (sin GTK).
 cargo check -p zedazo-desktop
 cargo test -p zedazo-desktop --lib
 ```

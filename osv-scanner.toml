@@ -1,0 +1,14 @@
+# IgnoredVulns alineados con `.cargo/audit.toml` y `deny.toml` (ADR-0013 / ADR-0021).
+# Revisar cuando Tauri/gtk-rs publiquen glib ≥ parche o dejen proc-macro-error.
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0429"
+reason = "glib 0.18.x (unsound VariantStrIter) transitivo de Tauri/wry en apps/desktop; sin bump publicable en el grafo actual. Revisión: tras upgrade Tauri/gtk-rs."
+
+[[IgnoredVulns]]
+id = "GHSA-wrw7-89jp-8q8g"
+reason = "Mismo advisory que RUSTSEC-2024-0429 (glib); ver ignore anterior."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0370"
+reason = "proc-macro-error unmaintained; transitivo de Tauri/gtk-rs. No hay reemplazo en el grafo actual. Revisión: tras upgrade Tauri."

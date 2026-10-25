@@ -10,6 +10,11 @@
 # para RUSTSEC-2026-0285). Primero actualiza Cargo.lock.
 
 [advisories]
-ignore = []
+ignore = [
+  # glib 0.18.x unsound (Tauri/wry); sin bump publicable. Revisión tras upgrade Tauri/gtk-rs. 2026-10-25
+  "RUSTSEC-2024-0429",
+  # proc-macro-error unmaintained (transitivo Tauri). Revisión tras upgrade Tauri. 2026-10-25
+  "RUSTSEC-2024-0370",
+]
 # informational_warnings = ["unmaintained", "unsound"]
 # severity_threshold no se usa: cualquier vulnerability falla.

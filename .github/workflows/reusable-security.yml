@@ -91,5 +91,6 @@ jobs:
           # Sale distinto de 0 si hay vulnerabilidades conocidas en los lockfiles.
           # El umbral high lo refuerzan pnpm audit y cargo audit arriba.
           scan-args: |-
+            --config=osv-scanner.toml
             --lockfile=Cargo.lock
             --lockfile=apps/web/pnpm-lock.yaml

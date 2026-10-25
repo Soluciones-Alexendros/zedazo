@@ -4,6 +4,13 @@ FROM rust:1.85-bookworm AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
+# Miembro del workspace (Cargo.toml); no se compila zedazo-desktop aquí (sin GTK).
+COPY apps/desktop/Cargo.toml apps/desktop/Cargo.toml
+COPY apps/desktop/build.rs apps/desktop/build.rs
+COPY apps/desktop/src apps/desktop/src
+COPY apps/desktop/tauri.conf.json apps/desktop/tauri.conf.json
+COPY apps/desktop/capabilities apps/desktop/capabilities
+COPY apps/desktop/icons apps/desktop/icons
 RUN cargo build -p zedazo-api --release
 
 FROM debian:bookworm-slim

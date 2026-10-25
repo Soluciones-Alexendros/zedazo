@@ -40,7 +40,8 @@ echo "==> SBOM pnpm apps/web"
   if [[ ! -d node_modules ]]; then
     pnpm install --frozen-lockfile
   fi
-  pnpm dlx --package @cyclonedx/cyclonedx-npm@3.1.0 cyclonedx-npm \
+  # pnpm dlx: el primer posicional es el paquete; --package como flag rompe (404 --package).
+  pnpm dlx @cyclonedx/cyclonedx-npm@3.1.0 \
     --output-file "${OUT}/sbom-pnpm-web.json" \
     --output-format JSON \
     --ignore-npm-errors

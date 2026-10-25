@@ -40,7 +40,6 @@ const browser = await remote({
       application: appimage,
     },
     browserName: "wry",
-    maxInstances: 1,
   },
   connectionRetryCount: 3,
   connectionRetryTimeout: 180_000,

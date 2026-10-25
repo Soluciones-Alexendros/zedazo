@@ -14,6 +14,8 @@ if [[ -z "$APPIMAGE" || ! -f "$APPIMAGE" ]]; then
   exit 1
 fi
 APPIMAGE="$(cd "$(dirname "$APPIMAGE")" && pwd)/$(basename "$APPIMAGE")"
+# download-artifact no conserva el bit de ejecución.
+chmod +x "$APPIMAGE"
 
 export APPIMAGE_EXTRACT_AND_RUN="${APPIMAGE_EXTRACT_AND_RUN:-1}"
 export WEBKIT_DISABLE_DMABUF_RENDERER="${WEBKIT_DISABLE_DMABUF_RENDERER:-1}"

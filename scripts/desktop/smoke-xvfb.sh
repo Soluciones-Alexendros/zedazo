@@ -19,6 +19,8 @@ if [[ -z "$APPIMAGE" || ! -f "$APPIMAGE" ]]; then
   echo "error: no hay AppImage (pasa APPIMAGE=... o genera dist/desktop/)" >&2
   exit 1
 fi
+# download-artifact no conserva el bit de ejecución.
+chmod +x "$APPIMAGE"
 
 export APPIMAGE_EXTRACT_AND_RUN="${APPIMAGE_EXTRACT_AND_RUN:-1}"
 export WEBKIT_DISABLE_DMABUF_RENDERER="${WEBKIT_DISABLE_DMABUF_RENDERER:-1}"
