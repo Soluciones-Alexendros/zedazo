@@ -323,3 +323,25 @@ supersedes: "v0.3.1"
 - Relacionado: [AGENTS.md](./AGENTS.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [SPECS.md](./SPECS.md), [ROADMAP.md](./ROADMAP.md).
 
 </details>
+
+<details>
+<summary><strong>ADR-0021</strong> — Escritorio AppImage (Tauri + API same-process)</summary>
+
+- Estado: **aceptada**
+- Fecha: 2026-10-25
+- Contexto: La GUI V1 (ADR-0015/0016) vive en browser + Caddy/Docker o Next standalone. El operador necesita un binario de escritorio Linux (prueba en **Ubuntu 26**) sin empaquetar Node ni Caddy dentro del AppImage, sin duplicar dominio, y sin abrir la API a la red. ADR-0020 es flota CI (`quality`/`smoke`); no cubre producto escritorio.
+- Decisión:
+  1. **Entrega v0.6.0:** AppImage Linux vía **Tauri v2** (`apps/desktop`); destino de prueba **Ubuntu 26**; build CI en runner compatible (p. ej. `ubuntu-22.04`).
+  2. **API same-process:** `zedazo-api` como librería embebida; `serve` en el runtime Tauri sobre `127.0.0.1:0`. Un proceso; shutdown al cerrar la ventana. Sin sidecar Node/Caddy ni proceso `zedazo-api` aparte.
+  3. **Auth de sesión loopback:** token 32 B CSPRNG inyectado al webview (Bearer); 401 sin credencial; Host/Origin ajenos → 403; sin CORS abierto; solo bajo flag de escritorio. No reutilizar el modelo remoto ADR-0016 (HTTPS + cookie de operador) como auth del AppImage.
+  4. **CSP:** `connect-src` incluye `self` y `http://127.0.0.1:*` (puerto efímero). Capabilities Tauri mínimas; sin updater automático en v0.6.0.
+  5. **GUI estática en el bundle:** export estático de `apps/web` (`output: "export"`); favicon/`icon` **estático** (PNG); no `ImageResponse` dinámico ni rutas que bloqueen el export. Docker/Caddy siguen siendo el camino remoto/self-hosted (ADR-0016), no el contenido del AppImage.
+  6. **XDG** para config/data/state del escritorio; UI en español; sin red saliente por defecto (misma postura que CLI/API local).
+- Alternativas rechazadas:
+  - **Node + Caddy dentro del AppImage:** hincha el artefacto y duplica el proxy ya cubierto por Docker remoto.
+  - **Electron:** runtime más pesado; no aporta paridad con el stack Rust ya elegido.
+  - **Sidecar** (API u otro binario aparte del webview): dos ciclos de vida, más superficie de auth/puertos y peores fallos al cerrar.
+- Consecuencias: hito [ROADMAP.md](./ROADMAP.md) **v0.6.0**; capas en [ARCHITECTURE.md](./ARCHITECTURE.md); PRs de código (static export, `serve`, Tauri, CI AppImage) separados y posteriores a este ADR. No altera ADR-0015/0016/0020.
+- Relacionado: ADR-0015, ADR-0016, ADR-0020, [SPECS.md](./SPECS.md) O10/O11, [ROADMAP.md](./ROADMAP.md) v0.6.0, [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+</details>
