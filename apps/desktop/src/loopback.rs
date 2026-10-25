@@ -91,18 +91,20 @@ pub async fn start_desktop_server(
     tokio::task::JoinHandle<anyhow::Result<()>>,
 )> {
     let auth = AuthConfig::token(session_token, false);
-    let state = AppState::new_with_auth(data_dir, 52_428_800, 4, 24, auth)?;
-    let cfg = ApiConfig {
-        state,
-        static_dir: Some(static_dir),
-    };
-
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     let addr = listener.local_addr()?;
     if !addr.ip().is_loopback() {
         anyhow::bail!("bind no-loopback rechazado: {addr}");
     }
 
+    let state = AppState::new_with_auth(data_dir, 52_428_800, 4, 24, auth)?
+        .with_host_policy(zedazo_api::host_guard::HostPolicy::for_port(addr.port()));
+    let cfg = ApiConfig {
+        state,
+        static_dir: Some(static_dir),
+    };
+
+    // Guard Host/Origin ya en zedazo-api::app::router; LoopbackGuard extra por defensa en profundidad.
     let guard = LoopbackGuard { port: addr.port() };
     let app = desktop_router(cfg, guard);
 
@@ -167,7 +169,8 @@ mod tests {
             24,
             AuthConfig::token(token, false),
         )
-        .unwrap();
+        .unwrap()
+        .with_host_policy(zedazo_api::host_guard::HostPolicy::for_port(port));
         desktop_router(
             ApiConfig {
                 state,

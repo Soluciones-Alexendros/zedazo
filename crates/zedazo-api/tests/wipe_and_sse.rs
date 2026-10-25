@@ -27,6 +27,7 @@ async fn wipe_clears_jobs_and_fs() {
     let res = app::router(state.clone())
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/admin/wipe")
                 .body(Body::empty())
@@ -134,6 +135,7 @@ async fn sse_query_last_event_id_replays() {
     let res = app::router(state)
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("GET")
                 .uri(format!("/api/v1/jobs/{job_id}/events?last_event_id=4"))
                 .body(Body::empty())

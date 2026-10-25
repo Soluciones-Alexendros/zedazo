@@ -42,9 +42,14 @@ impl ApiConfig {
 /// Sirve la API (y opcionalmente la GUI) hasta que `shutdown` se complete.
 pub async fn serve(
     listener: TcpListener,
-    cfg: ApiConfig,
+    mut cfg: ApiConfig,
     shutdown: impl Future<Output = ()> + Send + 'static,
 ) -> anyhow::Result<()> {
+    // S-01: alinear allowlist al puerto real del listener (p. ej. :0 en tests).
+    let port = listener.local_addr()?.port();
+    let mut policy = crate::host_guard::HostPolicy::for_port(port);
+    policy.extra_hosts = cfg.state.host_policy.extra_hosts.clone();
+    cfg.state = cfg.state.with_host_policy(policy);
     let app = cfg.into_router();
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown)
@@ -124,7 +129,13 @@ mod tests {
 
         let res = app
             .clone()
-            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
+                    .uri("/")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(res.status(), StatusCode::OK);
@@ -133,6 +144,7 @@ mod tests {
         let res = app
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .uri("/assets/app.js")
                     .body(Body::empty())
                     .unwrap(),
@@ -159,6 +171,7 @@ mod tests {
             .clone()
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .uri("/procesar")
                     .body(Body::empty())
                     .unwrap(),
@@ -172,6 +185,7 @@ mod tests {
             .clone()
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .method("HEAD")
                     .uri("/ejecuciones")
                     .body(Body::empty())
@@ -185,6 +199,7 @@ mod tests {
             .clone()
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .method("POST")
                     .uri("/procesar")
                     .body(Body::empty())
@@ -197,6 +212,7 @@ mod tests {
         let res = app
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .uri("/api/v1/no-such-route")
                     .body(Body::empty())
                     .unwrap(),
@@ -240,7 +256,13 @@ mod tests {
         ] {
             let res = app
                 .clone()
-                .oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
+                .oneshot(
+                    Request::builder()
+                        .header(axum::http::header::HOST, "127.0.0.1:8080")
+                        .uri(uri)
+                        .body(Body::empty())
+                        .unwrap(),
+                )
                 .await
                 .unwrap();
             let status = res.status();
@@ -267,6 +289,7 @@ mod tests {
         let res = app
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .uri("/empty/")
                     .body(Body::empty())
                     .unwrap(),
@@ -298,7 +321,13 @@ mod tests {
         .into_router();
 
         let res = app
-            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
+                    .uri("/")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(res.status(), StatusCode::NOT_FOUND);
@@ -318,7 +347,13 @@ mod tests {
 
         let res = app
             .clone()
-            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
+                    .uri("/")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -329,6 +364,7 @@ mod tests {
         let res = app
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .uri("/api/v1/health")
                     .body(Body::empty())
                     .unwrap(),

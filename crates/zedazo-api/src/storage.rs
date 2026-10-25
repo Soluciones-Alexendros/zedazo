@@ -14,10 +14,40 @@ pub struct Storage {
 
 impl Storage {
     pub fn new(root: PathBuf) -> anyhow::Result<Self> {
-        fs::create_dir_all(root.join("jobs"))?;
-        fs::create_dir_all(root.join("tmp"))?;
-        fs::create_dir_all(root.join("uploads"))?;
-        Ok(Self { root })
+        use zedazo_core::infrastructure::secure_fs;
+        for sub in ["jobs", "tmp", "uploads"] {
+            secure_fs::ensure_dir_0700(&root.join(sub))?;
+        }
+        let s = Self { root };
+        s.harden_tree_permissions()?;
+        Ok(s)
+    }
+
+    /// Corrige modos del árbol de datos (dirs 0700, ficheros 0600) — S-06.
+    pub fn harden_tree_permissions(&self) -> anyhow::Result<()> {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fn walk(path: &Path) -> std::io::Result<()> {
+                let meta = fs::symlink_metadata(path)?;
+                if meta.file_type().is_symlink() {
+                    return Ok(());
+                }
+                if meta.is_dir() {
+                    fs::set_permissions(path, fs::Permissions::from_mode(0o700))?;
+                    for entry in fs::read_dir(path)? {
+                        walk(&entry?.path())?;
+                    }
+                } else if meta.is_file() {
+                    fs::set_permissions(path, fs::Permissions::from_mode(0o600))?;
+                }
+                Ok(())
+            }
+            if self.root.exists() {
+                walk(&self.root)?;
+            }
+        }
+        Ok(())
     }
 
     /// Solo UUID (v4/v7 hex con guiones). Rechaza path traversal.
@@ -197,26 +227,12 @@ impl Storage {
         Ok(())
     }
 
-    /// Escritura atómica: tmp en el mismo directorio + rename.
+    /// Escritura atómica vía `secure_fs` (0600 / persist).
     pub fn atomic_write(path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        let tmp = path.with_extension(format!(
-            "{}.tmp",
-            path.extension()
-                .and_then(|e| e.to_str())
-                .unwrap_or("partial")
-        ));
-        // Preferir nombre único si .tmp colisiona
-        let tmp = if tmp.exists() {
-            path.with_extension(format!("tmp-{}", uuid::Uuid::now_v7()))
-        } else {
-            tmp
-        };
-        fs::write(&tmp, bytes).with_context(|| format!("escribir {}", tmp.display()))?;
-        fs::rename(&tmp, path).with_context(|| format!("rename → {}", path.display()))?;
-        Ok(())
+        use zedazo_core::infrastructure::secure_fs::{self, WriteOpts};
+        secure_fs::write_bytes(path, bytes, WriteOpts::new(true))
+            .map_err(|e| anyhow::anyhow!(e))
+            .with_context(|| format!("escribir {}", path.display()))
     }
 
     pub fn sanitize_name(name: &str) -> String {

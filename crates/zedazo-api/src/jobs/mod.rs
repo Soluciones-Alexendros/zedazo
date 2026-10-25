@@ -91,12 +91,13 @@ pub fn spawn_job(state: AppState, job_id: String) {
                 }
                 let mut jobs = state.jobs.write().await;
                 if let Some(rec) = jobs.get_mut(&job_id) {
-                    let msg = e.to_string();
-                    let disk_full = msg.contains("No space left")
-                        || msg.contains("espacio")
-                        || msg.contains("ENOSPC");
+                    let code = crate::errors::error_code(e.as_ref());
+                    let detail = crate::errors::redact_detail(&e.to_string());
+                    tracing::debug!(%job_id, code, detail = %detail, "detalle job fallido");
+                    let disk_full = code == "disk_full";
                     rec.manifest.status = JobStatus::Failed;
-                    rec.manifest.error = Some(if disk_full { "disco_lleno".into() } else { msg });
+                    // S-05: solo código en manifest (sin valor/detalle).
+                    rec.manifest.error = Some(code.to_string());
                     rec.manifest.completed_at = Some(now_rfc3339());
                     let _ = save_manifest_result(&state, &rec.manifest);
                     if disk_full {

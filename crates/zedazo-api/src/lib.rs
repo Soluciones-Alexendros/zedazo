@@ -4,6 +4,8 @@ pub mod api;
 pub mod app;
 pub mod auth;
 pub mod dto;
+pub mod errors;
+pub mod host_guard;
 pub mod jobs;
 pub mod retention;
 pub mod security_headers;
