@@ -99,7 +99,9 @@ cargo llvm-cov --lcov --output-path coverage/lcov.info
 - Identidad GUI «Archivo Vivo»: documental/preciso (no dashboard SaaS genérico); UI en español; temas claro/oscuro/sistema; colores de producción en `oklch()`.
 - Wordmark lowercase **`zedazo`** (lockups/pestaña/README H1); prosa «Zedazo»; ids `zedazo` / `ZEDAZO_*` / `X-ZEDAZO-*` (ADR-0014, [`docs/brand.md`](./docs/brand.md)).
 - No añadir PWA, notificaciones de job u otras extras de GUI sin ancla en SPECS/ADR.
-- Si pide fusionar o «monitoriza merge», esperar CI verde y hacer merge; no empujar a `main` (PRs draft desde ramas `cursor/`).
+- Si pide fusionar o «monitoriza merge», esperar CI verde y dejar el PR listo; en GitHub `main` rechaza merge commits (`allow_merge_commit=false`, solo squash). No hacer squash, no usar `--admin` ni cambiar el método de merge: lo fusiona el operador. No empujar a `main` (PRs draft desde ramas `cursor/`).
+- No cambiar protección de ramas, rulesets, secretos ni DNS/Vercel salvo petición explícita.
+- Renovate es el único bot de dependencias (ADR-0007); no añadir `dependabot.yml`.
 
 ## Learned Workspace Facts
 
@@ -119,4 +121,4 @@ cargo llvm-cov --lcov --output-path coverage/lcov.info
 | `test` | `test` (ya canónico: `cargo test --workspace --all-features`) |
 | `smoke` | `health` + `check` (compilación workspace) |
 
-  El resto (`msrv`, `doc`, `parity`, `web`, `deny`, `coverage`) sigue siendo la superficie Rust/GUI; no se aplasta. ADRs en [`DECISIONS.md`](./DECISIONS.md) (no se mueve a `docs/architecture/decisions/`). Renovate en [`.github/renovate.json`](./.github/renovate.json). Dual license MIT OR Apache-2.0 y [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) se conservan.
+  El resto (`msrv`, `doc`, `parity`, `web`, `deny`, `coverage`) sigue siendo la superficie Rust/GUI; no se aplasta. Workflow aparte [`.github/workflows/security.yml`](./.github/workflows/security.yml): jobs `secrets` (gitleaks binario, redactado; no `gitleaks-action`) y `sca`. ADR-0020 (aceptada) es esta alineación de flota; el número no se reutiliza. ADRs en [`DECISIONS.md`](./DECISIONS.md) (no se mueve a `docs/architecture/decisions/`). Renovate (ADR-0007) en [`.github/renovate.json`](./.github/renovate.json); no hay `dependabot.yml`. Dual license MIT OR Apache-2.0 y [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) se conservan.
