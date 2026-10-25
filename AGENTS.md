@@ -99,8 +99,8 @@ cargo llvm-cov --lcov --output-path coverage/lcov.info
 - Identidad GUI «Archivo Vivo»: documental/preciso (no dashboard SaaS genérico); UI en español; temas claro/oscuro/sistema; colores de producción en `oklch()`.
 - Wordmark lowercase **`zedazo`** (lockups/pestaña/README H1); prosa «Zedazo»; ids `zedazo` / `ZEDAZO_*` / `X-ZEDAZO-*` (ADR-0014, [`docs/brand.md`](./docs/brand.md)).
 - No añadir PWA, notificaciones de job u otras extras de GUI sin ancla en SPECS/ADR.
-- Si pide fusionar o «monitoriza merge», esperar CI verde y dejar el PR listo; en GitHub `main` rechaza merge commits (`allow_merge_commit=false`, solo squash). No hacer squash, no usar `--admin` ni cambiar el método de merge: lo fusiona el operador. No empujar a `main` (PRs draft desde ramas `cursor/`).
-- Features multi-PR: preferir rama de integración (`cursor/…`) + oleadas Multitask; un solo merge a `main` al cerrar, no PRs parciales a `main` por oleada.
+- PRs a la rama del plan (`plan/…` / `cursor/…`): con CI verde el agente fusiona con `gh pr merge <n> --auto --squash --delete-branch` y reanuda el plan (puede solapar la siguiente oleada mientras corre el CI). Sin `--merge`/`--rebase`/`--admin` (repo solo squash). No empujar a `main`; el PR final a `main` lo fusiona el operador salvo orden explícita.
+- Features multi-PR: preferir rama de integración (`cursor/…` o `plan/…`) + oleadas Multitask; un solo merge a `main` al cerrar, no PRs parciales a `main` por oleada.
 - Destino de prueba del AppImage de escritorio: **Ubuntu 26** (no asumir CachyOS u otras distros).
 - No cambiar protección de ramas, rulesets, secretos ni DNS/Vercel salvo petición explícita.
 - Renovate es el único bot de dependencias (ADR-0007); no añadir `dependabot.yml`.

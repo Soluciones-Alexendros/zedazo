@@ -5,6 +5,7 @@ use std::path::Path;
 use crate::domain::contact::Contact;
 use crate::domain::screening::ScreeningDecision;
 use crate::error::CribaError;
+use crate::infrastructure::formula_guard::neutralize_cell;
 use crate::infrastructure::secure_fs::{self, WriteOpts};
 
 /// Exporta contactos conservados y needs_review a CSV.
@@ -55,14 +56,14 @@ pub fn export_csv(
             let tels = c
                 .tels
                 .iter()
-                .map(|t| t.value.as_str())
+                .map(|t| neutralize_cell(&t.value))
                 .collect::<Vec<_>>()
                 .join(", ");
 
             let emails = c
                 .emails
                 .iter()
-                .map(|e| e.value.as_str())
+                .map(|e| neutralize_cell(&e.value))
                 .collect::<Vec<_>>()
                 .join(", ");
 
@@ -70,7 +71,7 @@ pub fn export_csv(
                 .addresses
                 .iter()
                 .map(|a| {
-                    format!(
+                    neutralize_cell(&format!(
                         "{};{};{};{};{};{};{}",
                         a.po_box,
                         a.extended,
@@ -79,7 +80,7 @@ pub fn export_csv(
                         a.region,
                         a.postal_code,
                         a.country
-                    )
+                    ))
                 })
                 .collect::<Vec<_>>()
                 .join(" | ");
@@ -92,7 +93,7 @@ pub fn export_csv(
                 for cat in &c.categories.n2 {
                     parts.push(cat.as_str());
                 }
-                parts.join(", ")
+                neutralize_cell(&parts.join(", "))
             };
 
             let source = match &c.source_detail {
@@ -111,15 +112,15 @@ pub fn export_csv(
             };
 
             wtr.write_record([
-                &c.fn_value,
-                &n,
-                c.org.as_deref().unwrap_or(""),
-                &tels,
-                &emails,
-                &addresses,
-                &categories,
-                source,
-                result,
+                neutralize_cell(&c.fn_value),
+                neutralize_cell(&n),
+                neutralize_cell(c.org.as_deref().unwrap_or("")),
+                tels,
+                emails,
+                addresses,
+                categories,
+                neutralize_cell(source),
+                neutralize_cell(result),
             ])?;
         }
 
