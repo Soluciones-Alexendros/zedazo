@@ -36,3 +36,4 @@ Envía un correo a los mantenedores del proyecto con los detalles. Responderemos
   - **Falla solo** ante vulnerabilidades RustSec. Avisos informativos (`unmaintained`, `unsound`, `yanked`) no fallan el job.
   - Una excepción temporal exige el mismo `RUSTSEC-*` en [`.cargo/audit.toml`](.cargo/audit.toml) y [`deny.toml`](deny.toml), con motivo y fecha de revisión. No ignores un advisory si hay parche publicable (p. ej. `rustls` ≥ 0.23.45 para [RUSTSEC-2026-0285](https://rustsec.org/advisories/RUSTSEC-2026-0285)).
   - Local: `make audit` (y `make deny` para cargo-deny, ADR-0013).
+- **CI Security** (`.github/workflows/security.yml`, en todo PR y push a `main`): job `secrets` (gitleaks binario, redactado) y job `sca` (`pnpm audit --prod --audit-level=high` en `apps/web`, `cargo audit` con la misma política informativa, OSV-Scanner sobre los lockfiles fallando en high/critical). Marcar `secrets` y `sca` como required checks es tarea del operador.
