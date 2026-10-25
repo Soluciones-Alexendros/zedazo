@@ -1,0 +1,8 @@
+{
+  "name": "zedazo-desktop-e2e",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "webdriverio": "^9.12.0"
+  }
+}
