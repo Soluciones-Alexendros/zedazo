@@ -1,11 +1,11 @@
 //! Export JSON.
 
-use std::fs;
 use std::path::Path;
 
 use crate::domain::contact::Contact;
 use crate::domain::screening::ScreeningDecision;
 use crate::error::CribaError;
+use crate::infrastructure::secure_fs::{self, WriteOpts};
 use serde::Serialize;
 
 /// DTO para exportación JSON de un contacto.
@@ -27,7 +27,11 @@ struct ContactExport<'a> {
 }
 
 /// Exporta contactos conservados y needs_review a JSON.
-pub fn export_json(contacts: &[Contact], path: &Path) -> Result<(), CribaError> {
+pub fn export_json(
+    contacts: &[Contact],
+    path: &Path,
+    opts: WriteOpts<'_>,
+) -> Result<(), CribaError> {
     let exports: Vec<ContactExport> = contacts
         .iter()
         .filter(|c| {
@@ -111,7 +115,7 @@ pub fn export_json(contacts: &[Contact], path: &Path) -> Result<(), CribaError> 
         .collect();
 
     let json = serde_json::to_string_pretty(&exports)?;
-    fs::write(path, json)?;
+    secure_fs::write_bytes(path, json.as_bytes(), opts)?;
     Ok(())
 }
 
@@ -122,6 +126,7 @@ mod tests {
     use super::*;
     use crate::domain::contact::{CategorySet, SourceDetail, Tel, TelType};
     use crate::domain::screening::ScreeningDecision;
+    use std::fs;
 
     #[test]
     fn test_export_json_basic() {
@@ -152,7 +157,12 @@ mod tests {
 
         let dir = std::env::temp_dir();
         let path = dir.join("test_export.json");
-        export_json(&[contact], &path).unwrap();
+        export_json(
+            &[contact],
+            &path,
+            crate::infrastructure::secure_fs::WriteOpts::new(true),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(&path).unwrap();
         assert!(content.contains("\"uid\": \"u1\""));
@@ -186,7 +196,12 @@ mod tests {
 
         let dir = std::env::temp_dir();
         let path = dir.join("test_skip.json");
-        export_json(&[c], &path).unwrap();
+        export_json(
+            &[c],
+            &path,
+            crate::infrastructure::secure_fs::WriteOpts::new(true),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(&path).unwrap();
         assert_eq!(content.trim(), "[]");

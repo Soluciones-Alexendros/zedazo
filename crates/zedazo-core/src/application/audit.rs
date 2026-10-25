@@ -9,6 +9,7 @@ use crate::error::CribaError;
 use crate::infrastructure::config::load_config;
 use crate::infrastructure::encoding::ensure_utf8;
 use crate::infrastructure::parser::{parse_vcards, unfold};
+use crate::infrastructure::secure_fs::WriteOpts;
 use crate::infrastructure::tsv_writer::write_audit_tsv;
 
 /// Ejecuta screening + auditoría TSV.
@@ -78,7 +79,11 @@ pub fn execute(
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| Path::new("audit.tsv").to_path_buf());
 
-    write_audit_tsv(&audit_entries, &audit_path)?;
+    write_audit_tsv(
+        &audit_entries,
+        &audit_path,
+        WriteOpts::new(false).protect(input),
+    )?;
 
     println!("Auditoría escrita: {}", audit_path.display());
     println!("  Contactos: {}", total);

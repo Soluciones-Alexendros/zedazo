@@ -152,7 +152,11 @@ fn run_job_sync(state: &AppState, job_id: &str, epoch_at_spawn: u64) -> anyhow::
         .storage
         .upload_path(&rec_snapshot.manifest.input.upload_id);
     if !input.exists() {
-        std::fs::copy(&upload_path, &input)?;
+        zedazo_core::infrastructure::secure_fs::copy_file(
+            &upload_path,
+            &input,
+            zedazo_core::infrastructure::secure_fs::WriteOpts::new(false),
+        )?;
     }
 
     let config = if let Some(toml) = &rec_snapshot.config_toml {
