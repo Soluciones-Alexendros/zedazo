@@ -20,7 +20,7 @@ Ficha pública estática: [`apps/landing/`](apps/landing/index.html). Despliegue
 
 Criba, normaliza, clasifica y deduplica contactos VCF exportados desde **ProtonMail**, **Google Contacts** o **Apple iCloud**, con reglas deterministas, deduplicación transitiva y normalización de nombres y teléfonos.
 
-Desde **v0.5.0** incluye **GUI web + API HTTP** self-hosted sobre el mismo core (`zedazo-core`): local en loopback (ADR-0015) y remoto single-user con HTTPS + token (ADR-0016). La CLI sigue siendo el canal oficial de automatización.
+Desde **v0.5.0** incluye **GUI web + API HTTP** self-hosted sobre el mismo core (`zedazo-core`): local en loopback (ADR-0015) y remoto single-user con HTTPS + token (ADR-0016). La CLI sigue siendo el canal oficial de automatización. Escritorio Linux AppImage (ADR-0021 / v0.6.0): [docs/desktop.md](docs/desktop.md).
 
 > Antes: `vcf-cribador`. Migración: ver [CHANGELOG 0.2.0](CHANGELOG.md#020---2026-08-15) y [ADR-0014](DECISIONS.md).
 
@@ -71,7 +71,7 @@ docker compose -f deploy/docker-compose.remote.yml --env-file deploy/.env up --b
 # → https://localhost:8443
 ```
 
-Docs: [docs/gui/](docs/gui/) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi.yaml) · [deploy.md](docs/gui/deploy.md) · acta de cierre [`docs/validation/acta-cierre-operativo.md`](docs/validation/acta-cierre-operativo.md). Tokens GUI (DTCG, ADR-0019): [`apps/web/tokens/`](apps/web/tokens/) · `pnpm --dir apps/web tokens:build`. Catálogo in-app: `/documentacion/ds` (plan [ejecutado](docs/gui/design-system-plan.md)).
+Docs: [docs/gui/](docs/gui/) · [escritorio AppImage](docs/desktop.md) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi.yaml) · [deploy.md](docs/gui/deploy.md) · acta de cierre [`docs/validation/acta-cierre-operativo.md`](docs/validation/acta-cierre-operativo.md). Tokens GUI (DTCG, ADR-0019): [`apps/web/tokens/`](apps/web/tokens/) · `pnpm --dir apps/web tokens:build`. Catálogo in-app: `/documentacion/ds` (plan [ejecutado](docs/gui/design-system-plan.md)).
 
 ## Capturas
 
@@ -218,7 +218,8 @@ deploy/                 Docker Compose local + remoto + landing (Caddy)
 | [`SECURITY.md`](SECURITY.md)                                   | Avisos privados; no abrir issue público              |
 | [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)                     | Código de conducta                                   |
 | [`SUPPORT.md`](SUPPORT.md)                                     | Dónde pedir ayuda                                    |
-| [`docs/gui/`](docs/gui/)                                       | Paridad O10, deploy (incl. DNS del dominio de producto), threat-model, retención, [plan design system](docs/gui/design-system-plan.md) (ejecutado; catálogo GUI `/documentacion/ds`) |
+| [`docs/desktop.md`](docs/desktop.md)                           | Guía AppImage Ubuntu 26 (ADR-0021 / v0.6.0)          |
+| [`docs/gui/`](docs/gui/)                                       | Paridad O10, deploy (incl. DNS del dominio de producto), threat-model, retención, benchmarks, [plan design system](docs/gui/design-system-plan.md) (ejecutado; catálogo GUI `/documentacion/ds`) |
 | [`docs/carddav.md`](docs/carddav.md)                           | CardDAV CLI pull/write/watch (ADR-0018 / #48)            |
 | [`docs/api/openapi.yaml`](docs/api/openapi.yaml)               | Contrato HTTP `/api/v1`                              |
 | [`docs/domain.md`](docs/domain.md)                             | Lenguaje ubicuo, entidades, rules                    |
