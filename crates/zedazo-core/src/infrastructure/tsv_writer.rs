@@ -5,6 +5,7 @@ use std::path::Path;
 
 use crate::domain::audit::{format_categories_tsv, AuditAction, AuditEntry};
 use crate::error::CribaError;
+use crate::infrastructure::formula_guard::neutralize_cell;
 use crate::infrastructure::secure_fs::{self, WriteOpts};
 
 /// Escribe el archivo de auditoría TSV con una fila por cada entrada.
@@ -32,21 +33,32 @@ pub fn write_audit_tsv(
         };
 
         let categorias = format_categories_tsv(&entry.categories);
-        let tels = entry.tels.join(",");
-        let emails = entry.emails.join(",");
+        // TEL: neutralizar cada número (excepción E.164) y luego unir.
+        let tels = entry
+            .tels
+            .iter()
+            .map(|t| neutralize_cell(t))
+            .collect::<Vec<_>>()
+            .join(",");
+        let emails = entry
+            .emails
+            .iter()
+            .map(|e| neutralize_cell(e))
+            .collect::<Vec<_>>()
+            .join(",");
 
         writeln!(
             buf,
             "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
             entry.timestamp,
-            escape_tsv(&entry.uid),
-            escape_tsv(&entry.fn_original),
-            escape_tsv(&entry.fn_final),
+            escape_tsv(&neutralize_cell(&entry.uid)),
+            escape_tsv(&neutralize_cell(&entry.fn_original)),
+            escape_tsv(&neutralize_cell(&entry.fn_final)),
             action_str,
-            escape_tsv(&entry.reason),
-            escape_tsv(&entry.rule),
-            escape_tsv(&categorias),
-            escape_tsv(&entry.source),
+            escape_tsv(&neutralize_cell(&entry.reason)),
+            escape_tsv(&neutralize_cell(&entry.rule)),
+            escape_tsv(&neutralize_cell(&categorias)),
+            escape_tsv(&neutralize_cell(&entry.source)),
             escape_tsv(&tels),
             escape_tsv(&emails),
         )
