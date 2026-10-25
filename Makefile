@@ -107,6 +107,8 @@ docs-validate: ## Valida documentación canónica (frontmatter, enlaces, stubs, 
 	@grep -q 'ZEDAZO_WORDMARK = "zedazo"' apps/web/src/components/brand/zedazo-wordmark.tsx || (echo "❌ GUI: wordmark no está en minúsculas"; exit 1)
 	@test -f docs/brand.md || (echo "❌ falta docs/brand.md"; exit 1)
 	@echo "✓ Landing OK"
+	@echo "→ Validando release-please (P-01)..."
+	@bash scripts/check-release-please-config.sh
 	@echo "✓ docs-validate completado"
 
 traceability: ## Genera matriz de trazabilidad SPECS→Módulo→Test
