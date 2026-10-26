@@ -12,20 +12,21 @@ on:
         required: false
         default: all
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   secrets:
     name: secrets
     if: ${{ inputs.suite == 'secrets' || inputs.suite == 'all' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          fetch-depth: 0
           persist-credentials: false
+          fetch-depth: 0
       # Binario gitleaks (no la action de pago). Checksum release v8.30.1.
       - name: gitleaks
         run: |
@@ -39,6 +40,8 @@ jobs:
     name: sca
     if: ${{ inputs.suite == 'sca' || inputs.suite == 'all' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -76,7 +79,7 @@ jobs:
 
       - name: Setup Rust
         if: steps.locks.outputs.cargo == 'yes'
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
 
       - name: cargo audit
         if: steps.locks.outputs.cargo == 'yes'

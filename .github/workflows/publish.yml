@@ -42,6 +42,8 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
+          # S-09 / zizmor cache-poisoning: publicar sin caché de package manager.
+          package-manager-cache: false
       - name: Deps sistema Tauri/WebKit
         run: bash scripts/desktop/install-linux-deps.sh
       - name: Prefetch linuxdeploy (SHA256)

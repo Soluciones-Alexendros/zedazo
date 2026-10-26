@@ -10,8 +10,7 @@ on:
   schedule:
     - cron: "17 5 * * 1"
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: security-${{ github.ref }}
@@ -20,12 +19,16 @@ concurrency:
 jobs:
   secrets:
     name: secrets
+    permissions:
+      contents: read
     uses: ./.github/workflows/reusable-security.yml
     with:
       suite: secrets
 
   sca:
     name: sca
+    permissions:
+      contents: read
     uses: ./.github/workflows/reusable-security.yml
     with:
       suite: sca
