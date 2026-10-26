@@ -24,19 +24,34 @@ export TAURI_APPIMAGE="$APPIMAGE"
 export ZEDAZO_SAMPLE_VCF="${ZEDAZO_SAMPLE_VCF:-$ROOT/examples/sample.vcf}"
 
 # S-10: tauri-driver pin exacto (no latest / no ^).
+# BL-1: con ZEDAZO_OFFLINE=1 no se instala nada (debe venir del paso CI previo).
 TAURI_DRIVER_VERSION="${TAURI_DRIVER_VERSION:-2.0.6}"
-if ! cargo install --list 2>/dev/null | grep -qE "^tauri-driver v${TAURI_DRIVER_VERSION}:"; then
-  echo "==> instalando tauri-driver =${TAURI_DRIVER_VERSION}"
-  cargo install tauri-driver --version "=${TAURI_DRIVER_VERSION}" --locked --force
-fi
-
 E2E_DIR="$ROOT/scripts/desktop/e2e"
-(
-  cd "$E2E_DIR"
-  if [[ ! -d node_modules ]]; then
-    npm install --no-fund --no-audit
+if [[ "${ZEDAZO_OFFLINE:-}" == "1" ]]; then
+  if ! cargo install --list 2>/dev/null | grep -qE "^tauri-driver v${TAURI_DRIVER_VERSION}:"; then
+    echo "error: falta tauri-driver =${TAURI_DRIVER_VERSION} (ZEDAZO_OFFLINE=1; instálalo antes de cortar la red)" >&2
+    exit 1
   fi
-)
+  if [[ ! -d "$E2E_DIR/node_modules" ]]; then
+    echo "error: falta $E2E_DIR/node_modules (ZEDAZO_OFFLINE=1; npm ci previo)" >&2
+    exit 1
+  fi
+else
+  if ! cargo install --list 2>/dev/null | grep -qE "^tauri-driver v${TAURI_DRIVER_VERSION}:"; then
+    echo "==> instalando tauri-driver =${TAURI_DRIVER_VERSION}"
+    cargo install tauri-driver --version "=${TAURI_DRIVER_VERSION}" --locked --force
+  fi
+  (
+    cd "$E2E_DIR"
+    if [[ ! -d node_modules ]]; then
+      if [[ -f package-lock.json ]]; then
+        npm ci --ignore-scripts --no-fund --no-audit
+      else
+        npm install --no-fund --no-audit
+      fi
+    fi
+  )
+fi
 
 # Todo el e2e comparte el mismo DISPLAY de Xvfb.
 if [[ -f dist/desktop/run-env.sh ]]; then
