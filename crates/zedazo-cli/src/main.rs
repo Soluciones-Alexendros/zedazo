@@ -11,6 +11,7 @@ use interfaces::cli::{Cli, Command};
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("zedazo=info".parse()?))
+        .with_writer(std::io::stderr)
         .init();
 
     let cli = Cli::parse();
