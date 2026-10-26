@@ -5,4 +5,4 @@
 # Recalculado en CI por scripts/check-design-references.mjs.
 feaa3374e7171bd7f2dcaedabcd68bd42cf22cc5756590fa6137dcba7cf2fdf1  design-references.css @layer design-references
 c191dad4077eb06e02564323db426cfd814f5a5fdcc5bd118886301460755d76  theme.ts THEME_BOOT_SCRIPT
-75a8ee68c6025081f63fdee8400f850cc19be9a6d7f725c58f601a31d98e2682  contrast.test.mjs
+24a4f252bb7b9e857541e637a9ac07f9816cc5b2f51d74abd36d5394b4c59228  contrast.test.mjs
