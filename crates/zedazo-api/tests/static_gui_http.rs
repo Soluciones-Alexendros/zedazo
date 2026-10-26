@@ -71,3 +71,38 @@ async fn binary_like_serve_gui_without_caddy() {
     tx.send(()).unwrap();
     handle.await.unwrap().unwrap();
 }
+
+#[tokio::test]
+async fn deep_link_procesar_serves_exported_html() {
+    let data = tempdir().unwrap();
+    let gui = tempdir().unwrap();
+    fs::write(
+        gui.path().join("procesar.html"),
+        "<!doctype html><title>zedazo</title><p>procesar-fixture</p>",
+    )
+    .unwrap();
+
+    let state = AppState::new(data.path().to_path_buf(), 1_000_000, 24).unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap().to_string();
+    let (tx, rx) = tokio::sync::oneshot::channel::<()>();
+    let cfg = ApiConfig {
+        state,
+        static_dir: Some(gui.path().to_path_buf()),
+    };
+    let handle = tokio::spawn(async move {
+        serve(listener, cfg, async move {
+            let _ = rx.await;
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(50)).await;
+
+    let (st, head, body) = http_get(&addr, "/procesar").await;
+    assert_eq!(st, 200, "GUI deep link: {head}");
+    assert!(body.contains("procesar-fixture"));
+
+    tx.send(()).unwrap();
+    handle.await.unwrap().unwrap();
+}
