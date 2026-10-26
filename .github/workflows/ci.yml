@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, plan/zedazo-v060-seguridad]
+    branches: [main, 'plan/**']
   workflow_dispatch:
 
 permissions: {}
