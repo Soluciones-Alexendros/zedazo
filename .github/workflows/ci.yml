@@ -7,8 +7,7 @@ on:
     branches: [main, plan/zedazo-v060-seguridad]
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 env:
   CARGO_TERM_COLOR: always
@@ -31,10 +30,14 @@ jobs:
     name: Check (stable)
     needs: [health]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       # zedazo-desktop (Tauri/GTK) se valida en jobs Desktop*; sin WebKitGTK en ubuntu-latest.
       - run: cargo check --workspace --all-features --exclude zedazo-desktop
 
@@ -42,19 +45,29 @@ jobs:
     name: Check (MSRV 1.80)
     needs: [health]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@1.80
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@ffa5102cf171ef44c6095daae18d851c024800b1 # 1.80
+        with:
+          toolchain: "1.80"
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - run: cargo check --workspace --all-features --exclude zedazo-desktop
 
   fmt:
     name: Format
     needs: [health]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           components: rustfmt
       - run: cargo fmt --all -- --check
@@ -63,65 +76,89 @@ jobs:
     name: Clippy
     needs: [check]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           components: clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - run: cargo clippy --workspace --all-targets --all-features --exclude zedazo-desktop -- -D warnings
 
   test:
     name: Test
     needs: [check]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - run: cargo test --workspace --all-features --exclude zedazo-desktop
 
   doc:
     name: Doc
     needs: [check]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - run: cargo doc --workspace --no-deps --document-private-items --exclude zedazo-desktop
 
   docs-validate:
     name: Docs validate
     needs: [health]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - run: make docs-validate
 
   parity:
     name: Parity CLI↔API (O10)
     needs: [check]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - run: cargo test -p zedazo-api --test equivalence_http --all-features
 
   web:
     name: Web (apps/web)
     needs: [health]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/web
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 9.15.9
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
@@ -144,14 +181,18 @@ jobs:
     name: Web E2E API real
     needs: [check, web]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 9.15.9
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
@@ -170,8 +211,12 @@ jobs:
     name: Compose smoke (Docker)
     needs: [health]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - name: Smoke stack local
         run: bash deploy/scripts/compose-smoke.sh
 
@@ -179,12 +224,18 @@ jobs:
     name: Deny (cargo-deny)
     needs: [check]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - name: Install cargo-deny
-        uses: taiki-e/install-action@cargo-deny
+        uses: taiki-e/install-action@63300d694c674b6bd0e1ca77d202a2bc41c4b623 # cargo-deny
+        with:
+          tool: cargo-deny
       - name: Run cargo-deny
         run: cargo deny check
 
@@ -192,20 +243,26 @@ jobs:
     name: Coverage
     needs: [test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           components: llvm-tools-preview
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+        uses: taiki-e/install-action@c3076e6fa5aeb9a93daf1bd8eff73345250a8a9c # cargo-llvm-cov
+        with:
+          tool: cargo-llvm-cov
       - name: Generate coverage
         run: |
           mkdir -p coverage
           cargo llvm-cov -p zedazo-core --lcov --output-path coverage/lcov.info --fail-under-lines 80 --fail-under-regions 75
       - name: Upload to Coveralls
-        uses: coverallsapp/github-action@v2
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file: coverage/lcov.info
@@ -217,42 +274,147 @@ jobs:
     if: ${{ always() && !cancelled() }}
     needs: [fmt, clippy, docs-validate]
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Agregar fmt + clippy + docs-validate
+        env:
+          FMT: ${{ needs.fmt.result }}
+          CLIPPY: ${{ needs.clippy.result }}
+          DOCS_VALIDATE: ${{ needs.docs-validate.result }}
         run: |
           echo "quality ≡ fmt + clippy + docs-validate"
-          echo "fmt=${{ needs.fmt.result }}"
-          echo "clippy=${{ needs.clippy.result }}"
-          echo "docs-validate=${{ needs.docs-validate.result }}"
-          test "${{ needs.fmt.result }}" = success
-          test "${{ needs.clippy.result }}" = success
-          test "${{ needs.docs-validate.result }}" = success
+          echo "fmt=${FMT}"
+          echo "clippy=${CLIPPY}"
+          echo "docs-validate=${DOCS_VALIDATE}"
+          test "${FMT}" = success
+          test "${CLIPPY}" = success
+          test "${DOCS_VALIDATE}" = success
 
   smoke:
     name: smoke
     if: ${{ always() && !cancelled() }}
     needs: [health, check]
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Agregar health + check
+        env:
+          HEALTH: ${{ needs.health.result }}
+          CHECK: ${{ needs.check.result }}
         run: |
           echo "smoke ≡ health + check (compilación workspace)"
-          echo "health=${{ needs.health.result }}"
-          echo "check=${{ needs.check.result }}"
-          test "${{ needs.health.result }}" = success
-          test "${{ needs.check.result }}" = success
+          echo "health=${HEALTH}"
+          echo "check=${CHECK}"
+          test "${HEALTH}" = success
+          test "${CHECK}" = success
 
   secrets:
     name: secrets
+    permissions:
+      contents: read
     uses: ./.github/workflows/reusable-security.yml
     with:
       suite: secrets
 
   sca:
     name: sca
+    permissions:
+      contents: read
     uses: ./.github/workflows/reusable-security.yml
     with:
       suite: sca
+
+  # S-08/S-15: zizmor + hadolint + FROM con digest (dentro de ci-gate).
+  zizmor:
+    name: zizmor
+    needs: [health]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Instalar zizmor 1.31.1
+        env:
+          ZIZMOR_VERSION: "1.31.1"
+          # sha256sum de zizmor-x86_64-unknown-linux-gnu.tar.gz (release v1.31.1).
+          ZIZMOR_SHA256: "d185f726bdaf92df78273217dfdd24ebcd6b0ef48cf3ce776ff5762b6e138c99"
+        run: |
+          set -euo pipefail
+          curl -sSfL -o zizmor.tar.gz \
+            "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-x86_64-unknown-linux-gnu.tar.gz"
+          echo "${ZIZMOR_SHA256}  zizmor.tar.gz" | sha256sum -c -
+          tar -xzf zizmor.tar.gz
+          sudo install -m 0755 zizmor /usr/local/bin/zizmor
+          zizmor --version
+      - name: Auditar workflows (sin medium+)
+        run: |
+          set -euo pipefail
+          zizmor --format plain --min-severity medium .github/workflows
+
+  hadolint:
+    name: hadolint
+    needs: [health]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Instalar hadolint 2.15.1
+        env:
+          HADOLINT_VERSION: "2.15.1"
+          # sha256sum de hadolint-linux-x86_64 (release v2.15.1).
+          HADOLINT_SHA256: "c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507"
+        run: |
+          set -euo pipefail
+          curl -sSfL -o hadolint \
+            "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
+          echo "${HADOLINT_SHA256}  hadolint" | sha256sum -c -
+          chmod +x hadolint
+          sudo mv hadolint /usr/local/bin/hadolint
+          hadolint --version
+      - name: Lint Dockerfiles
+        run: |
+          set -euo pipefail
+          # DL3066 (info: USER no numérico) no debe tumbar el gate; fallar desde warning.
+          hadolint --failure-threshold warning deploy/Dockerfile.api deploy/Dockerfile.web
+
+  dockerfile-digests:
+    name: dockerfile-digests
+    needs: [health]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Exigir digest en todo FROM
+        run: |
+          set -euo pipefail
+          bad=0
+          while IFS= read -r -d '' f; do
+            while IFS= read -r line; do
+              # Ignorar comentarios y COPY --from=
+              case "$line" in
+                \#*|COPY\ --from=*|copy\ --from=*) continue ;;
+              esac
+              if echo "$line" | grep -qiE '^[[:space:]]*FROM[[:space:]]'; then
+                if ! echo "$line" | grep -qE '@sha256:[a-fA-F0-9]{64}'; then
+                  echo "SIN DIGEST: $f: $line"
+                  bad=1
+                fi
+              fi
+            done < "$f"
+          done < <(find deploy -type f \( -name 'Dockerfile' -o -name 'Dockerfile.*' \) -print0)
+          test "$bad" -eq 0
+
 
   # --- Escritorio AppImage (ADR-0021 / W5A) ---------------------------------
   # Build en ubuntu-22.04 (glibc + WebKitGTK 4.1). Artefactos listos para
@@ -277,6 +439,8 @@ jobs:
       CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
         with:
@@ -368,6 +532,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - name: Deps xvfb/FUSE
         run: bash scripts/desktop/install-linux-deps.sh
       - name: Download AppImage
@@ -390,6 +556,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -418,6 +586,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - name: Paridad CLI cribar + I7
@@ -442,6 +612,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
@@ -493,9 +665,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
         with:
           workspaces: ". -> target"
       - name: Dedup 40k / cancel 100k (ignored)
@@ -504,7 +678,7 @@ jobs:
           cargo test -p zedazo-core --release --test dedup_perf -- --ignored --nocapture | tee dedup-perf.txt
       - name: Subir log de métricas
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dedup-perf
           path: dedup-perf.txt
@@ -533,6 +707,9 @@ jobs:
       - smoke
       - secrets
       - sca
+      - zizmor
+      - hadolint
+      - dockerfile-digests
       - desktop-appimage
       - desktop-smoke
       - desktop-e2e

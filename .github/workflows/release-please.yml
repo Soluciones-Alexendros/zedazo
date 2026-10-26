@@ -7,9 +7,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 concurrency:
   group: release-please-${{ github.ref }}
@@ -19,6 +17,9 @@ jobs:
   release-please:
     name: release-please
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     timeout-minutes: 15
     outputs:
       pr: ${{ steps.release.outputs.pr }}
@@ -37,6 +38,9 @@ jobs:
     needs: release-please
     if: needs.release-please.outputs.prs_created == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     timeout-minutes: 15
     steps:
       - name: Extraer número de PR
@@ -47,11 +51,12 @@ jobs:
           set -euo pipefail
           number="$(python3 -c 'import json,os; print(json.loads(os.environ["PR_JSON"])["number"])')"
           echo "number=$number" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          persist-credentials: false
           ref: refs/pull/${{ steps.pr.outputs.number }}/head
           token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - name: Regenerar Cargo.lock
         run: cargo generate-lockfile
       - name: Empujar Cargo.lock al PR de release

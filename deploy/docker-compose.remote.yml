@@ -7,6 +7,8 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.api
+    cap_drop:
+      - ALL
     environment:
       ZEDAZO_BIND: 0.0.0.0:8080
       ZEDAZO_DATA_DIR: /var/lib/zedazo
@@ -40,6 +42,8 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.web
+    cap_drop:
+      - ALL
     depends_on:
       api:
         condition: service_healthy
@@ -51,7 +55,8 @@ services:
       start_period: 25s
 
   caddy:
-    image: caddy:2-alpine
+    # Sin cap_drop:ALL — ver docker-compose.yml (Caddy + 443).
+    image: caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
     ports:
       - "127.0.0.1:8443:443"
     volumes:

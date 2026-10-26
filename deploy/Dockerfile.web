@@ -1,11 +1,12 @@
 # Frontend Zedazo (export estático). Bundle same-origin: rutas relativas /api/v1/...
-FROM node:22-bookworm AS deps
+# Digests resueltos 2026-10-26 (docker buildx imagetools inspect).
+FROM node:22-bookworm@sha256:63538dfe497cc29dfafdda25ada09b46db68a3f4cc205abf1f5d6bf0913f3384 AS deps
 WORKDIR /app
 RUN corepack enable
 COPY apps/web/package.json apps/web/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-FROM node:22-bookworm AS build
+FROM node:22-bookworm@sha256:63538dfe497cc29dfafdda25ada09b46db68a3f4cc205abf1f5d6bf0913f3384 AS build
 WORKDIR /app
 RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
@@ -14,7 +15,7 @@ COPY apps/web ./
 ENV NEXT_PUBLIC_API_BASE=
 RUN pnpm build
 
-FROM node:22-bookworm-slim
+FROM node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
 WORKDIR /app
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
@@ -24,5 +25,5 @@ COPY --from=build --chown=node:node /app/scripts/serve-out.mjs ./scripts/serve-o
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 CMD ["node", "scripts/serve-out.mjs"]
