@@ -11,3 +11,4 @@ Registro de excepciones a la norma de flota (etiqueta `policy-exception` en el P
 | #100 | 2026-10-26 | P6 pendiente; plan zedazo-cierre-integracion | Arquitecto, plan zedazo-cierre-integracion |
 | #101 | 2026-10-26 | P6 pendiente; plan zedazo-cierre-integracion | Arquitecto, plan zedazo-cierre-integracion |
 | #103 | 2026-10-26 | P6 pendiente; plan zedazo-cierre-integracion | Arquitecto, plan zedazo-cierre-integracion |
+| #105 | 2026-10-26 | P6 pendiente; cambio pedido por plan zedazo-v060 | Arquitecto, plan zedazo-v060 |
