@@ -28,6 +28,9 @@ fn cribar_info_logs_go_to_stderr_not_stdout() {
             "-a",
             audit.to_str().unwrap(),
         ])
+        // CI suele colorear niveles (`\x1b[32m INFO\x1b[0m`); sin estilo el assert es estable.
+        .env("RUST_LOG_STYLE", "never")
+        .env("NO_COLOR", "1")
         .output()
         .expect("ejecutar zedazo");
 
