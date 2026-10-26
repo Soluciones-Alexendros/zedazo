@@ -113,11 +113,18 @@ Fixtures adicionales (solo tests): `crates/zedazo-core/tests/fixtures/*.vcf` (p.
 
 Tamaño del AppImage y TTFB de `GET /health` en loopback: [docs/gui/benchmarks.md](gui/benchmarks.md).
 
-Valores actuales: placeholders (`_TBD_`) hasta medir en Ubuntu 26 o rellenar desde el artefacto CI (W5A). Notas de build/gates del crate escritorio: [`apps/desktop/NOTES.md`](../apps/desktop/NOTES.md) (sin cifras de tamaño/TTFB todavía).
+Artefacto CI típico (job `Desktop AppImage`, runner `ubuntu-22.04`): ~78–80 MiB el `.AppImage` (p. ej. run A6 `desktop-appimage` ≈ 78,2 MiB). Las cifras exactas de TTFB health y el doble-build (S-10) salen del log del job; B4 las copia cuando haya un run estable del tip del plan.
+
+Notas de build/gates: [`apps/desktop/NOTES.md`](../apps/desktop/NOTES.md).
+
+## CI: sin red y Ubuntu 26
+
+- **P-02 / `desktop-no-network`:** el e2e AppImage corre bajo `unshare -rn` + `strace -f -e trace=connect` (`scripts/desktop/e2e-no-network.sh`). Falla si hay `connect` a IP distinta de `127.0.0.1` / `::1`. Los `AF_UNIX` (X11/DBus) se ignoran. Forma parte de `ci-gate`.
+- **P-07 / smoke en `container: ubuntu:26.04`:** no está en `ci-gate`. Probe 2026-10-26: con `libwebkit2gtk-4.1-0`, xvfb y `--appimage-extract-and-run` la API llega a escuchar en loopback, pero el proceso aborta o queda inutilizable por EGL (`Could not create default EGL display: EGL_BAD_PARAMETER`) y choques de símbolos GIO/libcurl-gnutls (`nghttp2_option_set_no_rfc9113_leading_and_trailing_ws_validation`). No se añade un job rojo ni `continue-on-error` al gate. **Validación Ubuntu 26 = prueba manual del operador** en máquina real (esta guía).
 
 ## Ver también
 
-- [ADR-0021](../DECISIONS.md) — decisión de producto
+- [ADR-0021](../DECISIONS.md) — decisión de producto (escritorio AppImage)
 - [ROADMAP v0.6.0](../ROADMAP.md) — criterio de salida
 - [Matriz de paridad CLI↔GUI](gui/functional-parity-matrix.md)
 - [Deploy self-hosted](gui/deploy.md) — camino Docker/Caddy (no AppImage)

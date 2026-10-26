@@ -420,11 +420,12 @@ jobs:
   # Build en ubuntu-22.04 (glibc + WebKitGTK 4.1). Artefactos listos para
   # `gh release upload` al draft (release.yml); este workflow no publica.
   #
-  # Smoke en contenedor Ubuntu 26: omitido. WebKitGTK/AppImage en
-  # `container: ubuntu:26.04` suele fallar (FUSE/dmabuf/libs); un job
-  # `continue-on-error` informativo colgaría de ci-gate sin señal útil.
-  # Validación Ubuntu 26 = prueba manual del operador (guía W5B).
-  # Acciones nuevas pinneadas por SHA (comentario = tag).
+  # Smoke en contenedor Ubuntu 26: omitido (P-07). Probe 2026-10-26 con
+  # `ubuntu:26.04` + `--appimage-extract-and-run` + xvfb: la API loopback
+  # arranca, pero EGL (`Could not create default EGL display`) y símbolos
+  # GIO/curl (`nghttp2_option_set_no_rfc9113_…`) impiden un smoke estable.
+  # No meter job rojo ni `continue-on-error` en ci-gate. Validación Ubuntu 26
+  # = prueba manual del operador (docs/desktop.md).
 
   desktop-appimage:
     name: Desktop AppImage
@@ -577,6 +578,41 @@ jobs:
           WEBKIT_DISABLE_DMABUF_RENDERER: "1"
           ZEDAZO_RUN_PARITY: "1"
 
+  # P-02: mismo e2e bajo unshare -rn + strace connect (solo loopback / AF_UNIX).
+  desktop-no-network:
+    name: Desktop e2e (no network)
+    needs: [desktop-appimage]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Deps sistema + strace
+        run: |
+          set -euo pipefail
+          bash scripts/desktop/install-linux-deps.sh
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq strace
+      - name: Download AppImage
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: desktop-appimage
+          path: dist/desktop
+      - name: E2E bajo unshare -rn + strace
+        run: bash scripts/desktop/e2e-no-network.sh
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          WEBKIT_DISABLE_DMABUF_RENDERER: "1"
+          ZEDAZO_RUN_PARITY: "1"
+
   desktop-parity:
     name: Desktop parity (cribar)
     needs: [check]
@@ -713,6 +749,7 @@ jobs:
       - desktop-appimage
       - desktop-smoke
       - desktop-e2e
+      - desktop-no-network
       - desktop-parity
       - desktop-sbom
       - desktop-attest
