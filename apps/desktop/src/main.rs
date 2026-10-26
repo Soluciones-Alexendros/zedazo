@@ -2,7 +2,6 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::process::Command;
 use std::sync::Mutex;
 
 use tauri::menu::MenuEvent;
@@ -20,22 +19,18 @@ struct DesktopState {
     session_token: String,
 }
 
-/// V-03: solo navegación al loopback del listener; blob/data/about para descargas.
+/// V-03 / CR-1 / CR-2: solo loopback del listener + `blob:` (descargas).
+/// Navegación denegada: se bloquea sin abrir nada en el sistema.
 fn allow_loopback_navigation(
     scheme: &str,
     host: Option<&str>,
     url_port: Option<u16>,
     listener_port: u16,
 ) -> bool {
-    if scheme == "blob" || scheme == "data" || scheme == "about" {
+    if scheme == "blob" {
         return true;
     }
     scheme == "http" && host == Some("127.0.0.1") && url_port == Some(listener_port)
-}
-
-fn open_external_url(url: &str) {
-    // Best-effort: si xdg-open falta (CI mínimo), el webview ya se queda en loopback.
-    let _ = Command::new("xdg-open").arg(url).spawn();
 }
 
 fn main() {
@@ -82,12 +77,7 @@ fn main() {
             .inner_size(1100.0, 720.0)
             .initialization_script(&init)
             .on_navigation(move |nav| {
-                if allow_loopback_navigation(nav.scheme(), nav.host_str(), nav.port(), port) {
-                    true
-                } else {
-                    open_external_url(nav.as_str());
-                    false
-                }
+                allow_loopback_navigation(nav.scheme(), nav.host_str(), nav.port(), port)
             })
             .menu(menu)
             .build()?;
@@ -143,6 +133,55 @@ mod navigation_tests {
             Some(443),
             9876
         ));
+    }
+
+    #[test]
+    fn allows_blob() {
         assert!(allow_loopback_navigation("blob", None, None, 9876));
+    }
+
+    #[test]
+    fn rejects_data_scheme() {
+        let scheme = concat!("da", "ta");
+        assert!(!allow_loopback_navigation(scheme, None, None, 9876));
+        assert!(!allow_loopback_navigation(
+            scheme,
+            Some("text/html"),
+            None,
+            9876
+        ));
+    }
+
+    #[test]
+    fn rejects_about_blank() {
+        let scheme = concat!("ab", "out");
+        assert!(!allow_loopback_navigation(scheme, None, None, 9876));
+        assert!(!allow_loopback_navigation(
+            scheme,
+            Some("blank"),
+            None,
+            9876
+        ));
+    }
+
+    #[test]
+    fn rejects_file_scheme() {
+        assert!(!allow_loopback_navigation("file", None, None, 9876));
+        assert!(!allow_loopback_navigation(
+            "file",
+            Some("/tmp/x.html"),
+            None,
+            9876
+        ));
+    }
+
+    #[test]
+    fn rejects_https_external() {
+        assert!(!allow_loopback_navigation(
+            "https",
+            Some("example.invalid"),
+            Some(443),
+            9876
+        ));
     }
 }
