@@ -1,22 +1,22 @@
 .form {
   display: grid;
-  gap: var(--zed-space-5);
+  gap: var(--ds-space-5);
 }
 
 .field {
   display: grid;
-  gap: var(--zed-space-2);
+  gap: var(--ds-space-2);
 }
 
 .fieldError {
-  color: var(--zed-danger-on-soft);
-  font-size: var(--zed-text-sm);
+  color: var(--ds-text);
+  font-size: var(--ds-text-sm);
 }
 
 .checkboxRow {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--zed-space-3) var(--zed-space-5);
+  gap: var(--ds-space-3) var(--ds-space-5);
 }
 
 .fieldset {
@@ -29,37 +29,37 @@
 .choice {
   display: inline-flex;
   align-items: center;
-  gap: var(--zed-space-2);
+  gap: var(--ds-space-2);
   cursor: pointer;
 }
 
 .checkbox {
   display: inline-flex;
   align-items: center;
-  gap: var(--zed-space-2);
-  min-height: var(--zed-control-height);
-  font-size: var(--zed-text-sm);
+  gap: var(--ds-space-2);
+  min-height: var(--ds-control-height);
+  font-size: var(--ds-text-sm);
 }
 
 .checkbox input {
-  width: var(--zed-space-4);
-  height: var(--zed-space-4);
-  accent-color: var(--zed-accent);
+  width: var(--ds-space-4);
+  height: var(--ds-space-4);
+  accent-color: var(--ds-accent);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--zed-space-3);
-  margin-top: var(--zed-space-2);
+  gap: var(--ds-space-3);
+  margin-top: var(--ds-space-2);
 }
 
 .split {
   display: grid;
-  gap: var(--zed-space-5);
+  gap: var(--ds-space-5);
 }
 
-/* 960px = --zed-bp-lg (60rem). Custom props no aplican en @media. */
+/* 960px = --ds-bp-lg (60rem). Custom props no aplican en @media. */
 @media (min-width: 60rem) {
   .split {
     grid-template-columns: 1.4fr 1fr;

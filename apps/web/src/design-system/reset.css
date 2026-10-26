@@ -36,13 +36,13 @@ button {
 }
 
 a {
-  color: var(--zed-accent);
+  color: var(--ds-accent);
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.18em;
 }
 
 a:hover {
-  color: var(--zed-accent-hover);
+  color: var(--ds-accent);
 }
 
 p,

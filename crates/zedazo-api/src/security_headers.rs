@@ -6,7 +6,7 @@ use axum::middleware::Next;
 use axum::response::Response;
 
 /// CSP alineada con `deploy/Caddyfile*` (GUI same-origin).
-pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'";
+pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-wZHa1Ad+sG4CVkMj20Js/YFPWl/cxb0RiIYwFGB1XXY='; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'";
 
 /// Aplica las cabeceras de seguridad a la respuesta.
 pub fn apply_headers(res: &mut Response) {

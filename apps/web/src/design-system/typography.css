@@ -1,105 +1,105 @@
 html {
-  font-family: var(--zed-font-ui);
+  font-family: var(--ds-font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  color: var(--zed-fg-default);
-  background: var(--zed-bg-canvas);
-  font-size: var(--zed-text-base);
-  line-height: var(--zed-leading-normal);
-  font-weight: var(--zed-weight-regular);
+  color: var(--ds-text);
+  background: var(--ds-bg-canvas);
+  font-size: var(--ds-text-base);
+  line-height: var(--ds-leading-body);
+  font-weight: var(--ds-weight-regular);
 }
 
 h1,
 .zed-title-page {
-  color: var(--zed-fg-strong);
+  color: var(--ds-text);
   font-size: clamp(2.125rem, 3.2vw, 2.75rem);
-  font-weight: var(--zed-weight-bold);
-  line-height: var(--zed-leading-tight);
+  font-weight: var(--ds-weight-bold);
+  line-height: var(--ds-leading-heading);
   letter-spacing: -0.02em;
-  margin: 0 0 var(--zed-space-3);
+  margin: 0 0 var(--ds-space-3);
 }
 
 h2,
 .zed-title-section {
-  color: var(--zed-fg-strong);
+  color: var(--ds-text);
   font-size: clamp(1.375rem, 2.1vw, 1.625rem);
-  font-weight: var(--zed-weight-semibold);
-  line-height: var(--zed-leading-snug);
-  margin: 0 0 var(--zed-space-3);
+  font-weight: var(--ds-weight-semibold);
+  line-height: var(--ds-leading-body);
+  margin: 0 0 var(--ds-space-3);
 }
 
 h3 {
-  color: var(--zed-fg-strong);
-  font-size: var(--zed-text-md);
-  font-weight: var(--zed-weight-semibold);
-  line-height: var(--zed-leading-snug);
-  margin: 0 0 var(--zed-space-2);
+  color: var(--ds-text);
+  font-size: var(--ds-text-md);
+  font-weight: var(--ds-weight-semibold);
+  line-height: var(--ds-leading-body);
+  margin: 0 0 var(--ds-space-2);
 }
 
 p {
-  margin: 0 0 var(--zed-space-4);
+  margin: 0 0 var(--ds-space-4);
 }
 
 .zed-label {
   display: block;
-  font-size: var(--zed-text-sm);
-  font-weight: var(--zed-weight-semibold);
-  color: var(--zed-fg-muted);
-  margin-bottom: var(--zed-space-2);
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-text-muted);
+  margin-bottom: var(--ds-space-2);
 }
 
 .zed-contact-name {
   font-size: clamp(1.125rem, 1.5vw, 1.375rem);
-  font-weight: var(--zed-weight-semibold);
-  color: var(--zed-fg-strong);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-text);
 }
 
 .zed-stat-value {
   font-variant-numeric: tabular-nums;
-  font-weight: var(--zed-weight-bold);
-  font-size: var(--zed-text-2xl);
-  line-height: var(--zed-leading-tight);
-  color: var(--zed-fg-strong);
+  font-weight: var(--ds-weight-bold);
+  font-size: var(--ds-text-2xl);
+  line-height: var(--ds-leading-heading);
+  color: var(--ds-text);
 }
 
 code,
 kbd,
 .zed-mono {
-  font-family: var(--zed-font-mono);
+  font-family: var(--ds-font-mono);
   font-variant-numeric: tabular-nums slashed-zero;
-  color: var(--zed-fg-strong);
-  font-size: var(--zed-text-sm);
+  color: var(--ds-text);
+  font-size: var(--ds-text-sm);
 }
 
 pre {
-  font-family: var(--zed-font-mono);
+  font-family: var(--ds-font-mono);
   font-variant-numeric: tabular-nums slashed-zero;
-  color: var(--zed-code-fg);
-  background: var(--zed-code-bg);
-  padding: var(--zed-space-4);
-  border-radius: var(--zed-radius-md);
+  color: var(--ds-text);
+  background: var(--ds-bg-muted);
+  padding: var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
   overflow: auto;
 }
 
 a {
-  color: var(--zed-accent);
+  color: var(--ds-accent);
 }
 
 a:hover {
-  color: var(--zed-accent-hover);
+  color: var(--ds-accent);
 }
 
 .zed-muted a {
-  color: var(--zed-accent);
+  color: var(--ds-accent);
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
 
 ::selection {
-  color: var(--zed-selection-fg);
-  background: var(--zed-selection-bg);
+  color: var(--ds-on-accent);
+  background: var(--ds-accent);
 }

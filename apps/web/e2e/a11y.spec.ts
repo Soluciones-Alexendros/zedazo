@@ -52,7 +52,6 @@ const AXE_ROUTES = [
   "/ajustes",
   "/acceso",
   "/documentacion",
-  "/documentacion/ds",
 ] as const;
 
 for (const path of AXE_ROUTES) {
@@ -101,8 +100,9 @@ test.describe("estados representativos (fixtures sintéticos)", () => {
 });
 
 test("prefers-reduced-motion anula el spinner", async ({ page }) => {
+  await installApiFixture(page, "hang-jobs");
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await gotoSettled(page, "/documentacion/ds");
+  await page.goto("/ejecuciones", { waitUntil: "domcontentloaded" });
   const spinner = page.locator(".zed-spinner").first();
   await expect(spinner).toBeVisible();
   const durationMs = await spinner.evaluate((el) => {

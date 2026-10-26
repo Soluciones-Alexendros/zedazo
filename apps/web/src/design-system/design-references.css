@@ -1,0 +1,171 @@
+/* design-references v1.0.0 BEGIN */
+/* Derivado del design system de Gráficas Nasve (Soluciones-Alexendros/ecommerce-graficasnasve), reutilizado con autorización del titular */
+@layer design-references {
+  :root {
+    /* Tipografía (escala modular 1.25) */
+    --ds-text-xs: 0.64rem;
+    --ds-text-sm: 0.8rem;
+    --ds-text-base: 1rem;
+    --ds-text-md: 1.25rem;
+    --ds-text-lg: 1.563rem;
+    --ds-text-xl: 1.953rem;
+    --ds-text-2xl: 2.441rem;
+    --ds-text-3xl: 3.052rem;
+    --ds-leading-body: 1.5;
+    --ds-leading-heading: 1.2;
+
+    /* Espaciado */
+    --ds-space-0: 0;
+    --ds-space-1: 0.25rem;
+    --ds-space-2: 0.5rem;
+    --ds-space-3: 0.75rem;
+    --ds-space-4: 1rem;
+    --ds-space-5: 1.25rem;
+    --ds-space-6: 1.5rem;
+    --ds-space-8: 2rem;
+    --ds-space-10: 2.5rem;
+    --ds-space-12: 3rem;
+
+    /* Radios */
+    --ds-radius-sm: 4px;
+    --ds-radius-md: 8px;
+    --ds-radius-card: 1rem;
+    --ds-radius-tile: 1.25rem;
+    --ds-radius-pill: 9999px;
+
+    /* Sombras duras */
+    --ds-shadow-hard: 6px 6px 0 0 var(--ds-shadow-color);
+    --ds-shadow-hard-sm: 4px 4px 0 0 var(--ds-shadow-color);
+
+    /* Movimiento */
+    --ds-duration-fast: 150ms;
+    --ds-duration-base: 250ms;
+    --ds-duration-slow: 400ms;
+    --ds-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Foco */
+    --ds-focus-width: 2px;
+    --ds-focus-offset: 2px;
+  }
+
+  :focus-visible {
+    outline: var(--ds-focus-width) solid var(--ds-focus);
+    outline-offset: var(--ds-focus-offset);
+    box-shadow: 0 0 0 calc(var(--ds-focus-width) * 2) var(--ds-focus-halo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --ds-duration-fast: 0.01ms;
+      --ds-duration-base: 0.01ms;
+      --ds-duration-slow: 0.01ms;
+    }
+  }
+}
+/* design-references v1.0.0 END */
+
+@font-face {
+  font-family: "Archivo";
+  src: url("/fonts/archivo/Archivo-variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/ibm-plex-mono/IBMPlexMono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/ibm-plex-mono/IBMPlexMono-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer theme {
+  :root {
+    --ds-font-sans: "Archivo", system-ui, sans-serif;
+    --ds-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+    /* Extensiones zedazo (estructura, sin color) */
+    --ds-weight-regular: 400;
+    --ds-weight-medium: 500;
+    --ds-weight-semibold: 600;
+    --ds-weight-bold: 700;
+    --ds-border-width: 1px;
+    --ds-space-16: 4rem;
+    --ds-space-20: 5rem;
+    --ds-space-24: 6rem;
+    --ds-shadow-xs: 0 1px 2px rgba(25, 25, 25, 0.06);
+    --ds-shadow-sm: 0 2px 8px rgba(25, 25, 25, 0.08);
+    --ds-shadow-md: 0 12px 32px rgba(25, 25, 25, 0.12);
+    --ds-overlay: rgba(20, 20, 20, 0.45);
+    --ds-content-readable: 74rem;
+    --ds-content-wide: 96rem;
+    --ds-sidebar-width: 17rem;
+    --ds-topbar-height: 3.75rem;
+    --ds-statusbar-height: 2rem;
+    --ds-control-height: 2.5rem;
+    --ds-textarea-min: 10rem;
+    --ds-drawer-width: 28rem;
+    --ds-auth-width: 28rem;
+    --ds-filter-max: 16rem;
+    --ds-prose-max: 36rem;
+    --ds-target-min: 1.5rem;
+    --ds-bp-md: 56.25rem;
+    --ds-bp-lg: 60rem;
+    --ds-nav-indicator: 0.1875rem;
+    --ds-z-shell: 20;
+    --ds-z-drawer: 40;
+    --ds-z-overlay: 30;
+    --ds-z-modal: 50;
+    --ds-z-skip: 60;
+    --ds-disabled-opacity: 0.55;
+    --ds-spin-duration: 700ms;
+  }
+
+  :root,
+  [data-theme="light"] {
+    --ds-bg-canvas: #f7f2e9;
+    --ds-bg-raised: #fefdfb;
+    --ds-bg-muted: #efe7d7;
+    --ds-text: #16140f;
+    --ds-text-muted: #5f584d;
+    --ds-border: #8a8173;
+    --ds-accent: #1f4e8c;
+    --ds-on-accent: #fefdfb;
+    --ds-success: #0f6b5f;
+    --ds-warning: #7a5200;
+    --ds-danger: #b0301f;
+    --ds-info: #2a5f8a;
+    --ds-focus: #1f4e8c;
+    --ds-focus-halo: #fbd9a0;
+    --ds-shadow-color: #8a8173;
+    color-scheme: light;
+  }
+
+  [data-theme="dark"] {
+    --ds-bg-canvas: #16140f;
+    --ds-bg-raised: #211e17;
+    --ds-bg-muted: #2b2820;
+    --ds-text: #f7f2e9;
+    --ds-text-muted: #c2b9a8;
+    --ds-border: #8a8173;
+    --ds-accent: #8fb4ec;
+    --ds-on-accent: #16140f;
+    --ds-success: #5cc8b8;
+    --ds-warning: #f4a52a;
+    --ds-danger: #ff8a75;
+    --ds-info: #8cc4e6;
+    --ds-focus: #8fb4ec;
+    --ds-focus-halo: #2b2820;
+    --ds-shadow-color: #8a8173;
+    color-scheme: dark;
+  }
+}

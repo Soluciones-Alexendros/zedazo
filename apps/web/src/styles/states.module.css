@@ -1,8 +1,8 @@
 .state {
   display: grid;
-  gap: var(--zed-space-3);
+  gap: var(--ds-space-3);
   justify-items: start;
-  padding: var(--zed-space-8) var(--zed-space-4);
+  padding: var(--ds-space-8) var(--ds-space-4);
   text-align: left;
 }
 
@@ -12,52 +12,52 @@
 }
 
 .stateCompact {
-  padding: var(--zed-space-4) 0;
+  padding: var(--ds-space-4) 0;
 }
 
 .stateTitle {
   margin: 0;
-  color: var(--zed-fg-strong);
-  font-size: var(--zed-text-lg);
-  font-weight: var(--zed-weight-semibold);
+  color: var(--ds-text);
+  font-size: var(--ds-text-lg);
+  font-weight: var(--ds-weight-semibold);
 }
 
 .stateBody {
   margin: 0;
-  color: var(--zed-fg-muted);
-  max-width: var(--zed-prose-max);
+  color: var(--ds-text-muted);
+  max-width: var(--ds-prose-max);
 }
 
 .skeleton {
   display: grid;
-  gap: var(--zed-space-2);
+  gap: var(--ds-space-2);
 }
 
 .skeletonLine {
-  height: var(--zed-space-3);
-  border-radius: var(--zed-radius-xs);
-  background: var(--zed-bg-muted);
+  height: var(--ds-space-3);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-bg-muted);
 }
 
 .chipRow {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--zed-space-2);
+  gap: var(--ds-space-2);
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--zed-space-2);
-  min-height: calc(var(--zed-target-min) + var(--zed-space-2));
-  padding: var(--zed-space-1) var(--zed-space-2);
-  border-radius: var(--zed-radius-pill);
-  border: var(--zed-border-width) solid var(--zed-border-default);
-  background: var(--zed-bg-subtle);
-  color: var(--zed-fg-default);
-  font-size: var(--zed-text-sm);
+  gap: var(--ds-space-2);
+  min-height: calc(var(--ds-target-min) + var(--ds-space-2));
+  padding: var(--ds-space-1) var(--ds-space-2);
+  border-radius: var(--ds-radius-pill);
+  border: var(--ds-border-width) solid var(--ds-border);
+  background: var(--ds-bg-muted);
+  color: var(--ds-text);
+  font-size: var(--ds-text-sm);
 }
 
 .live {
-  min-height: var(--zed-space-5);
+  min-height: var(--ds-space-5);
 }

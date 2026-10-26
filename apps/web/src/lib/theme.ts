@@ -1,6 +1,7 @@
 export type ThemePreference = "system" | "light" | "dark";
 
-const STORAGE_KEY = "zedazo-theme";
+const STORAGE_KEY = "ds-theme";
+const LEGACY_STORAGE_KEY = "zedazo-theme";
 
 export function readThemePreference(): ThemePreference {
   if (typeof window === "undefined") return "system";
@@ -21,13 +22,9 @@ export function resolveEffectiveTheme(
 
 export function applyTheme(preference: ThemePreference) {
   if (typeof document === "undefined") return;
-  const root = document.documentElement;
   const effective = resolveEffectiveTheme(preference);
-  root.setAttribute("data-theme-preference", preference);
-  root.setAttribute("data-theme", effective);
-  root.classList.toggle("wa-dark", effective === "dark");
-  root.classList.toggle("wa-light", effective === "light");
-  root.style.colorScheme = effective;
+  document.documentElement.setAttribute("data-theme", effective);
+  document.documentElement.style.colorScheme = effective;
 }
 
 export function persistTheme(preference: ThemePreference) {
@@ -36,5 +33,46 @@ export function persistTheme(preference: ThemePreference) {
   applyTheme(preference);
 }
 
-/** Inline script for FOUC-free theme boot — keep in sync with helpers above. */
-export const THEME_BOOT_SCRIPT = `(function(){try{var k='zedazo-theme';var p=localStorage.getItem(k);if(p!=='light'&&p!=='dark'&&p!=='system')p='system';var d=document.documentElement;var dark=p==='dark'||(p==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var e=dark?'dark':'light';d.setAttribute('data-theme-preference',p);d.setAttribute('data-theme',e);d.classList.toggle('wa-dark',dark);d.classList.toggle('wa-light',!dark);d.style.colorScheme=e;}catch(e){}})();`;
+/** Migra la clave anterior (zedazo-theme) a ds-theme, una sola vez, al arrancar. */
+export function migrateLegacyTheme(): ThemePreference | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy === null) return null;
+    let mapped: ThemePreference;
+    switch (legacy) {
+      case "claro":
+      case "light":
+        mapped = "light";
+        break;
+      case "oscuro":
+      case "dark":
+        mapped = "dark";
+        break;
+      case "auto":
+      case "sistema":
+      case "system":
+        mapped = "system";
+        break;
+      default:
+        mapped = "system";
+    }
+    window.localStorage.setItem(STORAGE_KEY, mapped);
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    return mapped;
+  } catch {
+    return null;
+  }
+}
+
+/** Script de arranque C20 (design-references v1.0.0) — texto exacto, sin nada antes ni después de los marcadores. */
+export const THEME_BOOT_SCRIPT = `/* design-references v1.0.0 theme-boot BEGIN */
+(function () {
+  var t = "system";
+  try { t = localStorage.getItem("ds-theme") || "system"; } catch (e) {}
+  if (t !== "light" && t !== "dark") {
+    t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  document.documentElement.setAttribute("data-theme", t);
+})();
+/* design-references v1.0.0 theme-boot END */`;

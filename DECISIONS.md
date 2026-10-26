@@ -289,7 +289,7 @@ supersedes: "v0.3.1"
 <details>
 <summary><strong>ADR-0019</strong> — Fuente DTCG de tokens GUI (script Node, sin Style Dictionary)</summary>
 
-- Estado: **aceptada**
+- Estado: **sustituida (v0.6.0, plan zedazo-v060 S3: variables de diseño congeladas en CSS con núcleo design-references)**
 - Fecha: 2026-09-11
 - Contexto: La GUI (ADR-0015/0016) ya usa custom properties `--zed-*` en OKLCH, escritas a mano. El [plan de design system](./docs/gui/design-system-plan.md) (epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59)) exige un origen DTCG, CSS/TS generados y contraste WCAG 2.2 AA en CI. Style Dictionary v4 + `@tokens-studio/sd-transforms` era la hipótesis; AGENTS §4 pide confirmación para deps nuevas.
 - Decisión:
