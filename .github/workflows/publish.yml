@@ -1,6 +1,9 @@
-# Publicación atestada del AppImage al release ya publicado (S-09).
+# Publicación atestada del AppImage al release ya publicado (S-09 / CR-3).
 # Dispara Alejandro al publicar el draft de release-please (tags v*).
 # Entorno `production`: si no existe en el repo, crearlo (tarea del operador).
+#
+# Separación least-privilege: `build` (contents: read) → artefacto;
+# `attest-upload` (write + id-token + attestations) con GH_TOKEN solo en el paso Upload.
 
 name: Publish desktop
 
@@ -15,21 +18,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish-appimage:
-    name: Build AppImage + attest + upload
+  build:
+    name: Build AppImage
     if: startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-22.04
     timeout-minutes: 90
     environment: production
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
+      contents: read
     env:
       NO_STRIP: "true"
       APPIMAGE_EXTRACT_AND_RUN: "1"
       CARGO_TERM_COLOR: always
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -53,16 +53,43 @@ jobs:
           ZEDAZO_GIT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          export ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          export ZEDAZO_BUILD_DATE
           bash scripts/desktop/build-appimage.sh
       - name: SBOM
         run: bash scripts/desktop/sbom.sh
+      - name: Upload build artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: publish-desktop-dist
+          path: dist/desktop/
+          if-no-files-found: error
+          retention-days: 3
+
+  attest-upload:
+    name: Attest + upload al release
+    needs: [build]
+    if: startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: publish-desktop-dist
+          path: dist/desktop
       - name: Attest build provenance
         uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
         with:
           subject-path: dist/desktop/*.AppImage
       - name: Upload al release publicado
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
@@ -72,23 +99,21 @@ jobs:
             dist/desktop/SHA256SUMS \
             dist/desktop/build-info.txt \
             dist/desktop/sbom-*.json \
-            dist/desktop/SBOM.SHA256SUMS \
-            --clobber
+            dist/desktop/SBOM.SHA256SUMS
 
   verify-release:
     name: verify-release
-    needs: [publish-appimage]
+    needs: [attest-upload]
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     environment: production
     permissions:
       contents: read
       attestations: read
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Descargar AppImage del release
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
@@ -102,6 +127,7 @@ jobs:
           sha256sum -c SHA256SUMS
       - name: gh attestation verify
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail

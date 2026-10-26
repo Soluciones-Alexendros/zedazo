@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, plan/zedazo-v060-seguridad]
+    branches: [main, 'plan/**']
   workflow_dispatch:
 
 permissions: {}
@@ -463,7 +463,8 @@ jobs:
           ZEDAZO_GIT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          export ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          export ZEDAZO_BUILD_DATE
           bash scripts/desktop/build-appimage.sh
       - name: Upload AppImage + checksums
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -516,7 +517,8 @@ jobs:
           ZEDAZO_GIT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          export ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          export ZEDAZO_BUILD_DATE
           bash scripts/desktop/build-appimage.sh
           FIRST=$(find dist/desktop-first -name '*.AppImage' -type f | sort | head -1)
           SECOND=$(find dist/desktop -name '*.AppImage' -type f | sort | head -1)
@@ -601,6 +603,11 @@ jobs:
           bash scripts/desktop/install-linux-deps.sh
           sudo apt-get update -qq
           sudo apt-get install -y -qq strace
+      - name: Prefetch tauri-driver + npm (con red)
+        run: |
+          set -euo pipefail
+          cargo install tauri-driver --version "=2.0.6" --locked
+          npm ci --ignore-scripts --prefix scripts/desktop/e2e
       - name: Download AppImage
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -611,7 +618,7 @@ jobs:
         env:
           APPIMAGE_EXTRACT_AND_RUN: "1"
           WEBKIT_DISABLE_DMABUF_RENDERER: "1"
-          ZEDAZO_RUN_PARITY: "1"
+          ZEDAZO_OFFLINE: "1"
 
   desktop-parity:
     name: Desktop parity (cribar)
@@ -638,6 +645,24 @@ jobs:
             dist/desktop/parity-audit.tsv
           if-no-files-found: error
           retention-days: 14
+
+  # CR-1 / CR-2: tests de navegación del binario (sin AppImage).
+  desktop-test:
+    name: Desktop test (zedazo-desktop)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
+      - name: Deps sistema
+        run: bash scripts/desktop/install-linux-deps.sh
+      - name: Tests crate escritorio
+        run: cargo test -p zedazo-desktop --locked
 
   desktop-sbom:
     name: Desktop SBOM (CycloneDX)
@@ -751,6 +776,7 @@ jobs:
       - desktop-e2e
       - desktop-no-network
       - desktop-parity
+      - desktop-test
       - desktop-sbom
       - desktop-attest
     runs-on: ubuntu-latest

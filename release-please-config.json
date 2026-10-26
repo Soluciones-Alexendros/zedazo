@@ -14,6 +14,11 @@
           "jsonpath": "$.workspace.package.version"
         },
         {
+          "type": "toml",
+          "path": "Cargo.toml",
+          "jsonpath": "$.workspace.dependencies['zedazo-core'].version"
+        },
+        {
           "type": "json",
           "path": "apps/web/package.json",
           "jsonpath": "$.version"

@@ -34,6 +34,7 @@ if pkg.get("include-component-in-tag") is not False:
 extras = pkg.get("extra-files") or []
 want = {
     ("toml", "Cargo.toml", "$.workspace.package.version"),
+    ("toml", "Cargo.toml", "$.workspace.dependencies['zedazo-core'].version"),
     ("json", "apps/web/package.json", "$.version"),
     ("json", "apps/desktop/tauri.conf.json", "$.version"),
 }

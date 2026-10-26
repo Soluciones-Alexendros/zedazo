@@ -32,7 +32,7 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  # Solo en el PR de release: regenerar Cargo.lock tras el bump de version y empujar.
+  # Solo en el PR de release: actualizar Cargo.lock de crates del workspace y empujar.
   update-lockfile:
     name: update-lockfile (release PR)
     needs: release-please
@@ -43,23 +43,27 @@ jobs:
       pull-requests: write
     timeout-minutes: 15
     steps:
-      - name: Extraer número de PR
+      - name: Extraer rama del PR
         id: pr
         env:
           PR_JSON: ${{ needs.release-please.outputs.pr }}
         run: |
           set -euo pipefail
           number="$(python3 -c 'import json,os; print(json.loads(os.environ["PR_JSON"])["number"])')"
+          head="$(python3 -c 'import json,os; print(json.loads(os.environ["PR_JSON"])["headBranchName"])')"
           echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-          ref: refs/pull/${{ steps.pr.outputs.number }}/head
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ steps.pr.outputs.head }}
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
-      - name: Regenerar Cargo.lock
-        run: cargo generate-lockfile
+      - name: Actualizar Cargo.lock (solo workspace)
+        run: cargo update --workspace
       - name: Empujar Cargo.lock al PR de release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ steps.pr.outputs.head }}
         run: |
           set -euo pipefail
           if git diff --quiet -- Cargo.lock; then
@@ -68,6 +72,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add Cargo.lock
           git commit -m "chore: regenerar Cargo.lock tras bump de versión"
-          git push
+          git push origin "HEAD:refs/heads/${HEAD_REF}"
