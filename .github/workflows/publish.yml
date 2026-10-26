@@ -53,7 +53,8 @@ jobs:
           ZEDAZO_GIT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          export ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          ZEDAZO_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          export ZEDAZO_BUILD_DATE
           bash scripts/desktop/build-appimage.sh
       - name: SBOM
         run: bash scripts/desktop/sbom.sh
