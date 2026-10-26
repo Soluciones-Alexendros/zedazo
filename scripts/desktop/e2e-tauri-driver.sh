@@ -44,11 +44,7 @@ else
   (
     cd "$E2E_DIR"
     if [[ ! -d node_modules ]]; then
-      if [[ -f package-lock.json ]]; then
-        npm ci --ignore-scripts --no-fund --no-audit
-      else
-        npm install --no-fund --no-audit
-      fi
+      npm ci --ignore-scripts --no-fund --no-audit
     fi
   )
 fi

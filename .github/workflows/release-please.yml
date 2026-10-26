@@ -63,6 +63,7 @@ jobs:
       - name: Empujar Cargo.lock al PR de release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ steps.pr.outputs.head }}
         run: |
           set -euo pipefail
           if git diff --quiet -- Cargo.lock; then
@@ -74,4 +75,4 @@ jobs:
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add Cargo.lock
           git commit -m "chore: regenerar Cargo.lock tras bump de versión"
-          git push origin "HEAD:refs/heads/${{ steps.pr.outputs.head }}"
+          git push origin "HEAD:refs/heads/${HEAD_REF}"
