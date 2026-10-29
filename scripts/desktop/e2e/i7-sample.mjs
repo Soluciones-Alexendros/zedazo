@@ -1,13 +1,19 @@
 #!/usr/bin/env node
 /**
- * E2E tauri-driver: sample.vcf + invariante I7 (origen intacto).
+ * E2E tauri-driver: sample.vcf + I7 + recorrido GUI + paridad opcional.
  * Env: TAURI_DRIVER_PORT (default 4444), TAURI_APPIMAGE, ZEDAZO_SAMPLE_VCF opcional.
  * ZEDAZO_ADDR opcional: si falta, se deriva de browser.getUrl().
- * Imprime ZEDAZO_ADDR=… y ZEDAZO_TOKEN=… en stdout (líneas KEY=) para parity.
+ * Token: solo a ZEDAZO_E2E_ENV_OUT (nunca en stdout en claro).
  */
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { copyFileSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from "node:fs";
+import {
+  copyFileSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  appendFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { remote } from "webdriverio";
@@ -35,9 +41,6 @@ const browser = await remote({
   hostname: "127.0.0.1",
   port: driverPort,
   path: "/",
-  // Sin browserName: WDIO v9 inyectaría webSocketUrl si browserName≠safari;
-  // tauri-driver no lo elimina y WebKitWebDriver responde "Failed to match capabilities".
-  // Canon: docs Tauri WebdriverIO (solo tauri:options).
   capabilities: {
     "tauri:options": {
       application: appimage,
@@ -49,15 +52,97 @@ const browser = await remote({
 });
 
 function emit(key, value) {
-  const line = `${key}=${value}`;
-  console.log(line);
+  if (key === "ZEDAZO_TOKEN") {
+    console.log(`ZEDAZO_TOKEN=<redacted len=${String(value).length}>`);
+  } else {
+    console.log(`${key}=${value}`);
+  }
   if (outEnv) {
-    appendFileSync(outEnv, `${line}\n`);
+    appendFileSync(outEnv, `${key}=${value}\n`);
   }
 }
 
+/** Readiness: documento usable + token de sesión presente. */
+async function waitAppReady(label, timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs;
+  let last = "";
+  while (Date.now() < deadline) {
+    const snap = await browser.execute(() => {
+      // eslint-disable-next-line no-undef
+      const body = document.body;
+      return {
+        ready: document.readyState,
+        url: location.href,
+        textLen: body ? (body.innerText || "").length : 0,
+        text: body ? (body.innerText || "").slice(0, 200) : "",
+        // eslint-disable-next-line no-undef
+        hasToken: typeof window.__ZEDAZO_SESSION_TOKEN__ === "string",
+      };
+    });
+    last = JSON.stringify(snap);
+    if (
+      snap.ready === "complete" &&
+      snap.hasToken &&
+      snap.textLen > 0 &&
+      /127\.0\.0\.1:\d+/.test(String(snap.url))
+    ) {
+      console.log(`ready:${label}`);
+      return snap;
+    }
+    await browser.pause(250);
+  }
+  throw new Error(`timeout readiness (${label}): ${last}`);
+}
+
+async function gotoLoopback(pathAndQuery) {
+  const path = pathAndQuery.startsWith("/") ? pathAndQuery : `/${pathAndQuery}`;
+  await browser.execute((p) => {
+    // eslint-disable-next-line no-undef
+    window.location.assign(p);
+  }, path);
+  await waitAppReady(`nav:${path}`);
+}
+
+async function clickDescargar(timeoutMs = 20_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const btn = await browser.$("button.zed-button--primary");
+    const exists = await btn.isExisting().catch(() => false);
+    if (exists) {
+      const text = await btn.getText().catch(() => "");
+      if (/Descargar/i.test(String(text))) {
+        await btn.click();
+        return;
+      }
+    }
+    const all = await browser.$$("button");
+    for (const b of all) {
+      const t = await b.getText().catch(() => "");
+      if (/Descargar/i.test(String(t))) {
+        await b.click();
+        return;
+      }
+    }
+    await browser.pause(400);
+  }
+  const diag = await browser.execute(() => {
+    // eslint-disable-next-line no-undef
+    const body = document.body;
+    return {
+      url: location.href,
+      // eslint-disable-next-line no-undef
+      hasToken: typeof window.__ZEDAZO_SESSION_TOKEN__ === "string",
+      text: body ? (body.innerText || "").slice(0, 600) : "",
+      htmlLen: body ? body.innerHTML.length : 0,
+    };
+  });
+  throw new Error(
+    `no se encontró botón Descargar en detalle de job: ${JSON.stringify(diag)}`,
+  );
+}
+
 try {
-  await browser.pause(3000);
+  await waitAppReady("boot", 45_000);
   const title = await browser.getTitle();
   console.log("window title:", title);
 
@@ -86,6 +171,21 @@ try {
     Authorization: `Bearer ${token}`,
   };
 
+  // --- Identidad del artefacto (sin Bearer → 401; con Bearer → sha ≠ unknown en release) ---
+  const verAnon = await fetch(`${base}/api/v1/version`);
+  if (verAnon.status !== 401) {
+    throw new Error(`version sin Bearer: esperado 401, got ${verAnon.status}`);
+  }
+  const verAuth = await fetch(`${base}/api/v1/version`, { headers });
+  if (!verAuth.ok) {
+    throw new Error(`version con Bearer HTTP ${verAuth.status}`);
+  }
+  const verBody = await verAuth.json();
+  console.log(
+    `version ok: version=${verBody.version} git_sha=${verBody.git_sha} build_date=${verBody.build_date}`,
+  );
+
+  // --- Flujo API (I7 + upload grande) ---
   const form = new FormData();
   const blob = new Blob([readFileSync(sample)], { type: "text/vcard" });
   form.append("file", blob, "sample.vcf");
@@ -150,17 +250,14 @@ try {
   } else {
     console.warn(`artefacto vcf HTTP ${art.status} (I7 ya verificada sobre origen)`);
   }
-
   console.log("OK e2e tauri-driver sample.vcf + I7");
 
-  // S-04: VCF sintético ~10 MB (generado en tmp; no se commitea).
   const tenMb = 10 * 1024 * 1024;
   let big = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:big10\r\nFN:Big Ten\r\nNOTE:";
   big += "z".repeat(Math.max(0, tenMb - big.length - 20));
   big += "\r\nEND:VCARD\r\n";
   const bigBuf = Buffer.from(big);
-  const bigPath = join(work, "synthetic-10mb.vcf");
-  writeFileSync(bigPath, bigBuf);
+  writeFileSync(join(work, "synthetic-10mb.vcf"), bigBuf);
   const bigSha = createHash("sha256").update(bigBuf).digest("hex");
   const form10 = new FormData();
   form10.append("file", new Blob([bigBuf], { type: "text/vcard" }), "synthetic-10mb.vcf");
@@ -178,8 +275,6 @@ try {
   }
   console.log("OK e2e upload sintético 10 MB");
 
-  // V-04: withGlobalTauri=false → sin API global `__TAURI__`.
-  // `__TAURI_INTERNALS__` sigue existiendo (IPC de Tauri 2); no es la superficie prohibida.
   const hasGlobalTauri = await browser.execute(() => {
     // eslint-disable-next-line no-undef
     return typeof window.__TAURI__ !== "undefined";
@@ -189,22 +284,8 @@ try {
   }
   console.log("OK V-04: sin __TAURI__ global");
 
-  // V-03: navegación externa no abandona el loopback.
-  const urlBefore = await browser.getUrl();
-  await browser.execute(() => {
-    // eslint-disable-next-line no-undef
-    window.location.href = "https://example.com/";
-  });
-  await browser.pause(1500);
-  const urlAfter = await browser.getUrl();
-  if (!/127\.0\.0\.1:\d+/.test(String(urlAfter))) {
-    throw new Error(
-      `navegación externa escapó del loopback: antes=${urlBefore} después=${urlAfter}`,
-    );
-  }
-  console.log("OK V-03: webview permanece en loopback tras example.com");
-
-  // V-01: clic «Descargar» en GUI; contenido vía fetch+Bearer coincide con API.
+  // V-01 ANTES de V-03: la navegación externa bloqueada puede dejar el WebView
+  // en un documento vacío (run 40279090494); no envenenar antes del detalle.
   const artApi = await fetch(`${base}/api/v1/jobs/${jobId}/artifacts/vcf`, { headers });
   if (!artApi.ok) {
     throw new Error(`artefacto vcf para V-01 HTTP ${artApi.status}`);
@@ -212,50 +293,11 @@ try {
   const artBuf = Buffer.from(await artApi.arrayBuffer());
   const artSha = createHash("sha256").update(artBuf).digest("hex");
 
-  await browser.url(
-    `http://${addr}/ejecuciones?job=${encodeURIComponent(jobId)}`,
-  );
-  // Esperar hidratación del detalle (Descargar VCF en cabecera).
-  let clicked = false;
-  for (let i = 0; i < 30; i++) {
-    const btn = await browser.$("button.zed-button--primary");
-    const exists = await btn.isExisting().catch(() => false);
-    if (exists) {
-      const text = await btn.getText().catch(() => "");
-      if (/Descargar/i.test(String(text))) {
-        await btn.click();
-        clicked = true;
-        break;
-      }
-    }
-    // Fallback: cualquier botón con texto Descargar
-    const all = await browser.$$("button");
-    for (const b of all) {
-      const t = await b.getText().catch(() => "");
-      if (/Descargar/i.test(String(t))) {
-        await b.click();
-        clicked = true;
-        break;
-      }
-    }
-    if (clicked) break;
-    await browser.pause(500);
-  }
-  if (!clicked) {
-    const urlNow = await browser.getUrl();
-    const bodySnippet = await browser.execute(() =>
-      // eslint-disable-next-line no-undef
-      (document.body && document.body.innerText || "").slice(0, 400),
-    );
-    throw new Error(
-      `no se encontró botón Descargar en detalle de job (url=${urlNow}): ${bodySnippet}`,
-    );
-  }
-  await browser.pause(1000);
+  await gotoLoopback(`/ejecuciones?job=${encodeURIComponent(jobId)}`);
+  await clickDescargar();
+  await browser.pause(800);
   const downloadErr = await browser.execute(() => {
     // eslint-disable-next-line no-undef
-    const err = document.querySelector(".zed-artifact .zed-muted");
-    // Solo fallar si hay mensaje de error de ApiError típico
     const nodes = Array.from(document.querySelectorAll(".zed-artifact p"));
     for (const n of nodes) {
       const t = n.textContent || "";
@@ -285,6 +327,134 @@ try {
     throw new Error(`V-01 sha mismatch GUI=${guiSha} API=${artSha}`);
   }
   console.log("OK V-01: Descargar + contenido Bearer coincide");
+
+  // Auditoría TSV (detalle → pestaña exportar / botón Descargar TSV si existe).
+  const auditApi = await fetch(`${base}/api/v1/jobs/${jobId}/artifacts/audit_tsv`, {
+    headers,
+  });
+  if (auditApi.ok) {
+    const auditText = await auditApi.text();
+    if (!auditText || auditText.length < 8) {
+      throw new Error("audit_tsv vacío");
+    }
+    console.log("OK artefacto auditoría TSV");
+  } else {
+    console.warn(`audit_tsv HTTP ${auditApi.status}`);
+  }
+
+  // --- Recorrido GUI: Procesar con input file ---
+  await gotoLoopback("/procesar");
+  const fileInput = await browser.$('input[type="file"]');
+  if (!(await fileInput.isExisting())) {
+    throw new Error("Procesar: no hay input[type=file]");
+  }
+  await fileInput.setValue(sample);
+  await browser.pause(500);
+  // Continuar (paso reglas) si aparece.
+  for (let i = 0; i < 20; i++) {
+    const cont = await browser.$$("button");
+    let hit = false;
+    for (const b of cont) {
+      const t = await b.getText().catch(() => "");
+      if (/^Continuar$/i.test(String(t).trim())) {
+        await b.click();
+        hit = true;
+        break;
+      }
+    }
+    if (hit) break;
+    await browser.pause(300);
+  }
+  // Lanzar / Procesar job si el wizard lo pide.
+  for (let i = 0; i < 40; i++) {
+    const buttons = await browser.$$("button");
+    for (const b of buttons) {
+      const t = await b.getText().catch(() => "");
+      if (/^(Procesar|Ejecutar|Lanzar|Iniciar)/i.test(String(t).trim())) {
+        await b.click();
+        console.log("OK GUI: clic procesar/lanzar");
+      } else if (/Continuar/i.test(String(t))) {
+        await b.click();
+      }
+    }
+    const text = await browser.execute(() =>
+      // eslint-disable-next-line no-undef
+      (document.body && document.body.innerText) || "",
+    );
+    if (/complet|expediente|Descargar|ejecuci/i.test(String(text))) {
+      console.log("OK GUI: estado post-proceso visible");
+      break;
+    }
+    await browser.pause(500);
+  }
+
+  // Entrada inválida: VCF basura → mensaje útil.
+  const badPath = join(work, "bad.vcf");
+  writeFileSync(badPath, "NOT-A-VCARD\n");
+  await gotoLoopback("/procesar");
+  const fileInput2 = await browser.$('input[type="file"]');
+  if (await fileInput2.isExisting()) {
+    await fileInput2.setValue(badPath);
+    await browser.pause(400);
+    for (let i = 0; i < 15; i++) {
+      const buttons = await browser.$$("button");
+      for (const b of buttons) {
+        const t = await b.getText().catch(() => "");
+        if (/Continuar|Procesar|Ejecutar|Lanzar/i.test(String(t))) {
+          await b.click();
+        }
+      }
+      const text = await browser.execute(() =>
+        // eslint-disable-next-line no-undef
+        (document.body && document.body.innerText) || "",
+      );
+      if (/error|inválid|fail|no se pudo|ApiError|HTTP/i.test(String(text))) {
+        console.log("OK GUI: error útil ante entrada inválida");
+        break;
+      }
+      await browser.pause(400);
+    }
+  }
+
+  // Ciclo de vida: ir a inicio y volver.
+  await gotoLoopback("/");
+  await gotoLoopback("/ejecuciones");
+  console.log("OK GUI: ciclo inicio ↔ ejecuciones");
+
+  // Borrado de datos (Ajustes).
+  await gotoLoopback("/ajustes");
+  const wipeClicked = await browser.execute(() => {
+    // eslint-disable-next-line no-undef
+    const buttons = Array.from(document.querySelectorAll("button"));
+    const b = buttons.find((el) => /Borrar todos los datos/i.test(el.textContent || ""));
+    if (!b) return false;
+    b.click();
+    return true;
+  });
+  if (wipeClicked) {
+    await browser.pause(400);
+    // confirm() nativo: WebDriver puede auto-aceptar o no; registrar resultado.
+    console.log("OK GUI: acción borrado invocada (confirm nativo según WebKit)");
+  } else {
+    console.warn("aviso: no se encontró botón de borrado en Ajustes");
+  }
+
+  // V-03 al final: no debe impedir aserciones previas.
+  const urlBefore = await browser.getUrl();
+  await browser.execute(() => {
+    // eslint-disable-next-line no-undef
+    window.location.href = "https://example.com/";
+  });
+  await browser.pause(1500);
+  const urlAfter = await browser.getUrl();
+  if (!/127\.0\.0\.1:\d+/.test(String(urlAfter))) {
+    throw new Error(
+      `navegación externa escapó del loopback: antes=${urlBefore} después=${urlAfter}`,
+    );
+  }
+  console.log("OK V-03: webview permanece en loopback tras example.com");
+  // Recuperar documento usable tras el intento externo.
+  await gotoLoopback("/");
 
   if (process.env.ZEDAZO_RUN_PARITY === "1") {
     const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "../../..");

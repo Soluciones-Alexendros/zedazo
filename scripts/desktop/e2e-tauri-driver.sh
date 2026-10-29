@@ -49,23 +49,34 @@ else
   )
 fi
 
-# Todo el e2e comparte el mismo DISPLAY de Xvfb.
+# Extract/WebKit desde run-env; identidad va embebida en el binario (no reinyectar SHA).
 if [[ -f dist/desktop/run-env.sh ]]; then
   # shellcheck disable=SC1091
-  source dist/desktop/run-env.sh
+  # shellcheck source=/dev/null
+  source <(grep -E '^export (APPIMAGE_EXTRACT_AND_RUN|WEBKIT_DISABLE_DMABUF_RENDERER)=' dist/desktop/run-env.sh || true)
 fi
-# ServeDir necesita ficheros en disco. La GUI del AppImage va embebida en el binario
-# Tauri (no hay .html al --appimage-extract); el artefacto sube dist/desktop/gui/.
-if [[ -f dist/desktop/gui/index.html ]]; then
-  export ZEDAZO_STATIC_DIR="$ROOT/dist/desktop/gui"
-elif [[ -f apps/web/out/index.html ]]; then
-  export ZEDAZO_STATIC_DIR="$ROOT/apps/web/out"
+
+# Autonomía: el AppImage debe servir GUI desde bundle.resources.
+# Solo inyectar STATIC_DIR con ZEDAZO_ALLOW_EXTERNAL_GUI=1 (depuración).
+if [[ "${ZEDAZO_ALLOW_EXTERNAL_GUI:-}" == "1" ]]; then
+  if [[ -f dist/desktop/gui/index.html ]]; then
+    export ZEDAZO_STATIC_DIR="$ROOT/dist/desktop/gui"
+  elif [[ -f apps/web/out/index.html ]]; then
+    export ZEDAZO_STATIC_DIR="$ROOT/apps/web/out"
+  fi
+  if [[ -z "${ZEDAZO_STATIC_DIR:-}" || ! -f "${ZEDAZO_STATIC_DIR}/index.html" ]]; then
+    echo "error: ZEDAZO_ALLOW_EXTERNAL_GUI=1 pero falta dist/desktop/gui o apps/web/out" >&2
+    exit 1
+  fi
+  echo "==> ZEDAZO_ALLOW_EXTERNAL_GUI=1 → STATIC_DIR=${ZEDAZO_STATIC_DIR}"
+else
+  unset ZEDAZO_STATIC_DIR || true
+  echo "==> e2e autónomo (sin ZEDAZO_STATIC_DIR; resources del AppImage)"
 fi
-if [[ -z "${ZEDAZO_STATIC_DIR:-}" || ! -f "${ZEDAZO_STATIC_DIR}/index.html" ]]; then
-  echo "error: falta GUI estática (dist/desktop/gui o apps/web/out) para ZEDAZO_STATIC_DIR" >&2
-  exit 1
-fi
-echo "==> ZEDAZO_STATIC_DIR=${ZEDAZO_STATIC_DIR}"
+
+ENV_OUT="$(mktemp -t zedazo-e2e-env.XXXXXX)"
+cleanup_env() { rm -f "$ENV_OUT"; }
+trap cleanup_env EXIT
 
 xvfb-run -a -s "-screen 0 1280x800x24" env \
   APPIMAGE_EXTRACT_AND_RUN="$APPIMAGE_EXTRACT_AND_RUN" \
@@ -73,8 +84,7 @@ xvfb-run -a -s "-screen 0 1280x800x24" env \
   TAURI_DRIVER_PORT="$TAURI_DRIVER_PORT" \
   TAURI_APPIMAGE="$TAURI_APPIMAGE" \
   ZEDAZO_SAMPLE_VCF="$ZEDAZO_SAMPLE_VCF" \
-  ZEDAZO_STATIC_DIR="${ZEDAZO_STATIC_DIR:-}" \
-  ZEDAZO_GIT_SHA="${ZEDAZO_GIT_SHA:-}" \
-  ZEDAZO_BUILD_DATE="${ZEDAZO_BUILD_DATE:-}" \
+  ZEDAZO_E2E_ENV_OUT="$ENV_OUT" \
+  ${ZEDAZO_STATIC_DIR:+ZEDAZO_STATIC_DIR="$ZEDAZO_STATIC_DIR"} \
   ZEDAZO_RUN_PARITY="${ZEDAZO_RUN_PARITY:-}" \
   bash "$ROOT/scripts/desktop/e2e-tauri-driver-inner.sh"

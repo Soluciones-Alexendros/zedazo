@@ -28,3 +28,7 @@ deploy/.env
 .env.local
 scripts/desktop/e2e/node_modules/
 .worktrees/
+
+# Export estático sincronizado por build-appimage (conservar stub index.html)
+apps/desktop/gui/**
+!apps/desktop/gui/index.html

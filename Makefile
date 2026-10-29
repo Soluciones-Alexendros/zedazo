@@ -1,4 +1,4 @@
-.PHONY: all check test build release clean hooks version bump fmt clippy doc deny audit help docs-validate parity web-ci compose-smoke
+.PHONY: all check test build release clean hooks version bump fmt clippy doc deny audit help docs-validate parity web-ci compose-smoke desktop-preflight desktop-verify desktop-evidence
 
 CARGO := cargo
 BINARY := target/release/zedazo
@@ -20,7 +20,7 @@ parity: ## Tests de equivalencia CLI↔API HTTP (O10)
 	$(CARGO) test -p zedazo-api --test equivalence_http --all-features
 
 web-ci: ## design-references sha256 + lint + typecheck + unit tests + build + Playwright e2e/a11y de apps/web
-	CI=true $(PNPM) install --frozen-lockfile || CI=true $(PNPM) install
+	CI=true $(PNPM) install --frozen-lockfile
 	cd apps/web && ./node_modules/.bin/tsc --noEmit
 	cd apps/web && ./node_modules/.bin/next lint
 	cd apps/web && node scripts/check-design-references.mjs
@@ -28,6 +28,15 @@ web-ci: ## design-references sha256 + lint + typecheck + unit tests + build + Pl
 	cd apps/web && ./node_modules/.bin/next build
 	cd apps/web && ./node_modules/.bin/playwright install --with-deps chromium
 	cd apps/web && ./node_modules/.bin/playwright test --grep-invert 'screenshots|real-api'
+
+desktop-preflight: ## Fachada: deps y herramientas de escritorio (sin publicar)
+	@bash scripts/desktop/preflight.sh
+
+desktop-verify: ## Fachada: smoke (+ e2e si ZEDAZO_DESKTOP_E2E=1); AppImage autónomo
+	@bash scripts/desktop/verify.sh
+
+desktop-evidence: ## Fachada: expediente local de evidencia (SHA, hashes); sin remoto
+	@bash scripts/desktop/evidence.sh
 
 compose-smoke: ## Smoke Docker Compose (build, health, sample.vcf, descarga, borrado)
 	bash deploy/scripts/compose-smoke.sh
@@ -145,7 +154,7 @@ bump-major: ## Incrementa versión major (0.1.0 → 1.0.0)
 
 ##@ CI local
 
-ci: fmt-check clippy test check doc docs-validate parity web-ci ## Simula CI completa (Rust + O10 + web)
+ci: fmt-check clippy test check doc docs-validate parity web-ci ## Simula CI Rust+O10+web (no sustituye AppImage ni Ubuntu 26)
 
 doc: ## Genera documentación
 	$(CARGO) doc --workspace --no-deps --document-private-items $(EXCLUDE_DESKTOP)
