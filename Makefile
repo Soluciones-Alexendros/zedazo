@@ -1,4 +1,4 @@
-.PHONY: all check test build release clean hooks version bump fmt clippy doc deny audit help docs-validate parity web-ci compose-smoke desktop-preflight desktop-verify desktop-evidence
+.PHONY: all check test build release clean hooks version fmt clippy doc deny audit help docs-validate parity web-ci compose-smoke desktop-preflight desktop-verify desktop-evidence
 
 CARGO := cargo
 BINARY := target/release/zedazo
@@ -141,16 +141,7 @@ hooks: ## Instala hooks pre-commit
 ##@ Versionado
 
 version: ## Muestra la versión actual desde Cargo.toml
-	@grep '^version' crates/zedazo-cli/Cargo.toml 2>/dev/null | head -1 || grep 'version.workspace' -A0 crates/zedazo-cli/Cargo.toml; grep '^version' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'
-
-bump-patch: ## Incrementa versión patch (0.1.0 → 0.1.1)
-	@sh scripts/bump.sh patch
-
-bump-minor: ## Incrementa versión minor (0.1.0 → 0.2.0)
-	@sh scripts/bump.sh minor
-
-bump-major: ## Incrementa versión major (0.1.0 → 1.0.0)
-	@sh scripts/bump.sh major
+	@grep '^version' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'
 
 ##@ CI local
 

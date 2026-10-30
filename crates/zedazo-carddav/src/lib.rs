@@ -20,12 +20,7 @@ pub mod filter;
 pub mod url_policy;
 pub mod xml;
 
-pub use client::{
-    Addressbook, CardDavClient, CardObject, Discovery, PullResult, SyncState, WriteResult,
-};
-pub use config::{
-    load, CardDavConfig, ConfigOverrides, ENV_ADDRESSBOOK, ENV_PASSWORD, ENV_URL, ENV_USERNAME,
-};
-pub use error::{CardDavError, CardDavResult};
+pub use client::CardDavClient;
+pub use error::CardDavError;
 pub use reqwest::Url;
-pub use url_policy::{parse_and_validate, validate_server_url};
+pub use url_policy::parse_and_validate;

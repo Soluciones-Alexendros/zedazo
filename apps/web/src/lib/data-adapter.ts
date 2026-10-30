@@ -37,7 +37,7 @@ import {
   type LocalFixture,
 } from "@/lib/local-fixtures.mjs";
 
-export type AdapterKind = "remote" | "local";
+type AdapterKind = "remote" | "local";
 export type { LocalFixture };
 
 let probe: Promise<AdapterKind> | null = null;
