@@ -77,8 +77,20 @@ async fn health_check_once() -> anyhow::Result<()> {
 
     let bind = std::env::var("ZEDAZO_BIND").unwrap_or_else(|_| "127.0.0.1:8080".into());
     let addr = bind.rsplit_once('@').map(|(_, h)| h).unwrap_or(&bind);
-    let mut stream = tokio::net::TcpStream::connect(addr).await?;
-    let req = format!("GET /api/v1/health HTTP/1.1\r\nHost: {addr}\r\nConnection: close\r\n\r\n");
+    // Connect puede usar 0.0.0.0:puerto; el Host debe ser loopback (S-01 host_guard).
+    let port = addr
+        .rsplit_once(':')
+        .and_then(|(_, p)| p.parse::<u16>().ok())
+        .unwrap_or(8080);
+    let connect_addr = if addr.starts_with("0.0.0.0:") || addr.starts_with("[::]:") {
+        format!("127.0.0.1:{port}")
+    } else {
+        addr.to_string()
+    };
+    let host_header = format!("127.0.0.1:{port}");
+    let mut stream = tokio::net::TcpStream::connect(&connect_addr).await?;
+    let req =
+        format!("GET /api/v1/health HTTP/1.1\r\nHost: {host_header}\r\nConnection: close\r\n\r\n");
     stream.write_all(req.as_bytes()).await?;
     let mut buf = vec![0u8; 512];
     let n = stream.read(&mut buf).await?;

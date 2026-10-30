@@ -3,7 +3,7 @@
 import { Icon } from "@/components/ui/icon";
 import { IconButton } from "./icon-button";
 
-export type MetadataItem = {
+type MetadataItem = {
   label: string;
   value: string;
   mono?: boolean;

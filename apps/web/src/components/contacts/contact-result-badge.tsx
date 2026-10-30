@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 
-export type ContactResult =
+type ContactResult =
   | "conserved"
   | "needs_review"
   | "eliminated"
@@ -37,7 +37,7 @@ const MAP: Record<string, Meta> = {
   },
 };
 
-export function contactResultMeta(result: ContactResult): Meta {
+function contactResultMeta(result: ContactResult): Meta {
   return (
     MAP[result] ?? {
       label: String(result),

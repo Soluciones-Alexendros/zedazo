@@ -1,22 +1,28 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
   "timezone": "Europe/Madrid",
   "labels": ["dependencies", "automated"],
   "schedule": ["before 10am on monday"],
   "rangeStrategy": "bump",
   "dependencyDashboard": true,
   "lockFileMaintenance": { "enabled": true, "schedule": ["before 10am on monday"] },
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
   "ignoreDeps": [],
   "packageRules": [
-    {"matchManagers":["cargo"],"matchUpdateTypes":["minor","patch"],"groupName":"Rust (non-major)","automerge":true},
-    {"matchManagers":["cargo"],"matchUpdateTypes":["major"],"groupName":"Rust major","automerge":false},
-    {"matchManagers":["github-actions"],"groupName":"GitHub Actions","automerge":true},
+    {"matchManagers":["cargo"],"matchUpdateTypes":["minor","patch"],"groupName":"Rust (non-major)","automerge":false},
+    {"matchManagers":["cargo"],"matchUpdateTypes":["major"],"groupName":"Rust major","automerge":false,"minimumReleaseAge":"14 days"},
+    {"matchManagers":["github-actions"],"groupName":"GitHub Actions","automerge":false},
+    {"matchUpdateTypes":["major"],"minimumReleaseAge":"14 days"},
     {"matchPackageNames":["nom"],"allowedVersions":"<8"},
     {"matchPackageNames":["toml"],"allowedVersions":"<1"},
     {"matchPackageNames":["chardetng"],"allowedVersions":"<1"},
     {"matchPackageNames":["tempfile"],"allowedVersions":"<3.20"},
     {"matchPackageNames":["dtolnay/rust-toolchain"],"allowedVersions":"<1.100"}
   ],
-  "platformAutomerge": true
+  "platformAutomerge": false
 }

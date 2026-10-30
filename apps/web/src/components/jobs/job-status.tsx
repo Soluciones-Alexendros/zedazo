@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 
-export type JobStatusValue =
+type JobStatusValue =
   | "created"
   | "uploading"
   | "uploaded"

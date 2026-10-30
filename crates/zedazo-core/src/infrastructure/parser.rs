@@ -309,7 +309,7 @@ pub fn parse_vcards(input: &str) -> Result<Vec<ParsedVCard>, CribaError> {
                 return Err(CribaError::Parse {
                     line: line_number,
                     reason: "BEGIN:VCARD anidado sin END:VCARD previo".into(),
-                    context: trimmed.to_string(),
+                    context: crate::infrastructure::secure_fs::redact_parse_context(trimmed),
                 });
             }
             inside = true;
@@ -319,7 +319,7 @@ pub fn parse_vcards(input: &str) -> Result<Vec<ParsedVCard>, CribaError> {
                 return Err(CribaError::Parse {
                     line: line_number,
                     reason: "END:VCARD sin BEGIN:VCARD previo".into(),
-                    context: trimmed.to_string(),
+                    context: crate::infrastructure::secure_fs::redact_parse_context(trimmed),
                 });
             }
             inside = false;
@@ -334,7 +334,9 @@ pub fn parse_vcards(input: &str) -> Result<Vec<ParsedVCard>, CribaError> {
         return Err(CribaError::Parse {
             line: line_number,
             reason: "BEGIN:VCARD sin END:VCARD al final del archivo".into(),
-            context: lines.last().unwrap_or(&"").to_string(),
+            context: crate::infrastructure::secure_fs::redact_parse_context(
+                lines.last().unwrap_or(&""),
+            ),
         });
     }
 
@@ -438,7 +440,7 @@ fn parse_contentline(line: &str, line_num: usize) -> Result<RawProperty, CribaEr
     let colon_pos = line.find(':').ok_or_else(|| CribaError::Parse {
         line: line_num,
         reason: "falta ':' separador en propiedad".into(),
-        context: line.to_string(),
+        context: crate::infrastructure::secure_fs::redact_parse_context(line),
     })?;
 
     let header = &line[..colon_pos];
@@ -473,7 +475,7 @@ fn parse_header(
             Err(CribaError::Parse {
                 line: line_num,
                 reason,
-                context: full_line.to_string(),
+                context: crate::infrastructure::secure_fs::redact_parse_context(full_line),
             })
         }
     }

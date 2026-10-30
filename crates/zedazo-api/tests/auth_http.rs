@@ -28,6 +28,7 @@ async fn token_mode_rejects_without_credential() {
     let res = app::router(state)
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .uri("/api/v1/version")
                 .body(Body::empty())
                 .unwrap(),
@@ -52,6 +53,7 @@ async fn token_mode_accepts_bearer() {
     let res = app::router(state)
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .uri("/api/v1/version")
                 .header(header::AUTHORIZATION, "Bearer secret-token")
                 .body(Body::empty())
@@ -77,6 +79,7 @@ async fn health_remains_public() {
     let res = app::router(state)
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .uri("/api/v1/health")
                 .body(Body::empty())
                 .unwrap(),
@@ -103,6 +106,7 @@ async fn login_sets_cookie_and_authorizes() {
         .clone()
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/auth/login")
                 .header(header::CONTENT_TYPE, "application/json")
@@ -125,6 +129,7 @@ async fn login_sets_cookie_and_authorizes() {
     let res = app
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .uri("/api/v1/version")
                 .header(header::COOKIE, cookie)
                 .body(Body::empty())
@@ -150,6 +155,7 @@ async fn login_rejects_bad_token() {
     let res = app::router(state)
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/auth/login")
                 .header(header::CONTENT_TYPE, "application/json")
@@ -203,6 +209,7 @@ async fn protected_routes_reject_without_credential() {
             .clone()
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .method(method)
                     .uri(uri)
                     .body(Body::empty())
@@ -232,6 +239,7 @@ async fn logout_clears_cookie_flags() {
     let res = app::router(state)
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/auth/logout")
                 .body(Body::empty())
@@ -252,10 +260,9 @@ async fn logout_clears_cookie_flags() {
     assert!(set_cookie.contains("Secure"));
 }
 
-/// Prove-It: el cliente GUI usa `credentials: "include"`. CORS disabled debe
-/// espejar Origin y permitir credentials sin panicar (Allow-Headers no puede ser *).
+/// S-01: auth disabled → sin CORS (Host validado aparte).
 #[tokio::test]
-async fn disabled_mode_cors_mirrors_origin_with_credentials() {
+async fn disabled_mode_has_no_cors_acao() {
     let dir = tempdir().unwrap();
     let state = AppState::new(dir.path().to_path_buf(), 1_000_000, 24).unwrap();
     let origin = "http://127.0.0.1:3000";
@@ -263,6 +270,7 @@ async fn disabled_mode_cors_mirrors_origin_with_credentials() {
     let res = app::router(state)
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("GET")
                 .uri("/api/v1/health")
                 .header(header::ORIGIN, origin)
@@ -272,16 +280,8 @@ async fn disabled_mode_cors_mirrors_origin_with_credentials() {
         .await
         .unwrap();
     assert_eq!(res.status(), StatusCode::OK);
-    assert_eq!(
-        res.headers()
-            .get(header::ACCESS_CONTROL_ALLOW_ORIGIN)
-            .and_then(|v| v.to_str().ok()),
-        Some(origin)
-    );
-    assert_eq!(
-        res.headers()
-            .get(header::ACCESS_CONTROL_ALLOW_CREDENTIALS)
-            .and_then(|v| v.to_str().ok()),
-        Some("true")
-    );
+    assert!(res
+        .headers()
+        .get(header::ACCESS_CONTROL_ALLOW_ORIGIN)
+        .is_none());
 }

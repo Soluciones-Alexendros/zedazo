@@ -15,3 +15,10 @@ targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-da
 # (sbom + upload a draft; crates.io solo vía publish-crates.yml) que cargo-dist
 # no genera; permitir desincronización.
 allow-dirty = ["ci"]
+
+# Pin de acciones en el CI generado por dist (cargo-dist ≥0.29).
+# No regenerar release.yml en este PR (conserva pasos A6).
+[dist.github-action-commits]
+"actions/checkout" = "d23441a48e516b6c34aea4fa41551a30e30af803"
+"actions/upload-artifact" = "cf430e030ddbb5b0abf93d22962f4752f3646cd9"
+"actions/download-artifact" = "9000827ccba6bdab643e8b6fd33ac0654aef8333"

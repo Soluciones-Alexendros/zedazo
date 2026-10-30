@@ -99,8 +99,8 @@ cargo llvm-cov --lcov --output-path coverage/lcov.info
 - Identidad GUI «Archivo Vivo»: documental/preciso (no dashboard SaaS genérico); UI en español; temas claro/oscuro/sistema; colores de producción en `oklch()`.
 - Wordmark lowercase **`zedazo`** (lockups/pestaña/README H1); prosa «Zedazo»; ids `zedazo` / `ZEDAZO_*` / `X-ZEDAZO-*` (ADR-0014, [`docs/brand.md`](./docs/brand.md)).
 - No añadir PWA, notificaciones de job u otras extras de GUI sin ancla en SPECS/ADR.
-- Si pide fusionar o «monitoriza merge», esperar CI verde y dejar el PR listo; en GitHub `main` rechaza merge commits (`allow_merge_commit=false`, solo squash). No hacer squash, no usar `--admin` ni cambiar el método de merge: lo fusiona el operador. No empujar a `main` (PRs draft desde ramas `cursor/`).
-- Features multi-PR: preferir rama de integración (`cursor/…`) + oleadas Multitask; un solo merge a `main` al cerrar, no PRs parciales a `main` por oleada.
+- P9 fusión: `gh pr merge <PR> --squash --auto` solo si (a) `gh pr diff <PR> --name-only` no toca `.github/**` (incl. `.github/renovate.json`), `AGENTS.md`, `renovate.json`, `release-please-config.json`, `scripts/check-*.sh` ni `scripts/desktop/**` y (b) `gh api repos/Soluciones-Alexendros/zedazo/rules/branches/<base>` trae ci-gate en required_status_checks con `integration_id` 15368 (GitHub Actions). Tras cada push al PR, reevalúa (a); si toca rutas de política, `gh pr merge <PR> --disable-auto`. Falla (a): listo, verde y `policy-exception`; fusiona Alejandro. Falla (b): listo y verde, sin fusionar. Prohibido siempre: merge sin `--auto`, `--admin`, bypass, crear estados o check runs (`…/statuses`, `…/check-runs` o equivalente). plan→main: solo Alejandro (AL-5).
+- Features multi-PR: preferir rama de integración (`cursor/…` o `plan/…`) + oleadas Multitask; un solo merge a `main` al cerrar, no PRs parciales a `main` por oleada.
 - Destino de prueba del AppImage de escritorio: **Ubuntu 26** (no asumir CachyOS u otras distros).
 - No cambiar protección de ramas, rulesets, secretos ni DNS/Vercel salvo petición explícita.
 - Renovate es el único bot de dependencias (ADR-0007); no añadir `dependabot.yml`.

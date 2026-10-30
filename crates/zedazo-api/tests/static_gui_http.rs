@@ -60,6 +60,26 @@ async fn binary_like_serve_gui_without_caddy() {
         .to_ascii_lowercase()
         .contains("x-content-type-options: nosniff"));
 
+    // C21: script-src autoriza el arranque del tema por hash y sin 'unsafe-inline'.
+    let csp = head.lines().find(|l| {
+        l.to_ascii_lowercase()
+            .starts_with("content-security-policy:")
+    });
+    assert!(csp.is_some(), "falta Content-Security-Policy");
+    let script_src = csp
+        .unwrap()
+        .split(';')
+        .map(str::trim)
+        .find(|d| d.starts_with("script-src"));
+    assert!(script_src.is_some(), "falta script-src en CSP");
+    assert!(script_src
+        .unwrap()
+        .contains("sha256-wZHa1Ad+sG4CVkMj20Js/YFPWl/cxb0RiIYwFGB1XXY="));
+    assert!(!script_src
+        .unwrap()
+        .to_ascii_lowercase()
+        .contains("unsafe-inline"));
+
     let (st, _, body) = http_get(&addr, "/api/v1/health").await;
     assert_eq!(st, 200);
     assert!(body.contains("ok") || body.contains("status") || body.contains('{'));
@@ -67,6 +87,41 @@ async fn binary_like_serve_gui_without_caddy() {
     let (st, _, body) = http_get(&addr, "/api/v1/missing").await;
     assert_eq!(st, 404);
     assert!(!body.contains("sin-caddy"));
+
+    tx.send(()).unwrap();
+    handle.await.unwrap().unwrap();
+}
+
+#[tokio::test]
+async fn deep_link_procesar_serves_exported_html() {
+    let data = tempdir().unwrap();
+    let gui = tempdir().unwrap();
+    fs::write(
+        gui.path().join("procesar.html"),
+        "<!doctype html><title>zedazo</title><p>procesar-fixture</p>",
+    )
+    .unwrap();
+
+    let state = AppState::new(data.path().to_path_buf(), 1_000_000, 24).unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap().to_string();
+    let (tx, rx) = tokio::sync::oneshot::channel::<()>();
+    let cfg = ApiConfig {
+        state,
+        static_dir: Some(gui.path().to_path_buf()),
+    };
+    let handle = tokio::spawn(async move {
+        serve(listener, cfg, async move {
+            let _ = rx.await;
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(50)).await;
+
+    let (st, head, body) = http_get(&addr, "/procesar").await;
+    assert_eq!(st, 200, "GUI deep link: {head}");
+    assert!(body.contains("procesar-fixture"));
 
     tx.send(()).unwrap();
     handle.await.unwrap().unwrap();

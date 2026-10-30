@@ -1,4 +1,4 @@
-.PHONY: all check test build release clean hooks version bump fmt clippy doc deny audit help docs-validate parity web-ci compose-smoke
+.PHONY: all check test build release clean hooks version fmt clippy doc deny audit help docs-validate parity web-ci compose-smoke desktop-preflight desktop-verify desktop-evidence
 
 CARGO := cargo
 BINARY := target/release/zedazo
@@ -19,16 +19,24 @@ test: ## Ejecuta todos los tests
 parity: ## Tests de equivalencia CLI↔API HTTP (O10)
 	$(CARGO) test -p zedazo-api --test equivalence_http --all-features
 
-web-ci: ## Tokens check/contraste + lint + typecheck + unit tests + build + Playwright e2e/a11y/visual de apps/web
-	CI=true $(PNPM) install --frozen-lockfile || CI=true $(PNPM) install
+web-ci: ## design-references sha256 + lint + typecheck + unit tests + build + Playwright e2e/a11y de apps/web
+	CI=true $(PNPM) install --frozen-lockfile
 	cd apps/web && ./node_modules/.bin/tsc --noEmit
 	cd apps/web && ./node_modules/.bin/next lint
-	cd apps/web && node scripts/design-tokens/build.mjs --check
-	cd apps/web && node scripts/design-tokens/contrast.mjs
+	cd apps/web && node scripts/check-design-references.mjs
 	cd apps/web && pnpm test
 	cd apps/web && ./node_modules/.bin/next build
 	cd apps/web && ./node_modules/.bin/playwright install --with-deps chromium
 	cd apps/web && ./node_modules/.bin/playwright test --grep-invert 'screenshots|real-api'
+
+desktop-preflight: ## Fachada: deps y herramientas de escritorio (sin publicar)
+	@bash scripts/desktop/preflight.sh
+
+desktop-verify: ## Fachada: smoke (+ e2e si ZEDAZO_DESKTOP_E2E=1); AppImage autónomo
+	@bash scripts/desktop/verify.sh
+
+desktop-evidence: ## Fachada: expediente local de evidencia (SHA, hashes); sin remoto
+	@bash scripts/desktop/evidence.sh
 
 compose-smoke: ## Smoke Docker Compose (build, health, sample.vcf, descarga, borrado)
 	bash deploy/scripts/compose-smoke.sh
@@ -107,6 +115,8 @@ docs-validate: ## Valida documentación canónica (frontmatter, enlaces, stubs, 
 	@grep -q 'ZEDAZO_WORDMARK = "zedazo"' apps/web/src/components/brand/zedazo-wordmark.tsx || (echo "❌ GUI: wordmark no está en minúsculas"; exit 1)
 	@test -f docs/brand.md || (echo "❌ falta docs/brand.md"; exit 1)
 	@echo "✓ Landing OK"
+	@echo "→ Validando release-please (P-01)..."
+	@bash scripts/check-release-please-config.sh
 	@echo "✓ docs-validate completado"
 
 traceability: ## Genera matriz de trazabilidad SPECS→Módulo→Test
@@ -131,20 +141,11 @@ hooks: ## Instala hooks pre-commit
 ##@ Versionado
 
 version: ## Muestra la versión actual desde Cargo.toml
-	@grep '^version' crates/zedazo-cli/Cargo.toml 2>/dev/null | head -1 || grep 'version.workspace' -A0 crates/zedazo-cli/Cargo.toml; grep '^version' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'
-
-bump-patch: ## Incrementa versión patch (0.1.0 → 0.1.1)
-	@sh scripts/bump.sh patch
-
-bump-minor: ## Incrementa versión minor (0.1.0 → 0.2.0)
-	@sh scripts/bump.sh minor
-
-bump-major: ## Incrementa versión major (0.1.0 → 1.0.0)
-	@sh scripts/bump.sh major
+	@grep '^version' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'
 
 ##@ CI local
 
-ci: fmt-check clippy test check doc docs-validate parity web-ci ## Simula CI completa (Rust + O10 + web)
+ci: fmt-check clippy test check doc docs-validate parity web-ci ## Simula CI Rust+O10+web (no sustituye AppImage ni Ubuntu 26)
 
 doc: ## Genera documentación
 	$(CARGO) doc --workspace --no-deps --document-private-items $(EXCLUDE_DESKTOP)

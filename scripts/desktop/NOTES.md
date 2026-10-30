@@ -13,7 +13,8 @@ Gate local: `bash -n scripts/desktop/*.sh` + YAML parseable. El build AppImage c
 | `desktop-sbom` | ubuntu-22.04 | CycloneDX Cargo + pnpm |
 | `desktop-attest` | ubuntu-22.04 | `attest-build-provenance` sobre el AppImage |
 
-`release.yml` job `appimage`: build + `gh release upload` al draft tras `host`.
+AppImage atestado en release: [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml) (`on: release published`).
+`release.yml` solo sube artefactos cargo-dist al draft de release-please (sin `gh release create`, sin job appimage).
 
 ## Ubuntu 26 (contenedor)
 

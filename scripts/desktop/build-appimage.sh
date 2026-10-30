@@ -25,12 +25,10 @@ if [[ ! -d apps/desktop ]]; then
   exit 1
 fi
 
-echo "==> pnpm build apps/web (output: export → out/)"
+echo "==> pnpm build apps/web (output: export → out/; lockfile congelado)"
 (
   cd apps/web
-  if [[ ! -d node_modules ]]; then
-    pnpm install --frozen-lockfile
-  fi
+  CI=true pnpm install --frozen-lockfile
   pnpm exec next build
 )
 test -f apps/web/out/index.html
@@ -42,10 +40,26 @@ rsync -a --delete \
   apps/web/out/ \
   apps/desktop/gui/
 
-if ! command -v cargo-tauri >/dev/null 2>&1; then
-  if ! cargo tauri --version >/dev/null 2>&1; then
-    echo "==> instalando tauri-cli 2"
-    cargo install tauri-cli --version "^2" --locked
+# Copia para artefacto CI / depuración (ZEDAZO_ALLOW_EXTERNAL_GUI=1).
+# Producción: bundle.resources gui/**/* → resource_dir; smoke/e2e autónomos no usan STATIC_DIR.
+mkdir -p dist/desktop
+rsync -a --delete \
+  --exclude '.git' \
+  apps/web/out/ \
+  dist/desktop/gui/
+
+# S-10: tauri-cli pin exacto (no ^2) + herramientas linuxdeploy con SHA256.
+TAURI_CLI_VERSION="${TAURI_CLI_VERSION:-2.11.5}"
+bash "$ROOT/scripts/desktop/prefetch-tauri-tools.sh"
+if ! command -v cargo-tauri >/dev/null 2>&1 && ! cargo tauri --version >/dev/null 2>&1; then
+  echo "==> instalando tauri-cli =${TAURI_CLI_VERSION}"
+  cargo install tauri-cli --version "=${TAURI_CLI_VERSION}" --locked
+else
+  # Reinstalar si la versión instalada no coincide exactamente.
+  INSTALLED="$(cargo tauri --version 2>/dev/null | awk '{print $NF}' || true)"
+  if [[ "$INSTALLED" != "$TAURI_CLI_VERSION" ]]; then
+    echo "==> tauri-cli ${INSTALLED:-ausente} ≠ ${TAURI_CLI_VERSION}; reinstalar"
+    cargo install tauri-cli --version "=${TAURI_CLI_VERSION}" --locked --force
   fi
 fi
 
@@ -82,11 +96,11 @@ chmod +x "$DEST"
   echo "SOURCE_APPIMAGE=$(basename "$SRC")"
 } >"${OUT_DIR}/build-info.txt"
 
-# Env file para smoke/e2e en el mismo checkout (ServeDir + /version).
+# Env file para smoke/e2e. STATIC_DIR relativo al checkout del runner (no path absoluto del builder).
 {
   echo "export ZEDAZO_GIT_SHA=${ZEDAZO_GIT_SHA}"
   echo "export ZEDAZO_BUILD_DATE=${ZEDAZO_BUILD_DATE}"
-  echo "export ZEDAZO_STATIC_DIR=${ROOT}/apps/web/out"
+  echo "# Preferir dist/desktop/gui (artefacto) o apps/web/out en el mismo checkout."
   echo "export APPIMAGE_EXTRACT_AND_RUN=1"
   echo "export WEBKIT_DISABLE_DMABUF_RENDERER=1"
 } >"${OUT_DIR}/run-env.sh"

@@ -8,7 +8,8 @@
 
 services:
   landing:
-    image: caddy:2-alpine
+    # Sin cap_drop:ALL — Caddy necesita capacidades para 80/443 (ver compose local).
+    image: caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
     restart: unless-stopped
     ports:
       - "80:80"

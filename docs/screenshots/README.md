@@ -2,8 +2,9 @@
 
 PNG de producto para el README. **No** son el baseline de CI.
 
+- Solo se versionan las capturas enlazadas desde `README.md` / `docs/desktop.md`.
 - Regresión visual en CI: `apps/web/e2e/visual.spec.ts` (`toHaveScreenshot`).
-- Regenerar estas capturas (opt-in, fuera de `make web-ci`):
+- El spec opt-in genera las rutas enlazadas por la documentación:
 
 ```bash
 cd apps/web

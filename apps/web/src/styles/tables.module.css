@@ -1,15 +1,15 @@
 .tableWrap {
   width: 100%;
   overflow-x: auto;
-  border: var(--zed-border-width) solid var(--zed-border-subtle);
-  border-radius: var(--zed-radius-lg);
-  background: var(--zed-bg-raised);
+  border: var(--ds-border-width) solid var(--ds-border);
+  border-radius: var(--ds-radius-card);
+  background: var(--ds-bg-raised);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--zed-text-sm);
+  font-size: var(--ds-text-sm);
 }
 
 .table caption {
@@ -27,15 +27,15 @@
 .table th,
 .table td {
   text-align: left;
-  padding: var(--zed-space-3);
-  border-bottom: var(--zed-border-width) solid var(--zed-border-subtle);
+  padding: var(--ds-space-3);
+  border-bottom: var(--ds-border-width) solid var(--ds-border);
   vertical-align: top;
 }
 
 .table th {
-  font-weight: var(--zed-weight-semibold);
-  color: var(--zed-fg-muted);
-  background: var(--zed-bg-subtle);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-text-muted);
+  background: var(--ds-bg-muted);
   white-space: nowrap;
 }
 
@@ -45,7 +45,7 @@
 
 .table tbody tr:hover,
 .table tbody tr.interactive:hover {
-  background: var(--zed-bg-subtle);
+  background: var(--ds-bg-muted);
 }
 
 .interactive {
@@ -53,8 +53,8 @@
 }
 
 .interactive:focus-visible {
-  outline: var(--zed-focus-width) solid var(--zed-focus-ring);
-  outline-offset: calc(-1 * var(--zed-focus-offset));
+  outline: var(--ds-focus-width) solid var(--ds-focus);
+  outline-offset: calc(-1 * var(--ds-focus-offset));
 }
 
 .dossierButton {
@@ -67,27 +67,27 @@
 
 .cardList {
   display: none;
-  gap: var(--zed-space-3);
+  gap: var(--ds-space-3);
 }
 
 .dossierCard {
-  border: var(--zed-border-width) solid var(--zed-border-subtle);
-  border-radius: var(--zed-radius-lg);
-  background: var(--zed-bg-raised);
-  padding: var(--zed-space-4);
+  border: var(--ds-border-width) solid var(--ds-border);
+  border-radius: var(--ds-radius-card);
+  background: var(--ds-bg-raised);
+  padding: var(--ds-space-4);
   display: grid;
-  gap: var(--zed-space-3);
+  gap: var(--ds-space-3);
 }
 
 .dossierMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--zed-space-2) var(--zed-space-4);
-  color: var(--zed-fg-muted);
-  font-size: var(--zed-text-sm);
+  gap: var(--ds-space-2) var(--ds-space-4);
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-sm);
 }
 
-/* 900px = --zed-bp-md (56.25rem). Custom props no aplican en @media. */
+/* 900px = --ds-bp-md (56.25rem). Custom props no aplican en @media. */
 @media (max-width: 56.25rem) {
   .desktopOnly {
     display: none;

@@ -1,10 +1,10 @@
 @media (prefers-reduced-motion: no-preference) {
   .zed-animate-fade {
-    animation: zed-fade-in var(--zed-transition-base) var(--zed-ease-standard);
+    animation: zed-fade-in var(--ds-duration-base) var(--ds-ease-out);
   }
 
   .zed-animate-slide {
-    animation: zed-slide-up var(--zed-transition-slow) var(--zed-ease-standard);
+    animation: zed-slide-up var(--ds-duration-slow) var(--ds-ease-out);
   }
 }
 
@@ -35,16 +35,16 @@
 }
 
 .zed-spinner {
-  width: var(--zed-space-5);
-  height: var(--zed-space-5);
-  border: 2px solid var(--zed-border-default);
-  border-top-color: var(--zed-accent);
+  width: var(--ds-space-5);
+  height: var(--ds-space-5);
+  border: 2px solid var(--ds-border);
+  border-top-color: var(--ds-accent);
   border-radius: 50%;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .zed-spinner {
-    animation: zed-spin var(--zed-spin-duration) linear infinite;
+    animation: zed-spin var(--ds-spin-duration) linear infinite;
   }
 }
 

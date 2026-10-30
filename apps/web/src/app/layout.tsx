@@ -1,12 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Providers } from "@/components/providers";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
-import { themeColorHex } from "@/lib/design-tokens";
 import { ZEDAZO_WORDMARK } from "@/components/brand/zedazo-wordmark";
+import "@/design-system/design-references.css";
 import "@/design-system/reset.css";
-import "@/design-system/tokens.css";
-import "@/design-system/themes.css";
 import "@/design-system/typography.css";
 import "@/design-system/motion.css";
 import "@/design-system/utilities.css";
@@ -21,8 +18,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: themeColorHex.light },
-    { media: "(prefers-color-scheme: dark)", color: themeColorHex.dark },
+    { media: "(prefers-color-scheme: light)", color: "#f7f2e9" },
+    { media: "(prefers-color-scheme: dark)", color: "#16140f" },
   ],
 };
 
@@ -34,9 +31,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
-        <Script
-          id="zedazo-theme-boot"
-          strategy="beforeInteractive"
+        <script
           dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
         />
       </head>

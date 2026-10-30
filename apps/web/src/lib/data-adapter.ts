@@ -4,6 +4,7 @@ import {
   createAudit as remoteCreateAudit,
   createJob as remoteCreateJob,
   deleteJob as remoteDeleteJob,
+  downloadArtifact as remoteDownloadArtifact,
   getAudit as remoteGetAudit,
   getHealth,
   getJob as remoteGetJob,
@@ -36,7 +37,7 @@ import {
   type LocalFixture,
 } from "@/lib/local-fixtures.mjs";
 
-export type AdapterKind = "remote" | "local";
+type AdapterKind = "remote" | "local";
 export type { LocalFixture };
 
 let probe: Promise<AdapterKind> | null = null;
@@ -63,7 +64,7 @@ export function probeAdapter(): Promise<AdapterKind> {
   return probe;
 }
 
-export function currentFixture(): LocalFixture {
+function currentFixture(): LocalFixture {
   if (typeof window === "undefined") return "resultado";
   const fixture = readFixture(
     window.location.search,
@@ -165,6 +166,28 @@ export function artifactUrl(jobId: string, artifactKind: string) {
     return `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
   }
   return remoteArtifactUrl(jobId, artifactKind);
+}
+
+export async function downloadArtifact(
+  jobId: string,
+  artifactKind: string,
+  filename: string,
+) {
+  if ((await mode()) === "local") {
+    const text = localArtifactText(jobId, artifactKind);
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    try {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+    return;
+  }
+  return remoteDownloadArtifact(jobId, artifactKind, filename);
 }
 
 export { REAL_VCF_MESSAGE };

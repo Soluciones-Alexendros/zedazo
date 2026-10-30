@@ -22,20 +22,19 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 zedazo-api = { path = "../../crates/zedazo-api" }
+zedazo-core = { workspace = true }
 anyhow = { workspace = true }
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.8", features = ["multipart"] }
-tower = "0.5"
 getrandom = "0.2"
 hex = "0.4"
 directories = "5"
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 tauri = { version = "2", features = [] }
-serde = { workspace = true }
 serde_json = { workspace = true }
-tempfile = { workspace = true }
 
 [dev-dependencies]
 http-body-util = "0.1"
 tower = { version = "0.5", features = ["util"] }
+tempfile = { workspace = true }

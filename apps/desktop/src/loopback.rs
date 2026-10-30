@@ -91,18 +91,34 @@ pub async fn start_desktop_server(
     tokio::task::JoinHandle<anyhow::Result<()>>,
 )> {
     let auth = AuthConfig::token(session_token, false);
-    let state = AppState::new_with_auth(data_dir, 52_428_800, 4, 24, auth)?;
-    let cfg = ApiConfig {
-        state,
-        static_dir: Some(static_dir),
-    };
-
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     let addr = listener.local_addr()?;
     if !addr.ip().is_loopback() {
         anyhow::bail!("bind no-loopback rechazado: {addr}");
     }
 
+    let state = AppState::new_with_auth(data_dir, 52_428_800, 4, 24, auth)?
+        .with_host_policy(zedazo_api::host_guard::HostPolicy::for_port(addr.port()));
+
+    // S-12: misma reconciliación/retención que el binario API (primer tick = barrido al arrancar).
+    zedazo_api::retention::reconcile_on_startup(&state).await?;
+    {
+        let st = state.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(std::time::Duration::from_secs(3600));
+            loop {
+                interval.tick().await;
+                zedazo_api::retention::retention_sweep(&st).await;
+            }
+        });
+    }
+
+    let cfg = ApiConfig {
+        state,
+        static_dir: Some(static_dir),
+    };
+
+    // Guard Host/Origin ya en zedazo-api::app::router; LoopbackGuard extra por defensa en profundidad.
     let guard = LoopbackGuard { port: addr.port() };
     let app = desktop_router(cfg, guard);
 
@@ -120,17 +136,98 @@ pub async fn start_desktop_server(
     Ok((addr, tx, handle))
 }
 
-/// Resuelve el directorio GUI: `ZEDAZO_STATIC_DIR`, `apps/web/out` si existe, o stub embebido.
-pub fn resolve_static_dir() -> PathBuf {
-    if let Some(p) = std::env::var_os("ZEDAZO_STATIC_DIR").filter(|v| !v.is_empty()) {
-        return PathBuf::from(p);
+/// Error al resolver la GUI estática para `ServeDir`.
+#[derive(Debug, Clone)]
+pub struct StaticDirError {
+    pub message: String,
+    pub tried: Vec<PathBuf>,
+}
+
+impl std::fmt::Display for StaticDirError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message)
     }
+}
+
+impl std::error::Error for StaticDirError {}
+
+fn require_index(dir: &std::path::Path) -> Result<(), StaticDirError> {
+    let index = dir.join("index.html");
+    if index.is_file() {
+        return Ok(());
+    }
+    Err(StaticDirError {
+        message: format!(
+            "GUI no encontrada: falta index.html en {}. \
+Defina ZEDAZO_STATIC_DIR (desarrollo) o empaquete bundle.resources gui/**/* (AppImage).",
+            dir.display()
+        ),
+        tried: vec![dir.to_path_buf()],
+    })
+}
+
+/// Selección pura: override de env → recursos del paquete → candidatos de desarrollo.
+/// Cada candidata debe contener `index.html`; no se acepta un stub vacío como éxito implícito.
+pub fn resolve_static_dir_from(
+    env_override: Option<PathBuf>,
+    resource_gui: Option<PathBuf>,
+    dev_candidates: &[PathBuf],
+) -> Result<PathBuf, StaticDirError> {
+    let mut tried = Vec::new();
+
+    if let Some(p) = env_override {
+        tried.push(p.clone());
+        require_index(&p).map_err(|mut e| {
+            e.tried = tried.clone();
+            e
+        })?;
+        return Ok(p);
+    }
+
+    if let Some(p) = resource_gui {
+        tried.push(p.clone());
+        if p.join("index.html").is_file() {
+            return Ok(p);
+        }
+    }
+
+    for c in dev_candidates {
+        tried.push(c.clone());
+        if c.join("index.html").is_file() {
+            return Ok(c.clone());
+        }
+    }
+
+    Err(StaticDirError {
+        message: format!(
+            "GUI no encontrada (sin ZEDAZO_STATIC_DIR ni resources ni out/). Probado: {}",
+            tried
+                .iter()
+                .map(|p| p.display().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+        tried,
+    })
+}
+
+/// Resuelve el directorio GUI para el servidor loopback (ADR-0021).
+///
+/// Orden: `ZEDAZO_STATIC_DIR` → `$resource_dir/gui` (bundle.resources) →
+/// `apps/web/out` / `apps/desktop/gui` relativos al manifest (solo checkout de desarrollo).
+pub fn resolve_static_dir(app: &tauri::AppHandle) -> Result<PathBuf, StaticDirError> {
+    use tauri::Manager;
+
+    let env_override = std::env::var_os("ZEDAZO_STATIC_DIR")
+        .filter(|v| !v.is_empty())
+        .map(PathBuf::from);
+
+    let resource_gui = app.path().resource_dir().ok().map(|r| r.join("gui"));
+
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let web_out = manifest.join("../../apps/web/out");
-    if web_out.join("index.html").is_file() {
-        return web_out;
-    }
-    manifest.join("gui")
+    let dev = [manifest.join("../../apps/web/out"), manifest.join("gui")];
+
+    resolve_static_dir_from(env_override, resource_gui, &dev)
 }
 
 #[cfg(test)]
@@ -167,7 +264,8 @@ mod tests {
             24,
             AuthConfig::token(token, false),
         )
-        .unwrap();
+        .unwrap()
+        .with_host_policy(zedazo_api::host_guard::HostPolicy::for_port(port));
         desktop_router(
             ApiConfig {
                 state,
@@ -397,5 +495,59 @@ mod tests {
         assert_eq!(res.status(), StatusCode::OK);
         let body = res.into_body().collect().await.unwrap().to_bytes();
         assert!(String::from_utf8_lossy(&body).contains("gui"));
+    }
+
+    #[test]
+    fn resolve_prefers_env_override_with_index() {
+        let gui = tempdir().unwrap();
+        fixture_gui(gui.path());
+        let got = resolve_static_dir_from(Some(gui.path().to_path_buf()), None, &[]).unwrap();
+        assert_eq!(got, gui.path());
+    }
+
+    #[test]
+    fn resolve_rejects_env_without_index() {
+        let empty = tempdir().unwrap();
+        let err = resolve_static_dir_from(Some(empty.path().to_path_buf()), None, &[]).unwrap_err();
+        assert!(err.message.contains("index.html"));
+    }
+
+    #[test]
+    fn resolve_uses_resource_gui_before_dev() {
+        let resource = tempdir().unwrap();
+        let gui = resource.path().join("gui");
+        fs::create_dir_all(&gui).unwrap();
+        fixture_gui(&gui);
+        let fake_dev = tempdir().unwrap();
+        fixture_gui(fake_dev.path());
+        let got =
+            resolve_static_dir_from(None, Some(gui.clone()), &[fake_dev.path().to_path_buf()])
+                .unwrap();
+        assert_eq!(got, gui);
+    }
+
+    #[test]
+    fn resolve_falls_back_to_dev_candidate() {
+        let dev = tempdir().unwrap();
+        fixture_gui(dev.path());
+        let missing = tempdir().unwrap();
+        let got = resolve_static_dir_from(
+            None,
+            Some(missing.path().join("gui")),
+            &[dev.path().to_path_buf()],
+        )
+        .unwrap();
+        assert_eq!(got, dev.path());
+    }
+
+    #[test]
+    fn resolve_errors_when_nothing_has_index() {
+        let a = tempdir().unwrap();
+        let b = tempdir().unwrap();
+        let err =
+            resolve_static_dir_from(None, Some(a.path().join("gui")), &[b.path().to_path_buf()])
+                .unwrap_err();
+        assert!(!err.tried.is_empty());
+        assert!(err.message.contains("GUI no encontrada"));
     }
 }

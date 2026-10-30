@@ -1,6 +1,7 @@
 # API Zedazo
 # Imagen de build ≥ 1.85 (deps con edition2024). MSRV del crate sigue en 1.80 (CI msrv).
-FROM rust:1.85-bookworm AS build
+# Digests resueltos 2026-10-26 (docker buildx imagetools inspect).
+FROM rust:1.85-bookworm@sha256:e51d0265072d2d9d5d320f6a44dde6b9ef13653b035098febd68cce8fa7c0bc4 AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
@@ -11,9 +12,9 @@ COPY apps/desktop/src apps/desktop/src
 COPY apps/desktop/tauri.conf.json apps/desktop/tauri.conf.json
 COPY apps/desktop/capabilities apps/desktop/capabilities
 COPY apps/desktop/icons apps/desktop/icons
-RUN cargo build -p zedazo-api --release
+RUN cargo build -p zedazo-api --release --locked
 
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8
 RUN useradd -r -u 10001 zedazo && mkdir -p /var/lib/zedazo && chown zedazo:zedazo /var/lib/zedazo
 COPY --from=build /app/target/release/zedazo-api /usr/local/bin/zedazo-api
 USER zedazo

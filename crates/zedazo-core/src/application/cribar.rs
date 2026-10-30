@@ -8,7 +8,7 @@ use crate::application::stats::Stats;
 use crate::domain::audit::AuditEntry;
 use crate::domain::classification::classify;
 use crate::domain::contact::Contact;
-use crate::domain::identity::deduplicate;
+use crate::domain::identity::{deduplicate_with_ctrl, DedupCtrl};
 use crate::domain::normalization::{normalize_fn, normalize_org, normalize_tel};
 use crate::domain::pipeline::{ClassificationRuleProvider, ScreeningConfigProvider};
 use crate::domain::screening::{decide, ScreeningDecision};
@@ -18,6 +18,7 @@ use crate::error::CribaError;
 use crate::infrastructure::config::load_config;
 use crate::infrastructure::encoding::ensure_utf8;
 use crate::infrastructure::parser::{parse_vcards, unfold};
+use crate::infrastructure::secure_fs::WriteOpts;
 use crate::infrastructure::source::{detect_source, detect_version};
 use crate::infrastructure::tsv_writer::write_audit_tsv;
 use crate::infrastructure::v3_compat::adapt_v3;
@@ -43,6 +44,7 @@ impl std::error::Error for CriticalInvariantErrors {}
 
 /// Ejecuta el pipeline completo de cribado.
 /// Retorna estadísticas y los contactos procesados tras la deduplicación.
+#[allow(clippy::too_many_arguments)]
 pub fn execute(
     input: &Path,
     output: Option<&Path>,
@@ -51,6 +53,33 @@ pub fn execute(
     source_override: &str,
     dry_run: bool,
     strict: bool,
+    force: bool,
+) -> Result<(Stats, Vec<Contact>), CribaError> {
+    execute_with_dedup(
+        input,
+        output,
+        audit,
+        config,
+        source_override,
+        dry_run,
+        strict,
+        force,
+        &DedupCtrl::default(),
+    )
+}
+
+/// Como [`execute`], con cancelación/plazo en dedup (S-03).
+#[allow(clippy::too_many_arguments)]
+pub fn execute_with_dedup(
+    input: &Path,
+    output: Option<&Path>,
+    audit: Option<&Path>,
+    config: Option<&Path>,
+    source_override: &str,
+    dry_run: bool,
+    strict: bool,
+    force: bool,
+    dedup_ctrl: &DedupCtrl,
 ) -> Result<(Stats, Vec<Contact>), CribaError> {
     tracing::info!("Leyendo archivo: {}", input.display());
     let bytes = fs::read(input)?;
@@ -177,8 +206,14 @@ pub fn execute(
         audit_entries.push(audit_entry);
     }
 
-    // 9. Deduplicación solo de contactos activos
-    let (active_contacts, fusionados) = deduplicate(active_contacts);
+    // 9. Deduplicación solo de contactos activos (S-03: índices + cancelación)
+    let (active_contacts, fusionados) = deduplicate_with_ctrl(active_contacts, dedup_ctrl)
+        .map_err(|_| {
+            CribaError::Io(std::io::Error::new(
+                std::io::ErrorKind::Interrupted,
+                "cancelado",
+            ))
+        })?;
 
     // Actualizar entradas de auditoría para contactos fusionados
     let mut merged_map: HashMap<String, String> = HashMap::new();
@@ -250,11 +285,12 @@ pub fn execute(
 
     // 10. Salida
     if !dry_run {
+        let write_opts = WriteOpts::new(force).protect(input);
         if let Some(out_path) = output {
-            write_vcf(&contacts, &vcard_map, out_path, true)?;
+            write_vcf(&contacts, &vcard_map, out_path, true, write_opts)?;
         }
         if let Some(audit_path) = audit {
-            write_audit_tsv(&audit_entries, audit_path)?;
+            write_audit_tsv(&audit_entries, audit_path, write_opts)?;
         }
         // 11. Verificación post-escritura I4-I6 (no crítica, solo warnings)
         let post_warnings = verify_post(&contacts, output, audit);

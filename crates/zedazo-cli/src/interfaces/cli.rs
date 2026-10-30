@@ -44,6 +44,10 @@ pub enum Command {
         /// Modo estricto: falla en invariantes críticas I1, I2, I3
         #[arg(long)]
         strict: bool,
+
+        /// Sobrescribir salidas existentes (sin esto, no se pisan ficheros)
+        #[arg(long)]
+        force: bool,
     },
 
     /// Solo audita: analiza el VCF sin modificarlo

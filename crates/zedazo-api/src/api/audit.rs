@@ -84,12 +84,21 @@ pub async fn create_audit(
 
     let job_dir = state.storage.job_dir(&job_id);
     let input = job_dir.join("input.vcf");
-    std::fs::copy(&upload_path, &input)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    zedazo_core::infrastructure::secure_fs::copy_file(
+        &upload_path,
+        &input,
+        zedazo_core::infrastructure::secure_fs::WriteOpts::new(false),
+    )
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     let audit_out = job_dir.join("audit.tsv");
     let config_path = if let Some(ref toml) = config_toml {
         let p = job_dir.join("config.toml");
-        std::fs::write(&p, toml).map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+        zedazo_core::infrastructure::secure_fs::write_bytes(
+            &p,
+            toml.as_bytes(),
+            zedazo_core::infrastructure::secure_fs::WriteOpts::new(true),
+        )
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
         let _ = load_config(Some(&p)).map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
         Some(p)
     } else {

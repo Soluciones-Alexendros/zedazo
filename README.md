@@ -71,7 +71,7 @@ docker compose -f deploy/docker-compose.remote.yml --env-file deploy/.env up --b
 # → https://localhost:8443
 ```
 
-Docs: [docs/gui/](docs/gui/) · [escritorio AppImage](docs/desktop.md) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi.yaml) · [deploy.md](docs/gui/deploy.md) · acta de cierre [`docs/validation/acta-cierre-operativo.md`](docs/validation/acta-cierre-operativo.md). Tokens GUI (DTCG, ADR-0019): [`apps/web/tokens/`](apps/web/tokens/) · `pnpm --dir apps/web tokens:build`. Catálogo in-app: `/documentacion/ds` (plan [ejecutado](docs/gui/design-system-plan.md)).
+Docs: [docs/gui/](docs/gui/) · [escritorio AppImage](docs/desktop.md) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi.yaml) · [deploy.md](docs/gui/deploy.md) · acta de cierre [`docs/validation/acta-cierre-operativo.md`](docs/validation/acta-cierre-operativo.md). Variables de diseño: núcleo `design-references` en [`apps/web/src/design-system/`](apps/web/src/design-system/).
 
 ## Capturas
 
@@ -219,7 +219,7 @@ deploy/                 Docker Compose local + remoto + landing (Caddy)
 | [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)                     | Código de conducta                                   |
 | [`SUPPORT.md`](SUPPORT.md)                                     | Dónde pedir ayuda                                    |
 | [`docs/desktop.md`](docs/desktop.md)                           | Guía AppImage Ubuntu 26 (ADR-0021 / v0.6.0)          |
-| [`docs/gui/`](docs/gui/)                                       | Paridad O10, deploy (incl. DNS del dominio de producto), threat-model, retención, benchmarks, [plan design system](docs/gui/design-system-plan.md) (ejecutado; catálogo GUI `/documentacion/ds`) |
+| [`docs/gui/`](docs/gui/)                                       | Paridad O10, deploy (incl. DNS del dominio de producto), threat-model, retención, benchmarks, [plan design system](docs/gui/design-system-plan.md) (HISTÓRICO, sustituido en v0.6.0 por S3) |
 | [`docs/carddav.md`](docs/carddav.md)                           | CardDAV CLI pull/write/watch (ADR-0018 / #48)            |
 | [`docs/api/openapi.yaml`](docs/api/openapi.yaml)               | Contrato HTTP `/api/v1`                              |
 | [`docs/domain.md`](docs/domain.md)                             | Lenguaje ubicuo, entidades, rules                    |

@@ -3,7 +3,7 @@
 import { Icon } from "@/components/ui/icon";
 import type { ReactNode } from "react";
 
-export type CalloutVariant =
+type CalloutVariant =
   | "info"
   | "success"
   | "warning"

@@ -31,8 +31,13 @@ impl XdgPaths {
     }
 
     fn ensure(&self) -> anyhow::Result<()> {
+        use std::os::unix::fs::PermissionsExt;
         for p in [&self.config, &self.data, &self.state] {
-            fs::create_dir_all(p)?;
+            zedazo_core::infrastructure::secure_fs::ensure_dir_0700(p)
+                .map_err(|e| anyhow::anyhow!(e))?;
+            if p.exists() {
+                fs::set_permissions(p, fs::Permissions::from_mode(0o700))?;
+            }
         }
         Ok(())
     }

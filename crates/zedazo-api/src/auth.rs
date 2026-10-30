@@ -236,13 +236,9 @@ fn set_cookie_header(value: &str, secure: bool, clear: bool) -> String {
 
 pub fn cors_layer_for(auth: &AuthConfig) -> CorsLayer {
     match &auth.mode {
-        // Espejar origen + credentials: el cliente GUI usa `credentials: "include"`.
-        // No usar AllowOrigin::any ni Allow-Headers: * (incompatibles con credentials).
-        AuthMode::Disabled => CorsLayer::new()
-            .allow_origin(AllowOrigin::mirror_request())
-            .allow_methods(cors_allow_methods())
-            .allow_headers(cors_allow_headers())
-            .allow_credentials(true),
+        // S-01: disabled → sin CORS (Host validado por host_guard).
+        AuthMode::Disabled => CorsLayer::new(),
+        // Token: CORS solo con ZEDAZO_CORS_ORIGIN (nunca mirror_request).
         AuthMode::Token(_) => {
             let origins = std::env::var("ZEDAZO_CORS_ORIGIN").unwrap_or_default();
             if origins.trim().is_empty() {
@@ -256,7 +252,7 @@ pub fn cors_layer_for(auth: &AuthConfig) -> CorsLayer {
                     CorsLayer::new()
                 } else {
                     CorsLayer::new()
-                        .allow_origin(list)
+                        .allow_origin(AllowOrigin::list(list))
                         .allow_methods(cors_allow_methods())
                         .allow_headers(cors_allow_headers())
                         .allow_credentials(true)

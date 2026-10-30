@@ -240,6 +240,7 @@ async fn api_artifacts(fixture_path: &Path) -> (Value, String, String, String, S
     let upload_res = app::router(state.clone())
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/uploads")
                 .header("content-type", ct)
@@ -259,6 +260,7 @@ async fn api_artifacts(fixture_path: &Path) -> (Value, String, String, String, S
     let create_res = app::router(state.clone())
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/jobs")
                 .header("content-type", "application/json")
@@ -281,6 +283,7 @@ async fn api_artifacts(fixture_path: &Path) -> (Value, String, String, String, S
         let get_res = app::router(state.clone())
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .method("GET")
                     .uri(format!("/api/v1/jobs/{job_id}"))
                     .body(Body::empty())
@@ -303,6 +306,7 @@ async fn api_artifacts(fixture_path: &Path) -> (Value, String, String, String, S
         let res = app::router(state.clone())
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .method("GET")
                     .uri(format!("/api/v1/jobs/{job_id}/artifacts/{kind}"))
                     .body(Body::empty())
@@ -339,14 +343,25 @@ fn cli_artifacts(fixture_path: &Path) -> (Stats, String, String, String, String,
         "auto",
         false,
         false,
+        true,
     )
     .expect("cribar CLI");
 
     let stats_json = stats.to_json().expect("stats json");
     let csv_path = dir.path().join("contacts.csv");
     let json_path = dir.path().join("contacts.json");
-    export_csv(&contacts, &csv_path).expect("csv");
-    export_json(&contacts, &json_path).expect("json");
+    export_csv(
+        &contacts,
+        &csv_path,
+        zedazo_core::infrastructure::secure_fs::WriteOpts::new(true),
+    )
+    .expect("csv");
+    export_json(
+        &contacts,
+        &json_path,
+        zedazo_core::infrastructure::secure_fs::WriteOpts::new(true),
+    )
+    .expect("json");
 
     (
         stats,
@@ -454,6 +469,7 @@ async fn adverse_empty_vcf_upload_rejected() {
     let upload_res = app::router(state)
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/uploads")
                 .header("content-type", ct)
@@ -473,6 +489,7 @@ async fn adverse_rules_validate_rejects_invalid_toml() {
     let res = app::router(state)
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/rules/validate")
                 .header("content-type", "application/json")
@@ -507,6 +524,7 @@ async fn cancel_then_delete_is_idempotent() {
     let upload_res = app::router(state.clone())
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/uploads")
                 .header("content-type", ct)
@@ -521,6 +539,7 @@ async fn cancel_then_delete_is_idempotent() {
     let create_res = app::router(state.clone())
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri("/api/v1/jobs")
                 .header("content-type", "application/json")
@@ -541,6 +560,7 @@ async fn cancel_then_delete_is_idempotent() {
     let cancel = app::router(state.clone())
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
                 .uri(format!("/api/v1/jobs/{job_id}/cancel"))
                 .body(Body::empty())
@@ -558,6 +578,7 @@ async fn cancel_then_delete_is_idempotent() {
         let get_res = app::router(state.clone())
             .oneshot(
                 Request::builder()
+                    .header(axum::http::header::HOST, "127.0.0.1:8080")
                     .method("GET")
                     .uri(format!("/api/v1/jobs/{job_id}"))
                     .body(Body::empty())
@@ -575,6 +596,7 @@ async fn cancel_then_delete_is_idempotent() {
     let del1 = app::router(state.clone())
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("DELETE")
                 .uri(format!("/api/v1/jobs/{job_id}"))
                 .body(Body::empty())
@@ -587,6 +609,7 @@ async fn cancel_then_delete_is_idempotent() {
     let del2 = app::router(state.clone())
         .oneshot(
             Request::builder()
+                .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("DELETE")
                 .uri(format!("/api/v1/jobs/{job_id}"))
                 .body(Body::empty())
