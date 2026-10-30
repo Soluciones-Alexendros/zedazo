@@ -124,6 +124,7 @@ El webview carga `http://127.0.0.1:<puerto>/`; el servidor loopback sirve la GUI
 - Empaquetado: `bundle.resources` (`gui/**/*`) + resolución vía `resource_dir` de Tauri.
 - Desarrollo: `ZEDAZO_STATIC_DIR` apunta a `apps/web/out` o `dist/desktop/gui`.
 - Smoke/e2e de CI **no** inyectan `ZEDAZO_STATIC_DIR` por defecto (prueba de paquete autónomo). Depuración: `ZEDAZO_ALLOW_EXTERNAL_GUI=1`.
+- CSP: política base sin `'unsafe-inline'` en `script-src`; al servir HTML la API añade hashes `sha256-…` de los scripts inline del export Next (`__next_f`) para hidratar en el webview.
 - Identidad (`/api/v1/version`): SHA y fecha embebidos en compilación (`ZEDAZO_GIT_SHA` / `ZEDAZO_BUILD_DATE` en el build). Un artefacto de release no debe responder `unknown`.
 
 `make ci` no sustituye los jobs `Desktop AppImage` / smoke / e2e ni la aceptación Ubuntu 26. Fachadas locales: `make desktop-preflight`, `make desktop-verify`, `make desktop-evidence`.

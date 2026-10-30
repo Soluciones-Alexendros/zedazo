@@ -62,12 +62,7 @@ function emit(key, value) {
   }
 }
 
-/** Texto de página (no htmlLen solo: scripts cuentan y enmascaran DOM muerto). */
-function pageSignal(snap) {
-  return Math.max(snap.textLen || 0, snap.textContentLen || 0);
-}
-
-/** Readiness: documento usable + token de sesión presente. */
+/** Readiness: React hidratado (no basta textContent: los `<script>` __next_f cuentan). */
 async function waitAppReady(label, timeoutMs = 45_000) {
   const deadline = Date.now() + timeoutMs;
   let last = "";
@@ -76,28 +71,31 @@ async function waitAppReady(label, timeoutMs = 45_000) {
       // eslint-disable-next-line no-undef
       const body = document.body;
       const inner = body ? body.innerText || "" : "";
-      const textContent = body ? body.textContent || "" : "";
+      const hydrated = Boolean(
+        document.querySelector(
+          ".zed-gate, .zed-skip-link, button.zed-button, a[href='/ejecuciones'], a[href='/procesar']",
+        ),
+      );
       return {
         ready: document.readyState,
         url: location.href,
         textLen: inner.length,
-        textContentLen: textContent.length,
         htmlLen: body ? body.innerHTML.length : 0,
-        text: (inner || textContent).slice(0, 200),
+        text: inner.slice(0, 200),
+        hydrated,
         // eslint-disable-next-line no-undef
         hasToken: typeof window.__ZEDAZO_SESSION_TOKEN__ === "string",
         title: document.title || "",
       };
     });
     last = JSON.stringify(snap);
-    const signal = pageSignal(snap);
     if (
       snap.ready === "complete" &&
       snap.hasToken &&
-      signal > 32 &&
+      snap.hydrated &&
       /127\.0\.0\.1:\d+/.test(String(snap.url))
     ) {
-      console.log(`ready:${label} signal=${signal}`);
+      console.log(`ready:${label} hydrated textLen=${snap.textLen}`);
       return snap;
     }
     await browser.pause(250);
