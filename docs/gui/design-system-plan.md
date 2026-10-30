@@ -1,5 +1,7 @@
 # Plan de modernización del design system (GUI browser)
 
+**HISTÓRICO (sustituido en v0.6.0 por S3)**
+
 **Versión:** 0.2.0  
 **Fecha:** 2026-09-12  
 **Estado:** **Ejecutado** (2026-09-12). Fases 1–4 aterrizadas (pipeline DTCG + átomos + pantallas `--zed-*` + catálogo/QA, [ADR-0019](../../DECISIONS.md)). Epic [#59](https://github.com/Soluciones-Alexendros/zedazo/issues/59) cerrable si el DoD de §7 se mantiene en CI.  

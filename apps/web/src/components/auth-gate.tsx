@@ -2,12 +2,24 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ApiError, getVersion } from "@/lib/api";
+import { ApiError, getVersion, sessionBearer } from "@/lib/api";
 import { LoadingState } from "@/components/ui/loading-state";
 
 type Props = {
   children: ReactNode;
 };
+
+/** Escritorio Tauri: el init script puede llegar un tick después del primer paint
+ * (sobre todo tras navegación WebDriver). Sin esta espera, getVersion → 401 y la
+ * GUI queda en blanco / redirige a /acceso. */
+async function waitDesktopBearer(ms: number): Promise<boolean> {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    if (sessionBearer()) return true;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return Boolean(sessionBearer());
+}
 
 /**
  * Si la API está en modo token y no hay cookie válida, redirige a /acceso.
@@ -25,18 +37,33 @@ export function AuthGate({ children }: Props) {
     }
     let cancelled = false;
     setReady(false);
-    void getVersion()
-      .then(() => {
+
+    void (async () => {
+      await waitDesktopBearer(3000);
+      if (cancelled) return;
+      try {
+        await getVersion();
         if (!cancelled) setReady(true);
-      })
-      .catch((e) => {
+      } catch (e) {
         if (cancelled) return;
         if (e instanceof ApiError && e.status === 401) {
+          // Reintento si el Bearer acaba de aparecer tras el 401.
+          if (sessionBearer()) {
+            try {
+              await getVersion();
+              if (!cancelled) setReady(true);
+              return;
+            } catch {
+              /* seguir a /acceso */
+            }
+          }
           router.replace("/acceso");
           return;
         }
         setReady(true);
-      });
+      }
+    })();
+
     return () => {
       cancelled = true;
     };

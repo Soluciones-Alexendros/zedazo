@@ -1,160 +1,160 @@
-/* Semantic component surfaces — Archivo Vivo (fase 2: solo --zed-*) */
+/* Semantic component surfaces — Archivo Vivo (consume solo roles --ds-*) */
 
 .zed-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--zed-space-2);
-  min-height: var(--zed-control-height);
-  min-width: var(--zed-control-height);
-  padding: var(--zed-space-2) var(--zed-space-4);
-  border-radius: var(--zed-radius-sm);
-  border: var(--zed-border-width) solid transparent;
-  font-size: var(--zed-text-sm);
-  font-weight: var(--zed-weight-semibold);
-  line-height: var(--zed-leading-tight);
+  gap: var(--ds-space-2);
+  min-height: var(--ds-control-height);
+  min-width: var(--ds-control-height);
+  padding: var(--ds-space-2) var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  border: var(--ds-border-width) solid transparent;
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
+  line-height: var(--ds-leading-heading);
   text-decoration: none;
   transition:
-    background-color var(--zed-transition-fast) var(--zed-ease-standard),
-    border-color var(--zed-transition-fast) var(--zed-ease-standard),
-    color var(--zed-transition-fast) var(--zed-ease-standard),
-    opacity var(--zed-transition-fast) var(--zed-ease-standard);
+    background-color var(--ds-duration-fast) var(--ds-ease-out),
+    border-color var(--ds-duration-fast) var(--ds-ease-out),
+    color var(--ds-duration-fast) var(--ds-ease-out),
+    opacity var(--ds-duration-fast) var(--ds-ease-out);
 }
 
 .zed-button--sm {
-  min-height: var(--zed-target-min);
-  min-width: var(--zed-target-min);
-  padding: var(--zed-space-1) var(--zed-space-2);
-  font-size: var(--zed-text-xs);
+  min-height: var(--ds-target-min);
+  min-width: var(--ds-target-min);
+  padding: var(--ds-space-1) var(--ds-space-2);
+  font-size: var(--ds-text-xs);
 }
 
 .zed-button--primary {
-  border-color: var(--zed-accent);
-  background: var(--zed-accent);
-  color: var(--zed-accent-on);
+  border-color: var(--ds-accent);
+  background: var(--ds-accent);
+  color: var(--ds-on-accent);
 }
 
 .zed-button--primary:hover:not(:disabled) {
-  border-color: var(--zed-accent-hover);
-  background: var(--zed-accent-hover);
-  color: var(--zed-accent-on);
+  border-color: var(--ds-accent);
+  background: var(--ds-accent);
+  color: var(--ds-on-accent);
 }
 
 .zed-button--primary:active:not(:disabled) {
-  border-color: var(--zed-accent-active);
-  background: var(--zed-accent-active);
+  border-color: var(--ds-accent);
+  background: var(--ds-accent);
 }
 
 .zed-button--secondary {
-  border-color: var(--zed-border-default);
-  background: var(--zed-bg-raised);
-  color: var(--zed-fg-strong);
+  border-color: var(--ds-border);
+  background: var(--ds-bg-raised);
+  color: var(--ds-text);
 }
 
 .zed-button--secondary:hover:not(:disabled) {
-  border-color: var(--zed-border-strong);
-  background: var(--zed-bg-subtle);
+  border-color: var(--ds-border);
+  background: var(--ds-bg-muted);
 }
 
 .zed-button--tertiary {
   border-color: transparent;
   background: transparent;
-  color: var(--zed-accent);
+  color: var(--ds-accent);
 }
 
 .zed-button--tertiary:hover:not(:disabled) {
-  background: var(--zed-accent-soft);
-  color: var(--zed-accent-active);
+  background: var(--ds-bg-muted);
+  color: var(--ds-accent);
 }
 
 .zed-button--danger {
-  border-color: var(--zed-danger);
-  background: var(--zed-danger);
-  color: var(--zed-accent-on);
+  border-color: var(--ds-danger);
+  background: var(--ds-danger);
+  color: var(--ds-on-accent);
 }
 
 .zed-button--danger:hover:not(:disabled) {
-  border-color: var(--zed-danger-hover);
-  background: var(--zed-danger-hover);
+  border-color: var(--ds-danger);
+  background: var(--ds-danger);
 }
 
 .zed-button--icon {
-  padding: var(--zed-space-2);
+  padding: var(--ds-space-2);
 }
 
 .zed-button--icon.zed-button--sm {
-  padding: var(--zed-space-1);
+  padding: var(--ds-space-1);
 }
 
 .zed-button:disabled,
 .zed-button[aria-disabled="true"] {
   cursor: not-allowed;
-  opacity: var(--zed-disabled-opacity);
+  opacity: var(--ds-disabled-opacity);
 }
 
 .zed-button:focus-visible {
-  outline: var(--zed-focus-width) solid var(--zed-focus-ring);
-  outline-offset: var(--zed-focus-offset);
+  outline: var(--ds-focus-width) solid var(--ds-focus);
+  outline-offset: var(--ds-focus-offset);
 }
 
 .zed-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--zed-space-1);
-  min-height: calc(var(--zed-target-min) + var(--zed-space-1));
-  padding-inline: var(--zed-space-2);
-  border: var(--zed-border-width) solid transparent;
-  border-radius: var(--zed-radius-pill);
-  font-size: var(--zed-text-sm);
-  font-weight: var(--zed-weight-semibold);
+  gap: var(--ds-space-1);
+  min-height: calc(var(--ds-target-min) + var(--ds-space-1));
+  padding-inline: var(--ds-space-2);
+  border: var(--ds-border-width) solid transparent;
+  border-radius: var(--ds-radius-pill);
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
   line-height: 1;
   white-space: nowrap;
 }
 
 .zed-badge--neutral {
-  border-color: var(--zed-border-default);
-  background: var(--zed-bg-muted);
-  color: var(--zed-fg-default);
+  border-color: var(--ds-border);
+  background: var(--ds-bg-muted);
+  color: var(--ds-text);
 }
 
 .zed-badge--technical {
-  border-color: var(--zed-border-default);
-  background: var(--zed-bg-subtle);
-  color: var(--zed-fg-muted);
-  font-family: var(--zed-font-mono);
-  font-size: var(--zed-text-xs);
+  border-color: var(--ds-border);
+  background: var(--ds-bg-muted);
+  color: var(--ds-text-muted);
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-xs);
 }
 
 .zed-badge--success {
-  border-color: var(--zed-badge-success-border);
-  background: var(--zed-success-soft);
-  color: var(--zed-success-on-soft);
+  border-color: var(--ds-success);
+  background: var(--ds-bg-muted);
+  color: var(--ds-text);
 }
 
 .zed-badge--warning {
-  border-color: var(--zed-badge-warning-border);
-  background: var(--zed-warning-soft);
-  color: var(--zed-warning-on-soft);
+  border-color: var(--ds-warning);
+  background: var(--ds-bg-muted);
+  color: var(--ds-text);
 }
 
 .zed-badge--danger {
-  border-color: var(--zed-badge-danger-border);
-  background: var(--zed-danger-soft);
-  color: var(--zed-danger-on-soft);
+  border-color: var(--ds-danger);
+  background: var(--ds-bg-muted);
+  color: var(--ds-text);
 }
 
 .zed-badge--info {
-  border-color: var(--zed-badge-info-border);
-  background: var(--zed-info-soft);
-  color: var(--zed-info-on-soft);
+  border-color: var(--ds-info);
+  background: var(--ds-bg-muted);
+  color: var(--ds-text);
 }
 
 .zed-card {
-  border: var(--zed-border-width) solid var(--zed-border-subtle);
-  border-radius: var(--zed-radius-lg);
-  background: var(--zed-bg-raised);
-  color: var(--zed-fg-default);
-  padding: var(--zed-space-5);
+  border: var(--ds-border-width) solid var(--ds-border);
+  border-radius: var(--ds-radius-card);
+  background: var(--ds-bg-raised);
+  color: var(--ds-text);
+  padding: var(--ds-space-5);
 }
 
 .zed-card--document {
@@ -162,16 +162,16 @@
 }
 
 .zed-card--action {
-  box-shadow: var(--zed-shadow-xs);
+  box-shadow: var(--ds-shadow-xs);
 }
 
 .zed-card--action:hover {
-  border-color: var(--zed-border-strong);
-  box-shadow: var(--zed-shadow-sm);
+  border-color: var(--ds-border);
+  box-shadow: var(--ds-shadow-sm);
 }
 
 .zed-card--metric {
-  padding: var(--zed-space-4);
+  padding: var(--ds-space-4);
 }
 
 .zed-card--outlined {
@@ -181,64 +181,64 @@
 .zed-card--interactive {
   cursor: pointer;
   transition:
-    border-color var(--zed-transition-base) var(--zed-ease-standard),
-    box-shadow var(--zed-transition-base) var(--zed-ease-standard),
-    transform var(--zed-transition-base) var(--zed-ease-standard);
+    border-color var(--ds-duration-base) var(--ds-ease-out),
+    box-shadow var(--ds-duration-base) var(--ds-ease-out),
+    transform var(--ds-duration-base) var(--ds-ease-out);
 }
 
 .zed-card--interactive:hover {
   transform: translateY(-1px);
-  border-color: var(--zed-border-strong);
+  border-color: var(--ds-border);
 }
 
 .zed-card--interactive:focus-visible {
-  outline: var(--zed-focus-width) solid var(--zed-focus-ring);
-  outline-offset: var(--zed-focus-offset);
+  outline: var(--ds-focus-width) solid var(--ds-focus);
+  outline-offset: var(--ds-focus-offset);
 }
 
 .zed-callout {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: var(--zed-space-3);
-  padding: var(--zed-space-4);
-  border-radius: var(--zed-radius-md);
-  border: var(--zed-border-width) solid transparent;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  border: var(--ds-border-width) solid transparent;
 }
 
 .zed-callout__title {
   display: block;
-  margin-bottom: var(--zed-space-1);
+  margin-bottom: var(--ds-space-1);
 }
 
 .zed-callout--info {
-  background: var(--zed-info-soft);
-  border-color: var(--zed-badge-info-border);
-  color: var(--zed-info-on-soft);
+  background: var(--ds-bg-muted);
+  border-color: var(--ds-info);
+  color: var(--ds-text);
 }
 
 .zed-callout--success {
-  background: var(--zed-success-soft);
-  border-color: var(--zed-badge-success-border);
-  color: var(--zed-success-on-soft);
+  background: var(--ds-bg-muted);
+  border-color: var(--ds-success);
+  color: var(--ds-text);
 }
 
 .zed-callout--warning {
-  background: var(--zed-warning-soft);
-  border-color: var(--zed-badge-warning-border);
-  color: var(--zed-warning-on-soft);
+  background: var(--ds-bg-muted);
+  border-color: var(--ds-warning);
+  color: var(--ds-text);
 }
 
 .zed-callout--danger {
-  background: var(--zed-danger-soft);
-  border-color: var(--zed-badge-danger-border);
-  color: var(--zed-danger-on-soft);
+  background: var(--ds-bg-muted);
+  border-color: var(--ds-danger);
+  color: var(--ds-text);
 }
 
 .zed-callout--privacy,
 .zed-callout--verification {
-  background: var(--zed-accent-soft);
-  border-color: var(--zed-accent-border);
-  color: var(--zed-accent-active);
+  background: var(--ds-bg-muted);
+  border-color: var(--ds-border);
+  color: var(--ds-accent);
 }
 
 .zed-field input,
@@ -246,12 +246,12 @@
 .zed-field select,
 .zed-input {
   width: 100%;
-  min-height: var(--zed-control-height);
-  padding: var(--zed-space-2) var(--zed-space-3);
-  border: var(--zed-border-width) solid var(--zed-border-default);
-  border-radius: var(--zed-radius-sm);
-  background: var(--zed-bg-raised);
-  color: var(--zed-fg-default);
+  min-height: var(--ds-control-height);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border: var(--ds-border-width) solid var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-bg-raised);
+  color: var(--ds-text);
 }
 
 .zed-input--auto {
@@ -263,94 +263,94 @@
 .zed-field select:disabled,
 .zed-input:disabled {
   cursor: not-allowed;
-  opacity: var(--zed-disabled-opacity);
+  opacity: var(--ds-disabled-opacity);
 }
 
 .zed-field input:focus-visible,
 .zed-field textarea:focus-visible,
 .zed-field select:focus-visible,
 .zed-input:focus-visible {
-  outline: var(--zed-focus-width) solid var(--zed-focus-ring);
-  outline-offset: var(--zed-focus-offset);
+  outline: var(--ds-focus-width) solid var(--ds-focus);
+  outline-offset: var(--ds-focus-offset);
 }
 
 .zed-field textarea,
 .zed-textarea {
-  min-height: var(--zed-textarea-min);
+  min-height: var(--ds-textarea-min);
   resize: vertical;
-  font-family: var(--zed-font-mono);
-  font-size: var(--zed-text-sm);
-  line-height: var(--zed-leading-relaxed);
-  background: var(--zed-code-bg);
-  color: var(--zed-code-fg);
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-sm);
+  line-height: var(--ds-leading-body);
+  background: var(--ds-bg-muted);
+  color: var(--ds-text);
 }
 
 .zed-dropzone {
   display: grid;
   place-items: center;
-  gap: var(--zed-space-3);
-  padding: var(--zed-space-10) var(--zed-space-6);
-  border: var(--zed-border-width) solid var(--zed-border-default);
-  border-radius: var(--zed-radius-lg);
-  background: var(--zed-bg-subtle);
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-10) var(--ds-space-6);
+  border: var(--ds-border-width) solid var(--ds-border);
+  border-radius: var(--ds-radius-card);
+  background: var(--ds-bg-muted);
   text-align: center;
-  color: var(--zed-fg-muted);
+  color: var(--ds-text-muted);
   transition:
-    border-color var(--zed-transition-base) var(--zed-ease-standard),
-    background-color var(--zed-transition-base) var(--zed-ease-standard);
+    border-color var(--ds-duration-base) var(--ds-ease-out),
+    background-color var(--ds-duration-base) var(--ds-ease-out);
 }
 
 .zed-dropzone[data-active="true"],
 .zed-dropzone:focus-within {
-  border-color: var(--zed-accent);
-  background: var(--zed-accent-soft);
-  color: var(--zed-accent-active);
+  border-color: var(--ds-accent);
+  background: var(--ds-bg-muted);
+  color: var(--ds-accent);
 }
 
 .zed-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--zed-space-2);
-  margin-bottom: var(--zed-space-5);
-  border-bottom: var(--zed-border-width) solid var(--zed-border-subtle);
-  padding-bottom: var(--zed-space-2);
+  gap: var(--ds-space-2);
+  margin-bottom: var(--ds-space-5);
+  border-bottom: var(--ds-border-width) solid var(--ds-border);
+  padding-bottom: var(--ds-space-2);
 }
 
 .zed-tabs button {
-  min-height: var(--zed-control-height);
-  padding: var(--zed-space-2) var(--zed-space-3);
-  border: var(--zed-border-width) solid transparent;
-  border-radius: var(--zed-radius-sm);
+  min-height: var(--ds-control-height);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border: var(--ds-border-width) solid transparent;
+  border-radius: var(--ds-radius-md);
   background: transparent;
-  color: var(--zed-fg-muted);
-  font-weight: var(--zed-weight-medium);
+  color: var(--ds-text-muted);
+  font-weight: var(--ds-weight-medium);
 }
 
 .zed-tabs button[aria-selected="true"] {
-  color: var(--zed-accent-active);
-  background: var(--zed-accent-soft);
-  border-color: var(--zed-accent-border);
+  color: var(--ds-accent);
+  background: var(--ds-bg-muted);
+  border-color: var(--ds-border);
 }
 
 .zed-stepper {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--zed-space-2);
-  margin-bottom: var(--zed-space-6);
+  gap: var(--ds-space-2);
+  margin-bottom: var(--ds-space-6);
 }
 
 .zed-stepper__step {
   display: inline-flex;
   align-items: center;
-  gap: var(--zed-space-2);
-  min-height: calc(var(--zed-target-min) + var(--zed-space-3));
-  padding: var(--zed-space-1) var(--zed-space-3);
-  border-radius: var(--zed-radius-pill);
-  border: var(--zed-border-width) solid var(--zed-border-default);
-  color: var(--zed-fg-muted);
-  background: var(--zed-bg-raised);
-  font-size: var(--zed-text-sm);
-  font-weight: var(--zed-weight-medium);
+  gap: var(--ds-space-2);
+  min-height: calc(var(--ds-target-min) + var(--ds-space-3));
+  padding: var(--ds-space-1) var(--ds-space-3);
+  border-radius: var(--ds-radius-pill);
+  border: var(--ds-border-width) solid var(--ds-border);
+  color: var(--ds-text-muted);
+  background: var(--ds-bg-raised);
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-medium);
 }
 
 .zed-stepper__step:disabled {
@@ -359,31 +359,31 @@
 }
 
 .zed-stepper__step[data-state="todo"]:disabled {
-  opacity: var(--zed-disabled-opacity);
+  opacity: var(--ds-disabled-opacity);
 }
 
 .zed-stepper__step[data-state="current"] {
-  border-color: var(--zed-accent);
-  color: var(--zed-accent-active);
-  background: var(--zed-accent-soft);
+  border-color: var(--ds-accent);
+  color: var(--ds-accent);
+  background: var(--ds-bg-muted);
 }
 
 .zed-stepper__step[data-state="done"] {
-  border-color: var(--zed-badge-success-border);
-  color: var(--zed-success-on-soft);
-  background: var(--zed-success-soft);
+  border-color: var(--ds-success);
+  color: var(--ds-text);
+  background: var(--ds-bg-muted);
 }
 
 .zed-bar {
-  height: var(--zed-space-2);
-  border-radius: var(--zed-radius-pill);
-  background: var(--zed-bg-muted);
+  height: var(--ds-space-2);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-bg-muted);
   overflow: hidden;
 }
 
 .zed-bar__fill {
   height: 100%;
-  background: var(--zed-accent);
+  background: var(--ds-accent);
   border-radius: inherit;
 }
 
@@ -394,20 +394,20 @@
 .zed-scrim {
   position: fixed;
   inset: 0;
-  z-index: var(--zed-z-overlay);
-  background: var(--zed-overlay);
+  z-index: var(--ds-z-overlay);
+  background: var(--ds-overlay);
   border: 0;
   padding: 0;
 }
 
 .zed-scrim--modal {
-  z-index: var(--zed-z-modal);
+  z-index: var(--ds-z-modal);
 }
 
 .zed-section-heading {
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--zed-space-4);
+  margin-bottom: var(--ds-space-4);
 }
 
 .zed-stat-card__label {
@@ -415,23 +415,23 @@
 }
 
 .zed-stat-card__value {
-  margin: var(--zed-space-1) 0;
+  margin: var(--ds-space-1) 0;
 }
 
 .zed-stat-card__hint {
   margin: 0;
-  font-size: var(--zed-text-sm);
+  font-size: var(--ds-text-sm);
 }
 
 .zed-metadata {
   display: grid;
-  gap: var(--zed-space-3);
+  gap: var(--ds-space-3);
   margin: 0;
 }
 
 .zed-metadata__row {
   display: grid;
-  gap: var(--zed-space-1);
+  gap: var(--ds-space-1);
   grid-template-columns: minmax(8rem, 12rem) 1fr;
   align-items: center;
 }
@@ -444,38 +444,38 @@
 .zed-metadata__value {
   display: flex;
   align-items: center;
-  gap: var(--zed-space-2);
+  gap: var(--ds-space-2);
   min-width: 0;
 }
 
 .zed-artifact {
   justify-content: space-between;
-  padding: var(--zed-space-3) 0;
-  border-bottom: var(--zed-border-width) solid var(--zed-border-subtle);
+  padding: var(--ds-space-3) 0;
+  border-bottom: var(--ds-border-width) solid var(--ds-border);
 }
 
 .zed-artifact__label {
-  font-weight: var(--zed-weight-semibold);
+  font-weight: var(--ds-weight-semibold);
 }
 
 .zed-artifact__meta {
-  margin: var(--zed-space-1) 0 0;
-  font-size: var(--zed-text-sm);
+  margin: var(--ds-space-1) 0 0;
+  font-size: var(--ds-text-sm);
 }
 
 .zed-page-header {
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--zed-space-6);
-  gap: var(--zed-space-4);
+  margin-bottom: var(--ds-space-6);
+  gap: var(--ds-space-4);
 }
 
 .zed-page-header__eyebrow {
-  margin: 0 0 var(--zed-space-1);
-  color: var(--zed-accent-active);
+  margin: 0 0 var(--ds-space-1);
+  color: var(--ds-accent);
 }
 
 .zed-page-header__lead {
   margin: 0;
-  max-width: var(--zed-prose-max);
+  max-width: var(--ds-prose-max);
 }

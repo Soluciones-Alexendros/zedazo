@@ -117,10 +117,22 @@ Artefacto CI típico (job `Desktop AppImage`, runner `ubuntu-22.04`): ~78–80�
 
 Notas de build/gates: [`apps/desktop/NOTES.md`](../apps/desktop/NOTES.md).
 
+## Autonomía del AppImage
+
+El webview carga `http://127.0.0.1:<puerto>/`; el servidor loopback sirve la GUI desde disco.
+
+- Empaquetado: `bundle.resources` (`gui/**/*`) + resolución vía `resource_dir` de Tauri.
+- Desarrollo: `ZEDAZO_STATIC_DIR` apunta a `apps/web/out` o `dist/desktop/gui`.
+- Smoke/e2e de CI **no** inyectan `ZEDAZO_STATIC_DIR` por defecto (prueba de paquete autónomo). Depuración: `ZEDAZO_ALLOW_EXTERNAL_GUI=1`.
+- CSP: política base sin `'unsafe-inline'` en `script-src`; al servir HTML la API añade hashes `sha256-…` de los scripts inline del export Next (`__next_f`) para hidratar en el webview.
+- Identidad (`/api/v1/version`): SHA y fecha embebidos en compilación (`ZEDAZO_GIT_SHA` / `ZEDAZO_BUILD_DATE` en el build). Un artefacto de release no debe responder `unknown`.
+
+`make ci` no sustituye los jobs `Desktop AppImage` / smoke / e2e ni la aceptación Ubuntu 26. Fachadas locales: `make desktop-preflight`, `make desktop-verify`, `make desktop-evidence`.
+
 ## CI: sin red y Ubuntu 26
 
-- **P-02 / `desktop-no-network`:** el e2e AppImage corre bajo `unshare -rn` + `strace -f -e trace=connect` (`scripts/desktop/e2e-no-network.sh`). Falla si hay `connect` a IP distinta de `127.0.0.1` / `::1`. Los `AF_UNIX` (X11/DBus) se ignoran. Forma parte de `ci-gate`.
-- **P-07 / smoke en `container: ubuntu:26.04`:** no está en `ci-gate`. Probe 2026-10-26: con `libwebkit2gtk-4.1-0`, xvfb y `--appimage-extract-and-run` la API llega a escuchar en loopback, pero el proceso aborta o queda inutilizable por EGL (`Could not create default EGL display: EGL_BAD_PARAMETER`) y choques de símbolos GIO/libcurl-gnutls (`nghttp2_option_set_no_rfc9113_leading_and_trailing_ws_validation`). No se añade un job rojo ni `continue-on-error` al gate. **Validación Ubuntu 26 = prueba manual del operador** en máquina real (esta guía).
+- **P-02 / `desktop-no-network`:** el e2e AppImage corre bajo `unshare -rn` + `strace -f -e trace=connect` (`scripts/desktop/e2e-no-network.sh`). Falla si hay `connect` a IP distinta de `127.0.0.1` / `::1`. Los `AF_UNIX` (X11/DBus) se ignoran. Forma parte de `ci-gate`. Incluye prueba negativa del detector.
+- **P-07 / smoke en `container: ubuntu:26.04`:** no está en `ci-gate`. Probe 2026-10-26: con `libwebkit2gtk-4.1-0`, xvfb y `--appimage-extract-and-run` la API llega a escuchar en loopback, pero el proceso aborta o queda inutilizable por EGL (`Could not create default EGL display: EGL_BAD_PARAMETER`) y choques de símbolos GIO/libcurl-gnutls (`nghttp2_option_set_no_rfc9113_leading_and_trailing_ws_validation`). No se añade un job rojo ni `continue-on-error` al gate. **Validación Ubuntu 26 = prueba manual del operador** en máquina real (esta guía). Acta: [`tasks/ubuntu26-acta.md`](../tasks/ubuntu26-acta.md).
 
 ## Ver también
 

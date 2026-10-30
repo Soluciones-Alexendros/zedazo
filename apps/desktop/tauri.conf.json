@@ -23,6 +23,9 @@
       "icons/henry.w@example.net",
       "icons/icon.png"
     ],
+    "resources": [
+      "gui/**/*"
+    ],
     "linux": {
       "appimage": {
         "bundleMediaFramework": false

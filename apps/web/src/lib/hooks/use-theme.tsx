@@ -11,6 +11,7 @@ import {
 } from "react";
 import {
   applyTheme,
+  migrateLegacyTheme,
   persistTheme,
   readThemePreference,
   type ThemePreference,
@@ -27,6 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>("system");
 
   useEffect(() => {
+    migrateLegacyTheme();
     const initial = readThemePreference();
     setPreferenceState(initial);
     applyTheme(initial);

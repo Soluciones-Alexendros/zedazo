@@ -1,9 +1,0 @@
-/* Import path estable para layout.tsx. Fuente DTCG: apps/web/tokens/ (ADR-0019). */
-@import "./generated/themes.css";
-@import "./generated/wa-bridge.css";
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme="dark"]) {
-    /* reserved: prefer explicit data-theme=light|dark via boot script */
-  }
-}

@@ -25,12 +25,10 @@ if [[ ! -d apps/desktop ]]; then
   exit 1
 fi
 
-echo "==> pnpm build apps/web (output: export → out/)"
+echo "==> pnpm build apps/web (output: export → out/; lockfile congelado)"
 (
   cd apps/web
-  if [[ ! -d node_modules ]]; then
-    pnpm install --frozen-lockfile
-  fi
+  CI=true pnpm install --frozen-lockfile
   pnpm exec next build
 )
 test -f apps/web/out/index.html
@@ -42,8 +40,8 @@ rsync -a --delete \
   apps/web/out/ \
   apps/desktop/gui/
 
-# Copia para artefacto CI: el AppImage embebe la GUI en el binario (no hay .html
-# sueltos al --appimage-extract). El e2e/smoke sirven ServeDir desde aquí.
+# Copia para artefacto CI / depuración (ZEDAZO_ALLOW_EXTERNAL_GUI=1).
+# Producción: bundle.resources gui/**/* → resource_dir; smoke/e2e autónomos no usan STATIC_DIR.
 mkdir -p dist/desktop
 rsync -a --delete \
   --exclude '.git' \

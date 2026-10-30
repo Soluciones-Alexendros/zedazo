@@ -43,7 +43,9 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let xdg = XdgPaths::resolve()?;
-            let static_dir = resolve_static_dir();
+            let static_dir = resolve_static_dir(app.handle()).map_err(|e| {
+                anyhow::anyhow!("zedazo-desktop: {e} (arranque abortado; GUI requerida)")
+            })?;
             let token = generate_session_token()?;
             let init = init_script(&token)?;
 

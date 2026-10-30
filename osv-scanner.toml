@@ -12,3 +12,7 @@ reason = "Mismo advisory que RUSTSEC-2024-0429 (glib); ver ignore anterior."
 [[IgnoredVulns]]
 id = "RUSTSEC-2024-0370"
 reason = "proc-macro-error unmaintained; transitivo de Tauri/gtk-rs. No hay reemplazo en el grafo actual. Revisión: tras upgrade Tauri."
+
+[[IgnoredVulns]]
+id = "GHSA-qwgh-2vcv-g2f7"
+reason = "block-buffer <0.12.1 (panic en buffer inline); sha2 0.10 / digest 0.10 fijan 0.10.4 y no hay 0.10.x parcheado. Revisión: al subir sha2 a 0.11+ (API digest nueva) en zedazo-api y tauri-codegen."

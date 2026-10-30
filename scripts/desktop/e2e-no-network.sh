@@ -53,6 +53,41 @@ for s in bad:
 print("OK filtro loopback (127.0.0.1/53, ::1, ::ffff:127.0.0.1; 168.63.129.16 fuga)")
 PY
 
+# Prueba negativa del detector: una traza sintética con connect externo debe fallar.
+NEG_TRACE="$(mktemp -t zedazo-strace-neg.XXXXXX)"
+printf '%s\n' 'connect(3, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("168.63.129.16")}, 16) = -1 EINPROGRESS' >"$NEG_TRACE"
+set +e
+python3 - "$NEG_TRACE" <<'PY'
+import ipaddress
+import re
+import sys
+
+path = sys.argv[1]
+text = open(path, errors="replace").read()
+bad = 0
+for line in text.splitlines():
+    if "connect(" not in line:
+        continue
+    if "AF_UNIX" in line or "sun_path=" in line:
+        continue
+    for s in re.findall(r'inet_addr\("([^"]+)"\)', line):
+        ip = ipaddress.ip_address(s)
+        mapped = getattr(ip, "ipv4_mapped", None)
+        if mapped is not None:
+            ip = mapped
+        if not ip.is_loopback:
+            bad += 1
+sys.exit(0 if bad else 1)
+PY
+NEG_STATUS=$?
+set -e
+rm -f "$NEG_TRACE"
+if [[ "$NEG_STATUS" -ne 0 ]]; then
+  echo "error: prueba negativa del detector no marcó connect externo" >&2
+  exit 1
+fi
+echo "OK prueba negativa del detector (168.63.129.16)"
+
 APPIMAGE="${TAURI_APPIMAGE:-${APPIMAGE:-}}"
 if [[ -z "$APPIMAGE" ]]; then
   APPIMAGE="$(find dist/desktop -maxdepth 1 -name 'zedazo-*.AppImage' -type f | sort | head -1 || true)"

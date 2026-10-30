@@ -14,10 +14,16 @@ pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
 }
 
 pub async fn version(State(state): State<AppState>) -> Json<VersionResponse> {
+    // Identidad del binario: embebida en compilación (build.rs). No leer env en runtime
+    // — eso permitiría que smoke/run-env.sh acrediten un SHA ajeno al artefacto.
     Json(VersionResponse {
         version: state.core_version.clone(),
-        git_sha: std::env::var("ZEDAZO_GIT_SHA").unwrap_or_else(|_| "unknown".into()),
-        build_date: std::env::var("ZEDAZO_BUILD_DATE").unwrap_or_else(|_| "unknown".into()),
+        git_sha: option_env!("ZEDAZO_GIT_SHA")
+            .unwrap_or("unknown")
+            .to_string(),
+        build_date: option_env!("ZEDAZO_BUILD_DATE")
+            .unwrap_or("unknown")
+            .to_string(),
         schema_version: "1".into(),
     })
 }

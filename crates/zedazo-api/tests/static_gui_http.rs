@@ -60,6 +60,26 @@ async fn binary_like_serve_gui_without_caddy() {
         .to_ascii_lowercase()
         .contains("x-content-type-options: nosniff"));
 
+    // C21: script-src autoriza el arranque del tema por hash y sin 'unsafe-inline'.
+    let csp = head.lines().find(|l| {
+        l.to_ascii_lowercase()
+            .starts_with("content-security-policy:")
+    });
+    assert!(csp.is_some(), "falta Content-Security-Policy");
+    let script_src = csp
+        .unwrap()
+        .split(';')
+        .map(str::trim)
+        .find(|d| d.starts_with("script-src"));
+    assert!(script_src.is_some(), "falta script-src en CSP");
+    assert!(script_src
+        .unwrap()
+        .contains("sha256-wZHa1Ad+sG4CVkMj20Js/YFPWl/cxb0RiIYwFGB1XXY="));
+    assert!(!script_src
+        .unwrap()
+        .to_ascii_lowercase()
+        .contains("unsafe-inline"));
+
     let (st, _, body) = http_get(&addr, "/api/v1/health").await;
     assert_eq!(st, 200);
     assert!(body.contains("ok") || body.contains("status") || body.contains('{'));

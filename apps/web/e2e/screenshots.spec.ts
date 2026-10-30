@@ -20,7 +20,6 @@ const routes: { slug: string; path: string }[] = [
   { slug: "ajustes", path: "/ajustes" },
   { slug: "acceso", path: "/acceso" },
   { slug: "documentacion", path: "/documentacion" },
-  { slug: "documentacion-ds", path: "/documentacion/ds" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {
