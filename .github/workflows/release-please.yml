@@ -33,6 +33,8 @@ jobs:
           manifest-file: .release-please-manifest.json
 
   # Solo en el PR de release: actualizar Cargo.lock de crates del workspace y empujar.
+  # El commit se crea vía GraphQL `createCommitOnBranch` para que GitHub lo firme;
+  # `main` exige commits firmados y un `git commit` local bloquearía el PR de release.
   update-lockfile:
     name: update-lockfile (release PR)
     needs: release-please
@@ -40,7 +42,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     timeout-minutes: 15
     steps:
       - name: Extraer rama del PR
@@ -49,9 +50,7 @@ jobs:
           PR_JSON: ${{ needs.release-please.outputs.pr }}
         run: |
           set -euo pipefail
-          number="$(python3 -c 'import json,os; print(json.loads(os.environ["PR_JSON"])["number"])')"
           head="$(python3 -c 'import json,os; print(json.loads(os.environ["PR_JSON"])["headBranchName"])')"
-          echo "number=$number" >> "$GITHUB_OUTPUT"
           echo "head=$head" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -60,7 +59,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - name: Actualizar Cargo.lock (solo workspace)
         run: cargo update --workspace
-      - name: Empujar Cargo.lock al PR de release
+      - name: Empujar Cargo.lock firmado al PR de release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_REF: ${{ steps.pr.outputs.head }}
@@ -70,9 +69,28 @@ jobs:
             echo "Cargo.lock sin cambios"
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add Cargo.lock
-          git commit -m "chore: regenerar Cargo.lock tras bump de versión"
-          git push origin "HEAD:refs/heads/${HEAD_REF}"
+          export HEAD_SHA="$(git rev-parse HEAD)"
+          python3 - <<'PY'
+          import base64, json, os
+
+          contents = base64.b64encode(open("Cargo.lock", "rb").read()).decode()
+          payload = {
+              "query": "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid url } } }",
+              "variables": {
+                  "input": {
+                      "branch": {
+                          "repositoryNameWithOwner": os.environ["GITHUB_REPOSITORY"],
+                          "branchName": os.environ["HEAD_REF"],
+                      },
+                      "message": {"headline": "chore: regenerar Cargo.lock tras bump de versión"},
+                      "expectedHeadOid": os.environ["HEAD_SHA"],
+                      "fileChanges": {
+                          "additions": [{"path": "Cargo.lock", "contents": contents}],
+                      },
+                  }
+              },
+          }
+          with open("/tmp/release-lockfile.json", "w") as f:
+              json.dump(payload, f)
+          PY
+          gh api graphql --input /tmp/release-lockfile.json
