@@ -37,7 +37,7 @@ import {
   type LocalFixture,
 } from "@/lib/local-fixtures.mjs";
 
-export type AdapterKind = "remote" | "local";
+type AdapterKind = "remote" | "local";
 export type { LocalFixture };
 
 let probe: Promise<AdapterKind> | null = null;
@@ -64,7 +64,7 @@ export function probeAdapter(): Promise<AdapterKind> {
   return probe;
 }
 
-export function currentFixture(): LocalFixture {
+function currentFixture(): LocalFixture {
   if (typeof window === "undefined") return "resultado";
   const fixture = readFixture(
     window.location.search,

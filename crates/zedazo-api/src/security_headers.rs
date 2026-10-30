@@ -7,22 +7,31 @@
 
 use axum::body::Body;
 use axum::extract::Request;
-use axum::http::{header, HeaderValue};
+use axum::http::{header, HeaderMap, HeaderValue};
 use axum::middleware::Next;
 use axum::response::Response;
 use http_body_util::BodyExt;
 use sha2::{Digest, Sha256};
+use std::collections::BTreeSet;
 
 /// Hash CSP del script de arranque de tema (`THEME_BOOT_SCRIPT` en apps/web).
 pub const THEME_BOOT_SCRIPT_HASH: &str = "sha256-wZHa1Ad+sG4CVkMj20Js/YFPWl/cxb0RiIYwFGB1XXY=";
 
+/// Prefijo CSP hasta `script-src` (sin los hashes).
+const CSP_BEFORE_SCRIPT_SRC: &str =
+    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; ";
+
+/// Sufijo CSP tras `script-src`.
+const CSP_AFTER_SCRIPT_SRC: &str =
+    "; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'";
+
 /// CSP alineada con `deploy/Caddyfile*` (GUI same-origin). Política base: sin
 /// `'unsafe-inline'` en `script-src`; el theme-boot va por hash fijo.
+///
+/// Debe coincidir byte a byte con los Caddyfile (tests de paridad).
 pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-wZHa1Ad+sG4CVkMj20Js/YFPWl/cxb0RiIYwFGB1XXY='; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'";
 
-/// Aplica cabeceras de seguridad con la CSP base (no HTML / API).
-pub fn apply_headers(res: &mut Response) {
-    let headers = res.headers_mut();
+fn insert_transport_headers(headers: &mut HeaderMap) {
     headers.insert(
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
@@ -32,8 +41,17 @@ pub fn apply_headers(res: &mut Response) {
         HeaderValue::from_static("no-referrer"),
     );
     headers.insert(header::X_FRAME_OPTIONS, HeaderValue::from_static("DENY"));
-    headers.insert(
-        header::CONTENT_SECURITY_POLICY,
+}
+
+fn insert_csp(headers: &mut HeaderMap, csp: HeaderValue) {
+    insert_transport_headers(headers);
+    headers.insert(header::CONTENT_SECURITY_POLICY, csp);
+}
+
+/// Aplica cabeceras de seguridad con la CSP base (no HTML / API).
+pub fn apply_headers(res: &mut Response) {
+    insert_csp(
+        res.headers_mut(),
         HeaderValue::from_static(CONTENT_SECURITY_POLICY),
     );
 }
@@ -69,20 +87,9 @@ pub async fn middleware(req: Request, next: Next) -> Response {
 
     let html = String::from_utf8_lossy(&bytes);
     let csp = content_security_policy_for_html(&html);
-    headers.insert(
-        header::CONTENT_SECURITY_POLICY,
-        HeaderValue::from_str(&csp)
-            .unwrap_or_else(|_| HeaderValue::from_static(CONTENT_SECURITY_POLICY)),
-    );
-    headers.insert(
-        header::X_CONTENT_TYPE_OPTIONS,
-        HeaderValue::from_static("nosniff"),
-    );
-    headers.insert(
-        header::REFERRER_POLICY,
-        HeaderValue::from_static("no-referrer"),
-    );
-    headers.insert(header::X_FRAME_OPTIONS, HeaderValue::from_static("DENY"));
+    let csp_value = HeaderValue::from_str(&csp)
+        .unwrap_or_else(|_| HeaderValue::from_static(CONTENT_SECURITY_POLICY));
+    insert_csp(&mut headers, csp_value);
 
     let mut out = Response::builder()
         .status(status)
@@ -94,23 +101,24 @@ pub async fn middleware(req: Request, next: Next) -> Response {
 
 /// Política CSP para un documento HTML: base + hashes de cada script inline.
 pub fn content_security_policy_for_html(html: &str) -> String {
-    let mut script_src = String::from("script-src 'self'");
-    let mut seen = std::collections::BTreeSet::new();
-    seen.insert(THEME_BOOT_SCRIPT_HASH.to_string());
+    content_security_policy_with_script_hashes(
+        inline_script_bodies(html).into_iter().map(csp_sha256),
+    )
+}
 
-    for body in inline_script_bodies(html) {
-        seen.insert(csp_sha256(body));
+fn content_security_policy_with_script_hashes(hashes: impl IntoIterator<Item = String>) -> String {
+    let mut seen: BTreeSet<String> = BTreeSet::new();
+    seen.insert(THEME_BOOT_SCRIPT_HASH.to_string());
+    for h in hashes {
+        seen.insert(h);
     }
+    let mut script_src = String::from("script-src 'self'");
     for hash in &seen {
-        script_src.push(' ');
-        script_src.push('\'');
+        script_src.push_str(" '");
         script_src.push_str(hash);
         script_src.push('\'');
     }
-
-    format!(
-        "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; {script_src}; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'"
-    )
+    format!("{CSP_BEFORE_SCRIPT_SRC}{script_src}{CSP_AFTER_SCRIPT_SRC}")
 }
 
 fn csp_sha256(script: &str) -> String {
@@ -211,6 +219,15 @@ mod tests {
     }
 
     #[test]
+    fn base_csp_embeds_theme_boot_hash_constant() {
+        assert!(CONTENT_SECURITY_POLICY.contains(THEME_BOOT_SCRIPT_HASH));
+        assert_eq!(
+            content_security_policy_with_script_hashes(std::iter::empty()),
+            CONTENT_SECURITY_POLICY
+        );
+    }
+
+    #[test]
     fn caddyfiles_match_security_headers() {
         assert_caddy_parity("Caddyfile", include_str!("../../../deploy/Caddyfile"));
         assert_caddy_parity(
@@ -257,7 +274,6 @@ mod tests {
         let html = r#"<script src="/x.js"></script><script src='/y.js' async></script>"#;
         assert!(inline_script_bodies(html).is_empty());
         let csp = content_security_policy_for_html(html);
-        // Solo el hash fijo del theme-boot en script-src.
         assert!(csp.contains(THEME_BOOT_SCRIPT_HASH));
         assert_eq!(
             csp.matches("sha256-").count(),

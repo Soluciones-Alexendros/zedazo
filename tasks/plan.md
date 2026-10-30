@@ -1,32 +1,32 @@
 # Plan técnico: cierre ship Zedazo v0.6.0
 
-## Baseline
+## Baseline (actualizado tras #107)
 
 | Ref | SHA |
 | --- | --- |
 | `origin/main` | `0830b5da99c7c706c8bb5059c01863c67ae3239d` |
-| `plan/zedazo-v060-seguridad` | `4ab30e1bc59833ba3b0a525293c39dbc7f9fb971` |
-| `refactor/web-ligera` (#107) | `51fb32b953a43ebdb78a72a16d16bcd46969064f` |
-| Run CI fallido | `40279090494` / merge `1e1f8de2452b2c1abe3b46909d492b6d8bc7dce2` |
+| `plan/zedazo-v060-seguridad` | `45e27d7691907c4b34659452e51be0c70fa9be82` (#107) |
+| Head verde pre-merge | `56fe19605c5373baba4b24fe312192b710f81ca2` |
+| CI verde | [41034936451](https://github.com/Soluciones-Alexendros/zedazo/actions/runs/41034936451) |
 
-Trabajo en `refactor/web-ligera` hasta verde; destino de fusión: `plan/zedazo-v060-seguridad`. Sin PRs parciales a `main`.
+`refactor/web-ligera` fusionada. Sin PRs parciales a `main`. plan→main: operador (P9).
 
-## Componentes
+## Componentes (estado)
 
-1. **E2E / GUI detalle**: diagnosticar cuerpo vacío en `/ejecuciones?job=`; readiness; selector robusto; no emitir token.
-2. **Autonomía AppImage**: `resolve_static_dir` → `resource_dir` Tauri; abortar sin `index.html`; smoke autónomo.
-3. **Producto GUI**: recorrido WebView (upload, job, detalle, descarga, error, ciclo de vida) + paridad CLI + I7.
-4. **Offline**: unshare + strace + prueba negativa; fallo si falta aislamiento.
-5. **CI/Makefile**: `web-ci` frozen; fachadas `desktop-preflight` / `desktop-verify` / `desktop-evidence`; test local del gate.
-6. **Identidad**: SHA/fecha embebidos en build; smoke exige 401 + identidad ≠ unknown.
-7. **Ubuntu 26 / release**: expediente + acta; publicación solo Alejandro.
+1. **E2E / GUI**: verde (CSP dinámica + input file sr-only).
+2. **AppImage autónoma**: verde (resources + smoke sin `ZEDAZO_STATIC_DIR`).
+3. **Producto GUI**: recorrido en `i7-sample.mjs`.
+4. **Offline**: detector + prueba negativa verdes.
+5. **CI/Makefile**: web-ci frozen; fachadas desktop-*.
+6. **Identidad**: SHA/fecha embebidos; smoke exige 401.
+7. **Ubuntu 26 / release**: expediente en `tasks/ubuntu26-acta.md` — **stop operador**.
 
-## Riesgos
+## Riesgos residuales
 
-- E2E vacío: posible navegación SPA / hidratación / ruta no servida; no ampliar timeouts a ciegas.
-- `resource_dir` Tauri en AppImage: confirmar path real del extract.
+- Metadatos worktree locales con `commondir` montado RO (requiere `umount` de root).
+- CSP Caddy estática no hashea `__next_f` (la API sí al servir HTML).
 - Rutas `scripts/desktop/**` y `.github/**`: fusión por operador (P9).
 
 ## Verificación
 
-`make ci`, build AppImage, prueba decisiva fuera de checkout, `run-e2e.sh` ×3, `e2e-no-network.sh`, CI remota `ci-gate`.
+`make ci`, build AppImage, prueba decisiva fuera de checkout, E2E ×3, `e2e-no-network.sh`, CI remota `ci-gate`.

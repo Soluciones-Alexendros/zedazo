@@ -10,7 +10,7 @@ export function readThemePreference(): ThemePreference {
   return "system";
 }
 
-export function resolveEffectiveTheme(
+function resolveEffectiveTheme(
   preference: ThemePreference,
 ): "light" | "dark" {
   if (preference === "light" || preference === "dark") return preference;

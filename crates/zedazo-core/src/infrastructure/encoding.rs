@@ -1,4 +1,7 @@
 //! Detección y transcodificación de codificación (ISO-8859-1 → UTF-8).
+//!
+//! `chardetng::guess` devuelve `&'static encoding_rs::Encoding`; hace falta
+//! la dep directa `encoding_rs` para resolver `Encoding::decode`.
 
 use chardetng::EncodingDetector;
 

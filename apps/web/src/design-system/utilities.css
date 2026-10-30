@@ -60,68 +60,8 @@
   padding-left: var(--ds-space-5);
 }
 
-.zed-catalog-grid {
-  display: grid;
-  gap: var(--ds-space-6);
-}
-
-.zed-catalog-swatch {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ds-space-3);
-}
-
 .zed-catalog-actions {
   margin-top: var(--ds-space-5);
-}
-
-.zed-catalog-toc {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ds-space-2) var(--ds-space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.zed-catalog-token-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ds-space-3) var(--ds-space-5);
-}
-
-.zed-catalog-token {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ds-space-2);
-}
-
-.zed-catalog-token__chip {
-  width: var(--ds-space-6);
-  height: var(--ds-space-6);
-  border-radius: var(--ds-radius-md);
-  border: var(--ds-border-width) solid var(--ds-border);
-  flex-shrink: 0;
-}
-
-.zed-catalog-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: var(--ds-space-3);
-}
-
-.zed-catalog-type {
-  display: grid;
-  gap: var(--ds-space-2);
-}
-
-.zed-content {
-  width: min(100%, var(--ds-content-readable));
-}
-
-.zed-content-wide {
-  width: min(100%, var(--ds-content-wide));
 }
 
 :where(
@@ -220,15 +160,7 @@
   color: var(--ds-text-muted);
 }
 
-.zed-fieldset {
-  border: 0;
-  margin: 0;
-  padding: 0;
-  min-inline-size: 0;
-}
-
-.zed-phase-list,
-.zed-timeline {
+.zed-phase-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -240,26 +172,6 @@
 
 .zed-phase-list__item--current {
   font-weight: var(--ds-weight-semibold);
-}
-
-.zed-timeline {
-  border-left: var(--ds-border-width) solid var(--ds-border);
-  padding-left: var(--ds-space-4);
-}
-
-.zed-timeline__item {
-  position: relative;
-  padding: var(--ds-space-3) 0;
-}
-
-.zed-timeline__dot {
-  position: absolute;
-  left: calc(var(--ds-space-2) * -1 - var(--ds-border-width));
-  top: var(--ds-space-4);
-  width: var(--ds-space-2);
-  height: var(--ds-space-2);
-  border-radius: 50%;
-  background: var(--ds-accent);
 }
 
 .zed-stat-bar__value {

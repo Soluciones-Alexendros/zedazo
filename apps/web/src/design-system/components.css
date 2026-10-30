@@ -241,9 +241,6 @@
   color: var(--ds-accent);
 }
 
-.zed-field input,
-.zed-field textarea,
-.zed-field select,
 .zed-input {
   width: 100%;
   min-height: var(--ds-control-height);
@@ -258,23 +255,16 @@
   width: auto;
 }
 
-.zed-field input:disabled,
-.zed-field textarea:disabled,
-.zed-field select:disabled,
 .zed-input:disabled {
   cursor: not-allowed;
   opacity: var(--ds-disabled-opacity);
 }
 
-.zed-field input:focus-visible,
-.zed-field textarea:focus-visible,
-.zed-field select:focus-visible,
 .zed-input:focus-visible {
   outline: var(--ds-focus-width) solid var(--ds-focus);
   outline-offset: var(--ds-focus-offset);
 }
 
-.zed-field textarea,
 .zed-textarea {
   min-height: var(--ds-textarea-min);
   resize: vertical;
@@ -402,12 +392,6 @@
 
 .zed-scrim--modal {
   z-index: var(--ds-z-modal);
-}
-
-.zed-section-heading {
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--ds-space-4);
 }
 
 .zed-stat-card__label {

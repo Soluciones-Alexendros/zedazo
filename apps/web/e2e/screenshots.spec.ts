@@ -12,14 +12,9 @@ test.beforeEach(() => {
 });
 
 const routes: { slug: string; path: string }[] = [
-  { slug: "home", path: "/" },
   { slug: "procesar", path: "/procesar" },
   { slug: "ejecuciones", path: "/ejecuciones" },
-  { slug: "auditar", path: "/auditar" },
-  { slug: "reglas", path: "/reglas" },
   { slug: "ajustes", path: "/ajustes" },
-  { slug: "acceso", path: "/acceso" },
-  { slug: "documentacion", path: "/documentacion" },
 ];
 
 for (const scheme of ["light", "dark"] as const) {

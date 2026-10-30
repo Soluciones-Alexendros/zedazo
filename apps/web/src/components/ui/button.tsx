@@ -4,7 +4,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type ButtonVariant =
+type ButtonVariant =
   | "primary"
   | "secondary"
   | "tertiary"
@@ -13,7 +13,7 @@ export type ButtonVariant =
 
 export type ButtonSize = "sm" | "md";
 
-export type ButtonClassNameOptions = {
+type ButtonClassNameOptions = {
   variant?: ButtonVariant;
   size?: ButtonSize;
   className?: string;
