@@ -5286,6 +5286,7 @@ version = "0.5.1"
 dependencies = [
  "chardetng",
  "csv",
+ "encoding_rs",
  "jiff",
  "nom",
  "regex",
