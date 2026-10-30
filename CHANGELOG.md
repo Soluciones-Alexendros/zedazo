@@ -5,6 +5,51 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.6.0](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.5.1...v0.6.0) (2026-10-30)
+
+
+### Features
+
+* CardDAV write, watch y filtros N1/N2 (ADR-0018 / [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48)) ([47750ec](https://github.com/Soluciones-Alexendros/zedazo/commit/47750ec107386e607974705d4e3ab71ab237d59b))
+* CardDAV write, watch y filtros N1/N2 (ADR-0018 / [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48)) ([#66](https://github.com/Soluciones-Alexendros/zedazo/issues/66)) ([1e5e6f9](https://github.com/Soluciones-Alexendros/zedazo/commit/1e5e6f94833eb9fc49f2543dce7e2e03597f3260))
+* **desktop:** AppImage v0.6.0 — ADR-0021, ci-gate, export estático y Tauri ([#91](https://github.com/Soluciones-Alexendros/zedazo/issues/91)) ([0830b5d](https://github.com/Soluciones-Alexendros/zedazo/commit/0830b5da99c7c706c8bb5059c01863c67ae3239d))
+* **desktop:** v0.6.0 AppImage local-first ([#104](https://github.com/Soluciones-Alexendros/zedazo/issues/104)) ([42cb4d7](https://github.com/Soluciones-Alexendros/zedazo/commit/42cb4d7fc40f9e55bbdcc00a03e2ac765567ec06))
+* primer slice CardDAV pull (ADR-0018 / [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48)) ([c391102](https://github.com/Soluciones-Alexendros/zedazo/commit/c39110222da9fe26cada36d13a86bf9c48e79e0e))
+* primer slice CardDAV pull (ADR-0018 / [#48](https://github.com/Soluciones-Alexendros/zedazo/issues/48)) ([#61](https://github.com/Soluciones-Alexendros/zedazo/issues/61)) ([2f90785](https://github.com/Soluciones-Alexendros/zedazo/commit/2f90785f42af95650ae8db4196373af5552849ec))
+* **web:** contrato de tokens v1 y GUI sin API ([#69](https://github.com/Soluciones-Alexendros/zedazo/issues/69)) ([9423901](https://github.com/Soluciones-Alexendros/zedazo/commit/94239012b97e9f40f59179193cb39c3874588f8f))
+* **web:** GUI DS fase 2 — átomos alineados a tokens --zed-* ([996daf0](https://github.com/Soluciones-Alexendros/zedazo/commit/996daf09717a893010fb51837fb65a872c3e71b8))
+* **web:** GUI DS fase 3 — patrones y pantallas alineados a --zed-* ([7b8bac6](https://github.com/Soluciones-Alexendros/zedazo/commit/7b8bac677e36830c965f686b2f2967c1a4d8e23a))
+* **web:** GUI DS fase 4 — catálogo, axe y regresión visual ([ce06caf](https://github.com/Soluciones-Alexendros/zedazo/commit/ce06caf4994d3720a6dbdc0ef69afe356d956923))
+* **web:** pipeline DTCG de tokens GUI (fase 1, ADR-0019) ([5c75baf](https://github.com/Soluciones-Alexendros/zedazo/commit/5c75baf85ece56b49356b6d65b3de0165d6a9129))
+* **web:** tipografía de flota y morfología neubat ([#70](https://github.com/Soluciones-Alexendros/zedazo/issues/70)) ([5fbfc44](https://github.com/Soluciones-Alexendros/zedazo/commit/5fbfc440263de40fe4c641ad316173e7b003398d))
+
+
+### Bug Fixes
+
+* anclar hrefs CardDAV al origen y aligerar cargo-deny ([d8ec6aa](https://github.com/Soluciones-Alexendros/zedazo/commit/d8ec6aa31cbc13188d5c249cb9dee4d646e86f90))
+* **api:** CORS con cabeceras explícitas y test Prove-It ([95f3ddf](https://github.com/Soluciones-Alexendros/zedazo/commit/95f3ddfa65435cc2f6b0147579f77503f727d2ef))
+* **api:** matriz auth remota y tope de jobs concurrentes ([8187505](https://github.com/Soluciones-Alexendros/zedazo/commit/8187505c5e55be64d08a1d9793752701d3e96662))
+* **api:** reconciliación, retención y borrado reintentable ([9e8ab46](https://github.com/Soluciones-Alexendros/zedazo/commit/9e8ab46958d0f0f212606dc5b01e9563fc588789))
+* **carddav:** cerrar rust/cleartext-logging en test de redacción ([#82](https://github.com/Soluciones-Alexendros/zedazo/issues/82)) ([bed5e12](https://github.com/Soluciones-Alexendros/zedazo/commit/bed5e12fd13aa651f1b5680e157c9867b7b5963a))
+* **carddav:** no volcar el debug de credenciales en el assert ([0ec65d1](https://github.com/Soluciones-Alexendros/zedazo/commit/0ec65d1c485b2b715e4cd7ad814a1fa6614236af))
+* **ci:** E2E real vía rewrite same-origin y CORS credentials ([9ccd89d](https://github.com/Soluciones-Alexendros/zedazo/commit/9ccd89d1caf5b0ed76225b31072103c7378206a2))
+* **ci:** gates de release que exigen binarios y SBOM ([17936df](https://github.com/Soluciones-Alexendros/zedazo/commit/17936df1b1dfd9dcb019be40b1ff0589bdc4ce15))
+* **ci:** no saltar publish crates.io tras builds skipped ([3f76b23](https://github.com/Soluciones-Alexendros/zedazo/commit/3f76b23bccc277cccc554f0e9eccae850db7a088))
+* **ci:** publish crates.io + recovery workflow ([#55](https://github.com/Soluciones-Alexendros/zedazo/issues/55)) ([1d73c3f](https://github.com/Soluciones-Alexendros/zedazo/commit/1d73c3f7f2ac67cf9b94bf548168a3d3e8aab589))
+* **ci:** quinn-proto 0.11.19 y E2E API con NEXT_PUBLIC_API_BASE ([3f432e9](https://github.com/Soluciones-Alexendros/zedazo/commit/3f432e99ea6ae5effca93f03f07b17574b771e96))
+* **ci:** rustls 0.23.46 y mocks Playwright same-origin ([e356f34](https://github.com/Soluciones-Alexendros/zedazo/commit/e356f34f1b8e2e45ddfdbe0f6c9a0d13e6a19f2b))
+* **deploy:** stack Docker same-origin con Caddy de entrada ([495c81d](https://github.com/Soluciones-Alexendros/zedazo/commit/495c81db9ef8a64f3f8d329889fdf413afd24f9b))
+* **deps:** rustls-webpki, tokio y webpki-roots (RUSTSEC-2026) ([eea0e42](https://github.com/Soluciones-Alexendros/zedazo/commit/eea0e423bae61ec57eeb3178b420f86d31a0f4ab))
+* **landing:** nombre accesible del enlace a crates.io ([02b9687](https://github.com/Soluciones-Alexendros/zedazo/commit/02b9687724e61790fb1fb2238951de0042f80030))
+* rustls 0.23.45 y política de cargo audit (RUSTSEC-2026-0285) ([18193e1](https://github.com/Soluciones-Alexendros/zedazo/commit/18193e113fa91086029e7c0c183c000626b3cbe4))
+* rustls 0.23.45 y política de cargo audit (RUSTSEC-2026-0285) ([#67](https://github.com/Soluciones-Alexendros/zedazo/issues/67)) ([e0bf74b](https://github.com/Soluciones-Alexendros/zedazo/commit/e0bf74b4fae5db3c09e6255b0d87186a7258a3e3))
+* **web:** cerrar alertas de next, sharp, postcss y transitivas ([8f9e797](https://github.com/Soluciones-Alexendros/zedazo/commit/8f9e797f538ebb50acb869cc401ed107d3119b85))
+* **web:** cerrar alertas Dependabot de apps/web ([#83](https://github.com/Soluciones-Alexendros/zedazo/issues/83)) ([d29822e](https://github.com/Soluciones-Alexendros/zedazo/commit/d29822e8d44ef39515d67e7580a18b6819be64d1))
+* **web:** copy en español del catálogo mínimo de átomos ([ec40e09](https://github.com/Soluciones-Alexendros/zedazo/commit/ec40e09f617a8171e4b22a0ca73a5be292b1fd8a))
+* **web:** estructura válida de MetadataList para axe en /ajustes ([677a925](https://github.com/Soluciones-Alexendros/zedazo/commit/677a92592d5d2a52ebf10cf92bff4c195c0ea7f1))
+* **web:** mapear OKLCH al gamut sRGB antes del contraste ([31046b9](https://github.com/Soluciones-Alexendros/zedazo/commit/31046b9370674214869c4c9ab4578f2c80d83c7f))
+* **web:** zod 4.6.6 (alertas Dependabot high) ([#85](https://github.com/Soluciones-Alexendros/zedazo/issues/85)) ([684511d](https://github.com/Soluciones-Alexendros/zedazo/commit/684511d4930f215666f507bd57d591d7984e06f1))
+
 ## [Unreleased]
 
 ### Added
