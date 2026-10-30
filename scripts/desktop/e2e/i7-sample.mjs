@@ -62,31 +62,42 @@ function emit(key, value) {
   }
 }
 
+/** Texto visible o contenido DOM (WebKit a veces deja innerText vacío tras navegación). */
+function pageSignal(snap) {
+  return Math.max(snap.textLen || 0, snap.textContentLen || 0, snap.htmlLen || 0);
+}
+
 /** Readiness: documento usable + token de sesión presente. */
-async function waitAppReady(label, timeoutMs = 30_000) {
+async function waitAppReady(label, timeoutMs = 45_000) {
   const deadline = Date.now() + timeoutMs;
   let last = "";
   while (Date.now() < deadline) {
     const snap = await browser.execute(() => {
       // eslint-disable-next-line no-undef
       const body = document.body;
+      const inner = body ? body.innerText || "" : "";
+      const textContent = body ? body.textContent || "" : "";
       return {
         ready: document.readyState,
         url: location.href,
-        textLen: body ? (body.innerText || "").length : 0,
-        text: body ? (body.innerText || "").slice(0, 200) : "",
+        textLen: inner.length,
+        textContentLen: textContent.length,
+        htmlLen: body ? body.innerHTML.length : 0,
+        text: (inner || textContent).slice(0, 200),
         // eslint-disable-next-line no-undef
         hasToken: typeof window.__ZEDAZO_SESSION_TOKEN__ === "string",
+        title: document.title || "",
       };
     });
     last = JSON.stringify(snap);
+    const signal = pageSignal(snap);
     if (
       snap.ready === "complete" &&
       snap.hasToken &&
-      snap.textLen > 0 &&
+      signal > 32 &&
       /127\.0\.0\.1:\d+/.test(String(snap.url))
     ) {
-      console.log(`ready:${label}`);
+      console.log(`ready:${label} signal=${signal}`);
       return snap;
     }
     await browser.pause(250);
@@ -96,11 +107,15 @@ async function waitAppReady(label, timeoutMs = 30_000) {
 
 async function gotoLoopback(pathAndQuery) {
   const path = pathAndQuery.startsWith("/") ? pathAndQuery : `/${pathAndQuery}`;
-  await browser.execute((p) => {
-    // eslint-disable-next-line no-undef
-    window.location.assign(p);
-  }, path);
-  await waitAppReady(`nav:${path}`);
+  // browser.url (navegación WebDriver) es más fiable que location.assign en wry/WebKit:
+  // assign dejaba readyState=complete + token pero DOM vacío (CI e78df058).
+  const baseUrl = await browser.getUrl();
+  const origin = String(baseUrl).match(/^(https?:\/\/127\.0\.0\.1:\d+)/)?.[1];
+  if (!origin) {
+    throw new Error(`no se pudo derivar origin de getUrl(): ${baseUrl}`);
+  }
+  await browser.url(`${origin}${path}`);
+  await waitAppReady(`nav:${path}`, 60_000);
 }
 
 async function clickDescargar(timeoutMs = 20_000) {
@@ -142,7 +157,8 @@ async function clickDescargar(timeoutMs = 20_000) {
 }
 
 try {
-  await waitAppReady("boot", 45_000);
+  // Offline/unshare: WebKit puede tardar más en hidratar; 90s.
+  await waitAppReady("boot", 90_000);
   const title = await browser.getTitle();
   console.log("window title:", title);
 
@@ -293,7 +309,12 @@ try {
   const artBuf = Buffer.from(await artApi.arrayBuffer());
   const artSha = createHash("sha256").update(artBuf).digest("hex");
 
-  await gotoLoopback(`/ejecuciones?job=${encodeURIComponent(jobId)}`);
+  // Detalle: navegación WebDriver + esperar botón (no solo textLen; WebKit a veces
+  // reporta innerText vacío con DOM presente — CI e78df058).
+  await browser.url(
+    `http://${addr}/ejecuciones?job=${encodeURIComponent(jobId)}`,
+  );
+  await waitAppReady(`job-detail:${jobId}`, 60_000);
   await clickDescargar();
   await browser.pause(800);
   const downloadErr = await browser.execute(() => {
