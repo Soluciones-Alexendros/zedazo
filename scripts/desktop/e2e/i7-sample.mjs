@@ -62,9 +62,9 @@ function emit(key, value) {
   }
 }
 
-/** Texto visible o contenido DOM (WebKit a veces deja innerText vacío tras navegación). */
+/** Texto de página (no htmlLen solo: scripts cuentan y enmascaran DOM muerto). */
 function pageSignal(snap) {
-  return Math.max(snap.textLen || 0, snap.textContentLen || 0, snap.htmlLen || 0);
+  return Math.max(snap.textLen || 0, snap.textContentLen || 0);
 }
 
 /** Readiness: documento usable + token de sesión presente. */
@@ -118,7 +118,7 @@ async function gotoLoopback(pathAndQuery) {
   await waitAppReady(`nav:${path}`, 60_000);
 }
 
-async function clickDescargar(timeoutMs = 20_000) {
+async function clickDescargar(timeoutMs = 30_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const btn = await browser.$("button.zed-button--primary");
@@ -143,17 +143,53 @@ async function clickDescargar(timeoutMs = 20_000) {
   const diag = await browser.execute(() => {
     // eslint-disable-next-line no-undef
     const body = document.body;
+    const buttons = Array.from(document.querySelectorAll("button")).map((b) =>
+      (b.textContent || "").trim().slice(0, 40),
+    );
     return {
       url: location.href,
       // eslint-disable-next-line no-undef
       hasToken: typeof window.__ZEDAZO_SESSION_TOKEN__ === "string",
-      text: body ? (body.innerText || "").slice(0, 600) : "",
+      text: body ? (body.innerText || body.textContent || "").slice(0, 600) : "",
       htmlLen: body ? body.innerHTML.length : 0,
+      buttons: buttons.slice(0, 20),
+      gate: Boolean(document.querySelector(".zed-gate")),
     };
   });
   throw new Error(
     `no se encontró botón Descargar en detalle de job: ${JSON.stringify(diag)}`,
   );
+}
+
+/** Navegación in-app (Next Link) para no perder hidratación tras browser.url. */
+async function openJobDetailViaGui(jobId) {
+  const side = await browser.$('a[href="/ejecuciones"]');
+  if (await side.isExisting().catch(() => false)) {
+    await side.click();
+    await waitAppReady("ejecuciones-list", 45_000);
+  } else {
+    await gotoLoopback("/ejecuciones");
+  }
+
+  const href = `/ejecuciones?job=${encodeURIComponent(jobId)}`;
+  const deadline = Date.now() + 45_000;
+  while (Date.now() < deadline) {
+    const link = await browser.$(`a[href="${href}"]`);
+    if (await link.isExisting().catch(() => false)) {
+      await link.click();
+      await waitAppReady(`job-detail-soft:${jobId}`, 45_000);
+      return;
+    }
+    await browser.pause(500);
+  }
+  const origin = String(await browser.getUrl()).match(
+    /^(https?:\/\/127\.0\.0\.1:\d+)/,
+  )?.[1];
+  if (!origin) {
+    throw new Error("no origin para fallback job-detail");
+  }
+  await browser.url(`${origin}${href}`);
+  await waitAppReady(`job-detail-hard:${jobId}`, 60_000);
 }
 
 try {
@@ -309,12 +345,9 @@ try {
   const artBuf = Buffer.from(await artApi.arrayBuffer());
   const artSha = createHash("sha256").update(artBuf).digest("hex");
 
-  // Detalle: navegación WebDriver + esperar botón (no solo textLen; WebKit a veces
-  // reporta innerText vacío con DOM presente — CI e78df058).
-  await browser.url(
-    `http://${addr}/ejecuciones?job=${encodeURIComponent(jobId)}`,
-  );
-  await waitAppReady(`job-detail:${jobId}`, 60_000);
+  // Detalle vía GUI (Link cliente): evita documento «muerto» tras browser.url
+  // (htmlLen>0 pero sin botones — CI c119b360).
+  await openJobDetailViaGui(jobId);
   await clickDescargar();
   await browser.pause(800);
   const downloadErr = await browser.execute(() => {
