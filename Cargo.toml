@@ -10,7 +10,7 @@ members = [
 default-members = ["crates/zedazo-cli"]
 
 [workspace.package]
-version = "0.5.1"
+version = "0.6.0"
 edition = "2021"
 rust-version = "1.80"
 license = "MIT OR Apache-2.0"
@@ -18,7 +18,7 @@ repository = "https://github.com/Soluciones-Alexendros/zedazo"
 homepage = "https://github.com/Soluciones-Alexendros/zedazo"
 
 [workspace.dependencies]
-zedazo-core = { path = "crates/zedazo-core", version = "0.5.1" }
+zedazo-core = { path = "crates/zedazo-core", version = "0.6.0" }
 zedazo-carddav = { path = "crates/zedazo-carddav" }
 clap = { version = "4.5", features = ["derive"] }
 clap_complete = "4.5"
