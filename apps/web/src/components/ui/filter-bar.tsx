@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import styles from "@/styles/states.module.css";
 import { IconButton } from "./icon-button";
 
-export type FilterChip = {
+type FilterChip = {
   id: string;
   label: string;
 };

@@ -16,11 +16,9 @@ nom = { workspace = true }
 regex = { workspace = true }
 csv = { workspace = true }
 tracing = { workspace = true }
-strsim = { workspace = true }
 thiserror = { workspace = true }
 jiff = { workspace = true }
 chardetng = { workspace = true }
-encoding_rs = { workspace = true }
 toml = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

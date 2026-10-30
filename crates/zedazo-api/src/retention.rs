@@ -3,14 +3,12 @@
 //! El TTL no es exacto al segundo: el barrido corre cada hora (y una vez al arrancar).
 
 use std::collections::HashMap;
-use std::sync::Arc;
 
-use tokio::sync::{broadcast, RwLock};
 use zedazo_core::application::process::CancellationToken;
 
 use crate::app::AppState;
 use crate::dto::{JobManifest, JobRecord, JobStatus};
-use crate::jobs::{now_rfc3339, JobEvent};
+use crate::jobs::now_rfc3339;
 use crate::storage::{PendingKind, Storage, DEFAULT_UPLOAD_TTL_HOURS};
 
 fn is_terminal(status: &JobStatus) -> bool {
@@ -412,21 +410,6 @@ pub async fn delete_job_tracked(state: &AppState, job_id: &str) -> DeleteOutcome
             DeleteOutcome::PendingRetry
         }
     }
-}
-
-/// Garantiza un canal de eventos para jobs recuperados (si se pide SSE).
-#[allow(dead_code)]
-pub async fn ensure_event_channel(
-    events: &Arc<RwLock<HashMap<String, broadcast::Sender<JobEvent>>>>,
-    job_id: &str,
-) -> broadcast::Sender<JobEvent> {
-    let mut ev = events.write().await;
-    if let Some(tx) = ev.get(job_id) {
-        return tx.clone();
-    }
-    let (tx, _) = broadcast::channel(256);
-    ev.insert(job_id.to_string(), tx.clone());
-    tx
 }
 
 #[cfg(test)]

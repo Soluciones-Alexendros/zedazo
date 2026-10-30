@@ -64,7 +64,7 @@ export function probeAdapter(): Promise<AdapterKind> {
   return probe;
 }
 
-export function currentFixture(): LocalFixture {
+function currentFixture(): LocalFixture {
   if (typeof window === "undefined") return "resultado";
   const fixture = readFixture(
     window.location.search,
