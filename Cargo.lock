@@ -5228,7 +5228,7 @@ dependencies = [
 
 [[package]]
 name = "zedazo"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -5242,7 +5242,7 @@ dependencies = [
 
 [[package]]
 name = "zedazo-api"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -5269,7 +5269,7 @@ dependencies = [
 
 [[package]]
 name = "zedazo-carddav"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "reqwest 0.12.28",
  "roxmltree",
@@ -5282,7 +5282,7 @@ dependencies = [
 
 [[package]]
 name = "zedazo-core"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "chardetng",
  "csv",
@@ -5301,7 +5301,7 @@ dependencies = [
 
 [[package]]
 name = "zedazo-desktop"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "anyhow",
  "axum",
