@@ -49,6 +49,8 @@ const browser = await remote({
   connectionRetryCount: 3,
   connectionRetryTimeout: 180_000,
   logLevel: "warn",
+  // WDIO 10: `$()` exige un único match; la GUI tiene enlaces duplicados (nav/sidebar).
+  strictSelectors: false,
 });
 
 function emit(key, value) {
