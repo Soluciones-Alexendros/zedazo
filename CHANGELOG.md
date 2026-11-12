@@ -5,6 +5,13 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.6.1](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.0...v0.6.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **deps:** limpiar alertas altas del e2e de escritorio ([#112](https://github.com/Soluciones-Alexendros/zedazo/issues/112)) ([219906d](https://github.com/Soluciones-Alexendros/zedazo/commit/219906d4dd4d327bba534fa2a5de44ca887f3d9b))
+
 ## [0.6.0](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.5.1...v0.6.0) (2026-10-30)
 
 
