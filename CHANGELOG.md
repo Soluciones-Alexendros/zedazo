@@ -5,6 +5,13 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.6.2](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.1...v0.6.2) (2026-11-17)
+
+
+### Bug Fixes
+
+* remediación P0–P2 de la auditoría (quinn-udp, Dependabot, e2e, higiene) ([#115](https://github.com/Soluciones-Alexendros/zedazo/issues/115)) ([151ac4b](https://github.com/Soluciones-Alexendros/zedazo/commit/151ac4bc2485b2e81557cf934a3c2baef2794385))
+
 ## [0.6.1](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.0...v0.6.1) (2026-10-31)
 
 
