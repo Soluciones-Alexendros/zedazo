@@ -85,18 +85,31 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts
           # `Release` arranca en paralelo; su job `host` sube los assets al draft.
+          # Se deja de esperar cuando el número de ficheros se estabiliza (3
+          # lecturas iguales): entonces manda el checklist, que falla con un
+          # mensaje concreto en vez de agotar el tiempo.
+          last_count=-1
+          stable=0
           for attempt in $(seq 1 60); do
             if gh release view "$TAG" >/dev/null 2>&1; then
-              if gh release download "$TAG" --dir artifacts --clobber 2>/dev/null; then
-                count=$(find artifacts -type f | wc -l)
-                if [[ "$count" -ge 12 ]]; then
-                  echo "OK: $count assets descargados en el intento $attempt."
-                  ls -la artifacts
-                  exit 0
-                fi
-                echo "intento $attempt: $count assets (esperando al menos 12)"
+              gh release download "$TAG" --dir artifacts --clobber 2>/dev/null || true
+              count=$(find artifacts -type f | wc -l)
+              if [[ "$count" -ge 12 ]]; then
+                echo "OK: $count assets descargados en el intento $attempt."
+                ls -la artifacts
+                exit 0
+              fi
+              if [[ "$count" -eq "$last_count" ]]; then
+                stable=$((stable + 1))
               else
-                echo "intento $attempt: release '$TAG' aún sin assets"
+                stable=0
+                last_count="$count"
+              fi
+              echo "intento $attempt: $count assets (estable en $stable/3)"
+              if [[ "$stable" -ge 3 ]]; then
+                echo "Aviso: la lista de assets se estabilizó en $count; se valida con lo que hay."
+                ls -la artifacts
+                exit 0
               fi
             else
               echo "intento $attempt: release '$TAG' aún no existe"
