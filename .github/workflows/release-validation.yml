@@ -265,9 +265,12 @@ jobs:
             fi
             echo "OK: checksum del AppImage."
           fi
-          # --appimage-extract-and-run evita necesitar FUSE en CI.
-          "$APPIMAGE" --appimage-extract-and-run --version
-          "$APPIMAGE" --appimage-extract-and-run --help >/dev/null
+          # --appimage-extract-and-run evita FUSE; xvfb porque el binario Tauri
+          # inicializa GTK incluso para --version (sin display paniquea).
+          xvfb-run -a -s "-screen 0 1280x800x24" \
+            "$APPIMAGE" --appimage-extract-and-run --version
+          xvfb-run -a -s "-screen 0 1280x800x24" \
+            "$APPIMAGE" --appimage-extract-and-run --help >/dev/null
           echo "OK: AppImage ejecuta."
 
   # 3. Paridad CLI↔API (O10) sobre el código del tag.
