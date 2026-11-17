@@ -49,6 +49,11 @@ on:
   push:
     tags:
       - '**[0-9]+.[0-9]+.[0-9]+*'
+  # Los tags creados por release-please usan GITHUB_TOKEN y NO disparan `push`
+  # (GitHub bloquea la recursión). release-please.yml despacha este workflow
+  # con `--ref <tag>` tras crear la release.
+  # Ref: https://docs.github.com/actions/using-workflows/triggering-a-workflow
+  workflow_dispatch:
 
 jobs:
   # Run 'dist plan' (or host) to determine what tasks we need to do
