@@ -40,32 +40,35 @@ funcionalidad de producto; es un cierre de salud del repo.
 
 ### Fase 1 — P0: desbloquear el gate de seguridad
 
-- [ ] **Task 1**: `quinn-udp` 0.5.15 → 0.5.16 (RUSTSEC-2026-0538).
+- [x] **Task 1**: `quinn-udp` 0.5.15 → 0.5.16 (RUSTSEC-2026-0538).
 
 ### Checkpoint A (tras Task 1)
 
-- [ ] `cargo audit` sin `error: 1 vulnerability found`
+- [x] `cargo audit` sin `error: 1 vulnerability found`
 - [ ] `Security Audit` y `Security / sca` verdes en CI; `ci-gate` verde en el PR
 
 ### Fase 2 — P1: alertas npm + Renovate/MSRV
 
-- [ ] **Task 2**: resolver Dependabot `minimatch` (CVE-2026-118764) y `glob` (CVE-2026-118773).
-- [ ] **Task 3**: pins Renovate Opción A — `encoding_rs <0.8.40`, `uuid <1.27.0`.
+- [x] **Task 2**: resolver Dependabot `minimatch` (CVE-2026-118764) y `glob` (CVE-2026-118773).
+  Corregido respecto al borrador: están en `scripts/desktop/e2e`, no en `apps/web`.
+- [x] **Task 3**: pins Renovate Opción A — `encoding_rs <0.8.40`, `uuid <1.27.0`, más
+  `lockFileMaintenance` de cargo desactivado (los pins solos no lo contienen).
 
 ### Checkpoint B (tras Tasks 2–3)
 
-- [ ] `pnpm audit --prod --audit-level=high` limpio; 0 alertas Dependabot `open` (medium+)
-- [ ] `make compose-smoke` y check MSRV 1.80 verdes sobre lock refrescado
+- [x] `npm audit` del e2e limpio; `renovate-config-validator` OK
+- [ ] 0 alertas Dependabot `open` (medium+) tras el merge
+- [ ] `make compose-smoke` y check MSRV 1.80 verdes sobre lock refrescado (CI: sin docker local)
 
 ### Fase 3 — P1: estabilidad e2e
 
-- [ ] **Task 4**: determinismo de `Desktop e2e` ante diálogos nativos.
+- [x] **Task 4**: determinismo de `Desktop e2e` ante diálogos nativos.
 
 ### Fase 4 — P2: higiene
 
-- [ ] **Task 5**: consolidar fixture duplicado `sample-contacts.vcf` / `examples/sample.vcf`.
-- [ ] **Task 6**: añadir `.env.example`.
-- [ ] **Task 7**: registrar plan de migración `chrono → jiff` y revisión `rustix`.
+- [x] **Task 5**: consolidar fixture duplicado `sample-contacts.vcf` / `examples/sample.vcf`.
+- [x] **Task 6**: añadir `.env.example`.
+- [x] **Task 7**: registrar plan de migración `chrono → jiff` y revisión `rustix` (ADR-0022).
 
 ### Checkpoint C (final)
 

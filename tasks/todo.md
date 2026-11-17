@@ -1,117 +1,96 @@
 # Tasks: remediación de hallazgos P0–P2
 
-> Plan en `tasks/plan.md`. Orden bottom-up; cada tarea deja el repo verde.
-> Verificar siempre con el comando real del repo antes de marcar como hecho.
+> Plan en `tasks/plan.md`. Rama `fix/remediacion-p0-p2`.
+> Estado: **7/7 tareas cerradas** (2026-11-17). Pendiente sólo la verificación en CI
+> de los jobs que no corren en la máquina del operador (Compose smoke, e2e de
+> escritorio) — ver la nota al final.
 
-## Task 1: Bump quinn-udp 0.5.15 → 0.5.16 (RUSTSEC-2026-0538)
+## Task 1: Bump quinn-udp 0.5.15 → 0.5.16 (RUSTSEC-2026-0538) — HECHA
 
-- [ ] **Descripción**: parchear `quinn-udp` (bucle de receive tras datagrama truncado)
-      vía `cargo update -p quinn-udp`. Cadena: `quinn 0.11.11 → reqwest 0.12.28 → zedazo-carddav`.
-- [ ] Acceptance: `cargo audit` termina sin `error: 1 vulnerability found`; solo quedan
-      los 2 avisos permitidos (`chrono`, `rustix`).
-- [ ] Verification: `cargo audit`; `cargo clippy --workspace --all-targets --all-features --exclude zedazo-desktop -- -D warnings`;
-      `cargo test --workspace --all-features`; CI `Security Audit` + `Security/sca` + `ci-gate` verdes.
-- [ ] Dependencies: Ninguna
-- [ ] Implementation roles: — (cambio de lockfile; sin lógica de dominio/red)
-- [ ] Test surfaces: `cargo audit`; suite Rust workspace completa
-- [ ] Files: `Cargo.lock`
-- [ ] Scope: XS (1 fichero)
+- [x] `cargo update -p quinn-udp` (sólo toca ese crate; `cargo audit` limpio).
+- [x] Acceptance: `cargo audit` sin vulnerabilidades; quedan los 2 avisos permitidos.
+- [x] Efecto colateral documentado en el commit: el resolver re-unifica `windows-sys`
+      a 0.52.0/0.48.0 para errno/ring/rustix/tempfile/winapi-util/dirs-sys (cfg(windows)).
+- [x] Commit `fix(deps): quinn-udp 0.5.16 (RUSTSEC-2026-0538)`.
 
-## Task 2: Resolver Dependabot minimatch + glob (apps/web)
+## Task 2: Alertas Dependabot minimatch + glob — HECHA
 
-- [ ] **Descripción**: cerrar las 2 alertas abiertas: `minimatch`
-      (CVE-2026-118764, GHSA-g3hv-75wg-m249, vulnerable `>=7.0.0,<11.0.1`, parche `11.0.1`)
-      y `glob` (CVE-2026-118773, GHSA-3g3m-2fjr-6pw4, vulnerable `>=9.0.0,<=14.0.1`,
-      parche `14.0.2`). Localizar el origen transitivo con `pnpm why` y subir el rango
-      correspondiente (override `pnpm.overrides` o actualización Renovate).
-- [ ] Acceptance: `pnpm audit --prod --audit-level=high` sin hallazgos; ambas alertas
-      pasan a `fixed` en GitHub; sin regresión en `apps/web`.
-- [ ] Verification: `pnpm install --frozen-lockfile && pnpm audit --prod --audit-level=high`;
-      `make web-ci`; comprobar en la pestaña Dependabot que quedan 0 `open` medium+.
-- [ ] Dependencies: Ninguna
-- [ ] Implementation roles: — (gestión de dependencias; sin código)
-- [ ] Test surfaces: `pnpm audit`; suite `apps/web` (web-ci: build + Playwright + a11y)
-- [ ] Files: `apps/web/package.json` (overrides), `apps/web/pnpm-lock.yaml`
-- [ ] Scope: S (1–2 ficheros + lock)
+- [x] **Corrección al plan**: las alertas NO estaban en `apps/web` (allí `minimatch`
+      está overrideado a 11.0.3) sino en `scripts/desktop/e2e/package-lock.json`,
+      cadena `webdriverio → @wdio/config → glob → minimatch` y `archiver → readdir-glob`.
+- [x] `webdriverio ^10.1.0 → ^10.2.0` (@wdio/config 10.2.0 exige `glob ^14.0.2`:
+      parchea GHSA-3g3m-2fjr-6pw4).
+- [x] Override `readdir-glob ^4.0.0` (arrastra `minimatch ^11.0.1`, parchea
+      GHSA-g3hv-75wg-m249) en vez de 10.2.6.
+- [x] Verification: `npm audit` = 0 vulnerabilities; `npm ci --ignore-scripts
+      --prefix scripts/desktop/e2e` OK; `node --check` del spec OK.
 
-## Task 3: Pins Renovate Opción A (encoding_rs <0.8.40, uuid <1.27.0)
+## Task 3: Pins Renovate Opción A — HECHA
 
-- [ ] **Descripción**: el lock-file-maintenance de Renovate rompe el build al subir
-      `encoding_rs` (0.8.40+ declara rustc 1.88) y `uuid` (1.27.0+ declara rustc 1.89)
-      por encima de `rust:1.85-bookworm` y MSRV 1.80. Añadir pins `allowedVersions` en
-      `.github/renovate.json`, manager `cargo`, sin subir MSRV.
-- [ ] Acceptance: los pins figuran en `packageRules` con comentario de motivo/fecha;
-      un refresh de lock deja `make compose-smoke` y el check MSRV 1.80 verdes.
-- [ ] Verification: `make compose-smoke`; re-ejecutar `cargo update -p encoding_rs -p uuid --dry-run`
-      y confirmar que quedan anclados; validar JSON de `.github/renovate.json`; CI del PR
-      de lock maintenance verde (o al menos sin fallo de compose/MSRV).
-- [ ] Dependencies: Task 1 (mismo grafo Rust)
-- [ ] Implementation roles: — (configuración de Renovate)
-- [ ] Test surfaces: Compose smoke (Docker), check MSRV 1.80, job `Security`
-- [ ] Files: `.github/renovate.json`
-- [ ] Scope: S (1 fichero). Nota P9: `.github/**` → fusión con `policy-exception` por el operador.
+- [x] **Corrección al plan**: `allowedVersions` **no** contiene `lockFileMaintenance`
+      (Renovate borra el lock y ejecuta el package manager; verificado en su doc).
+      Además de los pins se desactiva `lockFileMaintenance` sólo para `cargo`.
+- [x] `allowedVersions`: `encoding_rs < 0.8.40`, `uuid < 1.27.0` (0.8.40 y 1.27.0
+      declaran rustc 1.88 y 1.89; la imagen es rust:1.85).
+- [x] Verification: `renovate-config-validator` → Config validated successfully.
+- [x] Descartado `[resolver] incompatible-rust-versions = "fallback"`: con MSRV 1.80
+      degradaría media flota (clap, brotli, cfb, darling…). Probado en dry-run.
+- [x] Anexo P9: toca `.github/**` → `policy-exception`, no auto-merge.
 
-## Task 4: Estabilizar Desktop e2e `unexpected alert open`
+## Task 4: Desktop e2e `unexpected alert open` — HECHA (verificación en CI)
 
-- [ ] **Descripción**: el spec `i7-sample.mjs` dispara el flujo «Borrar todos los datos»,
-      que usa `window.confirm/alert` nativos (`apps/desktop/src/menu_es.rs`), y WebDriver
-      falla con `unexpected alert open` al navegar después. Hacer el flujo determinista:
-      aceptar/descartar el diálogo explícitamente tras la acción y antes de cualquier
-      `browser.url`. No se sustituyen los diálogos nativos (fuera de alcance, D4).
-- [ ] Acceptance: `Desktop e2e (tauri-driver)` y `(no network)` verdes en ≥3 ejecuciones
-      consecutivas; sin `WebDriverError: unexpected alert open` en logs.
-- [ ] Verification: `bash scripts/desktop/e2e-tauri-driver.sh` y `bash scripts/desktop/e2e-no-network.sh`
-      ×3; `make web-ci` (no regresión web).
-- [ ] Dependencies: Ninguna (independiente de Rust/npm)
-- [ ] Implementation roles: role-front (flujos de interacción) + plan-validators (bucle de test)
-- [ ] Test surfaces: e2e de escritorio (tauri-driver, no-network); flujo de borrado local
-- [ ] Files: `scripts/desktop/e2e/i7-sample.mjs`
-- [ ] Scope: M (1 fichero, con iteración de depuración)
+- [x] Causa: `window.confirm()` de `/ajustes` y `confirm()+alert()` del menú nativo
+      (`apps/desktop/src/menu_es.rs`); WebKitGTK/tauri-driver no los auto-descarta.
+- [x] Helper `settleNativeDialog()`: `dismissAlert()` → interpreta `no such alert` como
+      «no había diálogo» → fallback a `acceptAlert()`. **No** usa `isAlertOpen()`
+      (comando solo-Chromium, no existe en WebKitGTK).
+- [x] Se invoca tras el click de borrado, en `gotoLoopback()` y antes de V-03.
+- [x] Verification local: `node --check` OK.
+- [ ] **Verificación pendiente en CI**: `Desktop e2e (tauri-driver)` y `(no network)`
+      ×3. La máquina del operador no tiene `xvfb-run`, `tauri-driver` ni AppImage
+      (`preflight.sh` → `falta xvfb-run`).
 
-## Task 5: Consolidar fixture duplicado sample.vcf
+## Task 5: Fixture duplicado consolidado — HECHA
 
-- [ ] **Descripción**: `crates/zedazo-core/tests/fixtures/sample-contacts.vcf` es
-      byte-idéntico a `examples/sample.vcf` (sha256 `14212ea18318f285`). Dejar un único
-      fixture canónico y referenciar desde `examples/` o eliminarlo.
-- [ ] Acceptance: un solo fichero fuente; `rg -l "sample.vcf"` sin referencias rotas;
-      `make ci` verde.
-- [ ] Verification: `rg -l "sample.vcf"`; `cargo test --workspace --all-features`
-- [ ] Dependencies: Ninguna
-- [ ] Implementation roles: role-clean-code (limpieza de duplicación)
-- [ ] Test surfaces: tests que usan el fixture (zedazo-core)
-- [ ] Files: `examples/sample.vcf` (o el fixture de tests), README si lo referencia
-- [ ] Scope: XS
+- [x] `examples/sample.vcf` pasa a **symlink relativo** al fixture canónico del crate
+      (`crates/zedazo-core/tests/fixtures/sample-contacts.vcf`); se conserva el
+      contenido en el crate (autocontenido para tests/publicación).
+- [x] `examples/README.md` explica el enlace y sus consumidores.
+- [x] Verification: sha256 idéntico (`14212ea1…`) y `cp` del symlink OK;
+      `cargo test -p zedazo-core --test integration_test --all-features` 17 pass.
 
-## Task 6: Añadir .env.example
+## Task 6: `.env.example` — HECHA
 
-- [ ] **Descripción**: crear `.env.example` con las claves `ZEDAZO_*` documentadas
-      (auth, static dir, CardDAV, bind) y valores de ejemplo sin secretos; enlazarlo
-      desde `README.md`.
-- [ ] Acceptance: fichero presente y documentado; `gitleaks` (job secrets) sin hallazgos.
-- [ ] Verification: `bash -n`/`shellcheck` si aplica; job `Security/secrets` verde
-- [ ] Dependencies: Ninguna
-- [ ] Implementation roles: — (documentación de operación)
-- [ ] Test surfaces: secret scanning (gitleaks)
-- [ ] Files: `.env.example`, `README.md`
-- [ ] Scope: XS
+- [x] Plantilla con API/bind, datos y retención, auth, OTEL y CardDAV; valores por
+      defecto contrastados con el código (24 h retención, 24 h upload TTL, 50 MiB,
+      4 jobs concurrentes).
+- [x] Sin defaults inventados: `ZEDAZO_JOB_TIMEOUT_SECS` comentado (sin límite por
+      defecto); secretos (`AUTH_TOKEN`, `CARDDAV_PASSWORD`) comentados.
+- [x] Enlazado desde `README.md`; `.env` sigue en `.gitignore`.
 
-## Task 7: Registrar plan chrono→jiff y revisión rustix
+## Task 7: Deuda `chrono`/`rustix` registrada — HECHA
 
-- [ ] **Descripción**: anotar en `DECISIONS.md` (y `ROADMAP.md` si procede) la hoja de
-      ruta de los avisos informativos no bloqueantes: `chrono` unmaintained (migrar a
-      `jiff`, ya en el árbol; seguimiento del transitivo Tauri) y `rustix` unsound
-      (revisión al publicar parche). Sin cambios de código.
-- [ ] Acceptance: entradas con motivo y fecha de revisión (patrón `.cargo/audit.toml`);
-      `make docs-validate` verde.
-- [ ] Verification: `make docs-validate`
-- [ ] Dependencies: Ninguna
-- [ ] Implementation roles: — (documentación)
-- [ ] Test surfaces: docs-validate (frontmatter, enlaces, trazabilidad)
-- [ ] Files: `DECISIONS.md`, `ROADMAP.md` (opcional)
-- [ ] Scope: XS
+- [x] ADR-0022 (Opción A: MSRV 1.80 + pins, `lockFileMaintenance` de cargo off) con
+      alternativas rechazadas y motivo.
+- [x] ROADMAP: dependencias congeladas actualizadas y deuda registrada
+      (`chrono → jiff`, revisión de `rustix` al publicarse parche).
+- [x] Verification: `make docs-validate` OK.
 
 ## Checkpoints
 
-- [ ] **Checkpoint A (tras Task 1)**: `cargo audit` limpio; `Security Audit` + `Security/sca` + `ci-gate` verdes.
-- [ ] **Checkpoint B (tras Tasks 2–3)**: `pnpm audit` limpio; 0 alertas Dependabot open; `make compose-smoke` + MSRV 1.80 verdes.
-- [ ] **Checkpoint C (final)**: `make ci` verde; `ci-gate` + `Security` + `Web` + `Desktop e2e` verdes en CI.
+- [x] **A (tras Task 1)**: `cargo audit` limpio (0 vulnerabilidades, 2 avisos permitidos).
+- [x] **B (tras Tasks 2–3)**: `npm audit` limpio; `renovate-config-validator` OK.
+      `make compose-smoke` **no ejecutable** aquí (docker sin permisos) → CI.
+- [ ] **C (final)**: `make ci` local + `ci-gate`/`Security`/`Desktop e2e` verdes en CI.
+
+## Nota de entorno
+
+No verificables en esta máquina, quedan para CI:
+
+| Job | Bloqueo |
+| --- | --- |
+| Compose smoke (Docker) | `docker` → permission denied en `/var/run/docker.sock` |
+| Desktop e2e (tauri-driver / no network) | falta `xvfb-run`, `tauri-driver`, AppImage |
+
+Todo lo demás (fmt, clippy, check, test, doc, docs-validate, audit, web typecheck)
+se ejecutó localmente.
