@@ -24,6 +24,8 @@ jobs:
     outputs:
       pr: ${{ steps.release.outputs.pr }}
       prs_created: ${{ steps.release.outputs.prs_created }}
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - id: release
         uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
@@ -31,6 +33,34 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  # Los tags que crea release-please lo hace con GITHUB_TOKEN, y GitHub no
+  # dispara workflows para eventos generados por ese token. Sin este despacho,
+  # `release.yml` (build + upload de assets) nunca corre y el draft queda vacío
+  # (pasó en v0.6.1 y v0.6.2).
+  dispatch-release-build:
+    name: dispatch release build + validation
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ needs.release-please.outputs.tag_name }}
+    steps:
+      - name: Despachar build de assets (Release)
+        run: |
+          set -euo pipefail
+          echo "tag: $TAG"
+          gh workflow run release.yml --ref "$TAG"
+      - name: Despachar validación de release
+        run: |
+          set -euo pipefail
+          gh workflow run release-validation.yml --ref "$TAG"
 
   # Solo en el PR de release: actualizar Cargo.lock de crates del workspace y empujar.
   # El commit se crea vía GraphQL `createCommitOnBranch` para que GitHub lo firme;

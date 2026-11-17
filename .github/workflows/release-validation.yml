@@ -1,0 +1,322 @@
+# Validación automática de cada release.
+#
+# Se dispara en tres momentos:
+# 1. Al empujar un tag `v*` (a la vez que el workflow `Release`, que construye
+#    los artefactos y los sube al draft de release-please); espera con reintentos
+#    a que aparezcan los assets.
+# 2. Al publicar la release (manual): valida también el AppImage que sube
+#    publish.yml en ese instante.
+# 3. A mano con `workflow_dispatch` + tag.
+#
+# Valida lo que de verdad se va a publicar: assets requeridos, checksums, SBOM,
+# smoke del binario y paridad CLI↔API sobre el código del tag.
+#
+# No publica nada: el draft lo crea release-please y los assets los sube
+# `release.yml` (job `host`). La validación pre-merge del PR de release la
+# cubre el `ci-gate` habitual (base=main).
+
+name: Release Validation
+
+on:
+  push:
+    tags:
+      - '**[0-9]+.[0-9]+.[0-9]+*'
+  # Al publicar (manual) la release, para validar también el AppImage que
+  # sube publish.yml en ese momento.
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag a validar (p. ej. v0.6.2)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-validation-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  resolve:
+    name: Resolver tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - id: tag
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT" == "workflow_dispatch" ]]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="$REF_NAME"
+          fi
+          if [[ ! "$TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "error: '$TAG' no parece un tag de release" >&2
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "tag a validar: $TAG"
+
+  # 1. Assets publicados: espera, presencia, checksums, SBOM y smoke del binario.
+  assets:
+    name: Assets y checksums
+    needs: [resolve]
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+    steps:
+      - name: Esperar a que release.yml suba los assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Sin checkout no hay repo git: `gh` necesita GH_REPO explícito
+          # (misma causa que el fallo corregido en #111).
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          # `Release` construye y sube los 12 assets al draft de una sola vez
+          # al final (job `host`). Mientras tanto el draft existe pero está
+          # vacío, así que no se puede distinguir «aún construyendo» de
+          # «incompleto» por el número de ficheros: se espera a que aparezcan
+          # o se agota el tiempo y el checklist de abajo falla con la lista.
+          for attempt in $(seq 1 90); do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              gh release download "$TAG" --dir artifacts --clobber 2>/dev/null || true
+              count=$(find artifacts -type f | wc -l)
+              if [[ "$count" -ge 12 ]]; then
+                echo "OK: $count assets descargados (intento $attempt)."
+                ls -la artifacts
+                exit 0
+              fi
+              echo "intento $attempt: $count assets (release.yml sigue construyendo)"
+            else
+              echo "intento $attempt: release '$TAG' aún no existe"
+            fi
+            sleep 30
+          done
+          echo "error: timeout esperando los assets de '$TAG' (¿falló release.yml?)" >&2
+          exit 1
+      - name: Checklist de assets requeridos
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          required=(
+            zedazo-x86_64-unknown-linux-gnu.tar.xz
+            zedazo-x86_64-unknown-linux-gnu.tar.xz.sha256
+            zedazo-aarch64-unknown-linux-gnu.tar.xz
+            zedazo-aarch64-unknown-linux-gnu.tar.xz.sha256
+            zedazo-x86_64-apple-darwin.tar.xz
+            zedazo-x86_64-apple-darwin.tar.xz.sha256
+            zedazo-aarch64-apple-darwin.tar.xz
+            zedazo-aarch64-apple-darwin.tar.xz.sha256
+            zedazo-x86_64-pc-windows-msvc.zip
+            zedazo-x86_64-pc-windows-msvc.zip.sha256
+            sbom.json
+            sbom.json.sha256
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [[ ! -f "$f" ]]; then
+              echo "FALTA: $f"
+              missing=1
+            fi
+          done
+          if [[ "$missing" -ne 0 ]]; then
+            echo "error: assets incompletos en la release" >&2
+            exit 1
+          fi
+          echo "OK: todos los assets requeridos presentes."
+      - name: Verificar checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          shopt -s nullglob
+          for f in zedazo-*.tar.xz zedazo-*.zip; do
+            expected=$(awk '{print $1}' "${f}.sha256")
+            actual=$(sha256sum "$f" | awk '{print $1}')
+            if [[ "$expected" != "$actual" ]]; then
+              echo "error: checksum mismatch en $f" >&2
+              exit 1
+            fi
+            echo "OK: $f"
+          done
+          expected=$(awk '{print $1}' sbom.json.sha256)
+          actual=$(sha256sum sbom.json | awk '{print $1}')
+          if [[ "$expected" != "$actual" ]]; then
+            echo "error: checksum mismatch en sbom.json" >&2
+            exit 1
+          fi
+          echo "OK: sbom.json"
+      - name: Validar SBOM CycloneDX
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          jq -e 'type == "object" and (has("bomFormat") or has("metadata"))' sbom.json >/dev/null
+          jq -e '(.components // []) | length > 0' sbom.json >/dev/null
+          jq -r '.components[] | select(.name == "zedazo") | "OK: SBOM contiene \(.name)@\(.version)"' sbom.json
+      - name: Smoke del binario Linux x86_64
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          tar -xJf zedazo-x86_64-unknown-linux-gnu.tar.xz
+          BIN=$(find . -type f -name zedazo -perm -u+x | head -1)
+          if [[ -z "$BIN" ]]; then
+            echo "error: binario zedazo no encontrado en el tarball" >&2
+            exit 1
+          fi
+          VERSION=$("$BIN" --version)
+          echo "version: $VERSION"
+          TAG="${{ needs.resolve.outputs.tag }}"
+          echo "$VERSION" | grep -q -- "${TAG#v}" || {
+            echo "error: versión del binario ($VERSION) no coincide con el tag ($TAG)" >&2
+            exit 1
+          }
+          "$BIN" --help >/dev/null
+          echo "OK: smoke del binario."
+
+  # 2. AppImage (lo sube publish.yml al publicar la release; puede no estar aún).
+  appimage:
+    name: AppImage
+    needs: [resolve]
+    # ubuntu-22.04: es donde el repo mantiene las deps de escritorio
+    # (webkit2gtk-driver no tiene candidato en 26.04).
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      # El AppImage enlaza libEGL/libGL/GTK: sin estas libs ni `--version` arranca
+      # ("libEGL.so.1: cannot open shared object file"). Reusa el script del repo.
+      - name: Dependencias de sistema (AppImage)
+        run: bash scripts/desktop/install-linux-deps.sh
+      - name: Esperar / descargar AppImage si existe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          # publish.yml sube el AppImage al publicar la release; se espera un rato.
+          for attempt in $(seq 1 15); do
+            gh release download "$TAG" --dir artifacts --clobber --pattern '*.AppImage*' 2>/dev/null || true
+            if ls artifacts/*.AppImage 1>/dev/null 2>&1; then
+              echo "OK: AppImage presente (intento $attempt)"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "Aviso: aún no hay AppImage en '$TAG' (se publica con publish.yml)."
+      - name: Validar AppImage (estructural)
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(artifacts/*.AppImage)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "::notice::Sin AppImage en la release todavía; nada que validar."
+            exit 0
+          fi
+          APPIMAGE="${files[0]}"
+          chmod +x "$APPIMAGE"
+          # Checksum: fichero propio o SHA256SUMS de la release.
+          if [[ -f "${APPIMAGE}.sha256" ]]; then
+            expected=$(awk '{print $1}' "${APPIMAGE}.sha256")
+            actual=$(sha256sum "$APPIMAGE" | awk '{print $1}')
+            [[ "$expected" == "$actual" ]] || { echo "error: checksum mismatch del AppImage" >&2; exit 1; }
+            echo "OK: checksum del AppImage."
+          elif [[ -f artifacts/SHA256SUMS ]]; then
+            base=$(basename "$APPIMAGE")
+            grep -q " $base\$" artifacts/SHA256SUMS && echo "OK: AppImage listado en SHA256SUMS."
+          fi
+          # Descomprimir (squashfs) y verificar contenido. NO se ejecuta el
+          # binario: es una app GTK y no termina con --version (se colgaría).
+          timeout 300 "$APPIMAGE" --appimage-extract >/dev/null
+          BIN=$(find squashfs-root -type f -name 'zedazo-desktop' | head -1)
+          if [[ -z "$BIN" ]]; then
+            echo "error: el AppImage no contiene zedazo-desktop" >&2
+            exit 1
+          fi
+          file "$BIN" | grep -q ELF || { echo "error: zedazo-desktop no es ELF" >&2; exit 1; }
+          test -s "$BIN"
+          test -x squashfs-root/AppRun
+          echo "OK: AppImage íntegro ($(stat -c%s "$BIN") bytes de binario)."
+          echo "::notice::Smoke de ejecución real cubierto por 'Desktop smoke (xvfb)' en cada push."
+
+  # 3. Paridad CLI↔API (O10) sobre el código del tag.
+  parity:
+    name: Paridad CLI↔API (O10)
+    needs: [resolve]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ needs.resolve.outputs.tag }}
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      # Sin rust-cache: este workflow corre sobre tags y valida artefactos
+      # publicados; escribir caché aquí abre la puerta a cache poisoning
+      # (zizmor: cache-poisoning).
+      - name: Paridad (harness HTTP real)
+        run: cargo test -p zedazo-api --test equivalence_http --all-features
+
+  # 4. Gate: falla si algo crítico falló.
+  gate:
+    name: Release Gate
+    needs: [resolve, assets, appimage, parity]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Resumen
+        env:
+          RESOLVE: ${{ needs.resolve.result }}
+          ASSETS: ${{ needs.assets.result }}
+          APPIMAGE: ${{ needs.appimage.result }}
+          PARITY: ${{ needs.parity.result }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          echo "=== Validación de $TAG ==="
+          echo "resolve:  $RESOLVE"
+          echo "assets:   $ASSETS"
+          echo "appimage: $APPIMAGE"
+          echo "parity:   $PARITY"
+          failed=0
+          for r in "$RESOLVE" "$ASSETS" "$APPIMAGE" "$PARITY"; do
+            if [[ "$r" != "success" && "$r" != "skipped" ]]; then
+              failed=1
+            fi
+          done
+          if [[ "$failed" -ne 0 ]]; then
+            echo "error: validación de release fallida" >&2
+            exit 1
+          fi
+          echo "OK: release validada."
