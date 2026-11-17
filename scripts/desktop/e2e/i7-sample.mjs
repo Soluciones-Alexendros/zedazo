@@ -105,8 +105,38 @@ async function waitAppReady(label, timeoutMs = 45_000) {
   throw new Error(`timeout readiness (${label}): ${last}`);
 }
 
+/**
+ * WebKit/tauri-driver no auto-descarta `window.confirm()` / `window.alert()`:
+ * dejarlos abiertos hace que el siguiente comando falle con
+ * `unexpected alert open` (CI 2026-11-12, PR #114).
+ *
+ * No se usa `isAlertOpen()`: es un comando solo-Chromium y el driver de
+ * WebKitGTK no lo implementa. Se intenta descartar directamente y se
+ * interpreta el error W3C `no such alert` como «no había diálogo».
+ */
+async function settleNativeDialog(label) {
+  await browser.pause(300);
+  try {
+    await browser.dismissAlert();
+    console.log(`OK GUI: diálogo nativo descartado (${label})`);
+    return "dismissed";
+  } catch (e) {
+    if (/no such alert|no alert/i.test(String(e?.message || e))) return "none";
+    // Algunos drivers solo implementan «accept».
+    try {
+      await browser.acceptAlert();
+      console.log(`OK GUI: diálogo nativo aceptado (${label})`);
+      return "accepted";
+    } catch {
+      return "none";
+    }
+  }
+}
+
 async function gotoLoopback(pathAndQuery) {
   const path = pathAndQuery.startsWith("/") ? pathAndQuery : `/${pathAndQuery}`;
+  // Un diálogo nativo pendiente rompe cualquier navegación WebDriver.
+  await settleNativeDialog(`pre-nav ${path}`);
   // browser.url (navegación WebDriver) es más fiable que location.assign en wry/WebKit:
   // assign dejaba readyState=complete + token pero DOM vacío (CI e78df058).
   const baseUrl = await browser.getUrl();
@@ -502,13 +532,16 @@ try {
   });
   if (wipeClicked) {
     await browser.pause(400);
-    // confirm() nativo: WebDriver puede auto-aceptar o no; registrar resultado.
-    console.log("OK GUI: acción borrado invocada (confirm nativo según WebKit)");
+    // confirm() nativo: WebDriver (WebKitGTK) no lo auto-acepta; si se deja
+    // abierto, el siguiente comando falla con `unexpected alert open`.
+    const dialog = await settleNativeDialog("wipe");
+    console.log(`OK GUI: acción borrado invocada (confirm nativo: ${dialog})`);
   } else {
     console.warn("aviso: no se encontró botón de borrado en Ajustes");
   }
 
   // V-03 al final: no debe impedir aserciones previas.
+  await settleNativeDialog("pre V-03");
   const urlBefore = await browser.getUrl();
   await browser.execute(() => {
     // eslint-disable-next-line no-undef

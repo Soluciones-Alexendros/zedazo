@@ -90,7 +90,7 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
         }
 
         // Expirados: borrar ya.
-        if should_expire(&manifest, retention_hours, chrono::Utc::now()) {
+        if should_expire(&manifest, retention_hours, jiff::Timestamp::now()) {
             match state.storage.delete_job_dir(&id) {
                 Ok(()) => {
                     tracing::info!(job_id = %id, "job vencido eliminado en reconciliación");
@@ -137,24 +137,20 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
 }
 
 /// ¿Ha vencido el TTL de retención? Reloj inyectable para tests (S-12).
-pub fn should_expire(
-    manifest: &JobManifest,
-    default_retention: u64,
-    now: chrono::DateTime<chrono::Utc>,
-) -> bool {
+pub fn should_expire(manifest: &JobManifest, default_retention: u64, now: jiff::Timestamp) -> bool {
     let Some(completed) = manifest.completed_at.as_ref() else {
         return false;
     };
-    let Ok(ts) = chrono::DateTime::parse_from_rfc3339(completed) else {
+    let Ok(ts) = completed.parse::<jiff::Timestamp>() else {
         return false;
     };
-    let age = now.signed_duration_since(ts.with_timezone(&chrono::Utc));
+    let age_secs = now.duration_since(ts).as_secs();
     let hours = if manifest.retention_hours > 0 {
         manifest.retention_hours
     } else {
         default_retention
     };
-    age.num_hours() >= hours as i64
+    age_secs / 3600 >= hours as i64
 }
 
 fn sweep_uploads(
@@ -162,7 +158,7 @@ fn sweep_uploads(
     upload_ttl_hours: u64,
     referenced: &std::collections::HashSet<String>,
 ) -> anyhow::Result<()> {
-    let now = chrono::Utc::now();
+    let now = jiff::Timestamp::now();
     for upload_id in state.storage.list_upload_ids()? {
         if referenced.contains(&upload_id) {
             continue;
@@ -181,9 +177,8 @@ fn sweep_uploads(
                 .and_then(|v| {
                     v.get("created_at")
                         .and_then(|c| c.as_str())
-                        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+                        .and_then(|s| s.parse::<jiff::Timestamp>().ok())
                 })
-                .map(|dt| dt.with_timezone(&chrono::Utc))
         } else {
             // Sin meta: usar mtime del fichero.
             state
@@ -192,13 +187,13 @@ fn sweep_uploads(
                 .metadata()
                 .ok()
                 .and_then(|m| m.modified().ok())
-                .map(chrono::DateTime::<chrono::Utc>::from)
+                .and_then(|t| jiff::Timestamp::try_from(t).ok())
         };
         let Some(created) = created else {
             continue;
         };
-        let age = now.signed_duration_since(created);
-        if age.num_hours() >= upload_ttl_hours as i64 {
+        let age = now.duration_since(created);
+        if age.as_secs() / 3600 >= upload_ttl_hours as i64 {
             match state.storage.delete_upload(&upload_id) {
                 Ok(()) => tracing::info!(%upload_id, "upload huérfano eliminado"),
                 Err(e) => {
@@ -226,10 +221,8 @@ fn sweep_tmp(state: &AppState) -> anyhow::Result<()> {
             .metadata()
             .ok()
             .and_then(|m| m.modified().ok())
-            .map(|t| {
-                let dt = chrono::DateTime::<chrono::Utc>::from(t);
-                chrono::Utc::now().signed_duration_since(dt).num_hours() >= 1
-            })
+            .and_then(|t| jiff::Timestamp::try_from(t).ok())
+            .map(|dt| jiff::Timestamp::now().duration_since(dt).as_secs() / 3600 >= 1)
             .unwrap_or(false);
         if old {
             if path.is_dir() {
@@ -283,7 +276,7 @@ pub async fn retention_sweep(state: &AppState) {
     {
         let jobs = state.jobs.read().await;
         for (id, rec) in jobs.iter() {
-            if should_expire(&rec.manifest, retention_hours, chrono::Utc::now()) {
+            if should_expire(&rec.manifest, retention_hours, jiff::Timestamp::now()) {
                 to_expire.push(id.clone());
             }
         }
@@ -449,9 +442,7 @@ mod should_expire_tests {
     fn expires_when_age_reaches_retention() {
         let completed = "2026-01-01T00:00:00Z";
         let manifest = completed_manifest(completed, 24);
-        let now = chrono::DateTime::parse_from_rfc3339("2026-01-02T00:00:00Z")
-            .unwrap()
-            .with_timezone(&chrono::Utc);
+        let now = "2026-01-02T00:00:00Z".parse::<jiff::Timestamp>().unwrap();
         assert!(should_expire(&manifest, 24, now));
     }
 
@@ -459,9 +450,7 @@ mod should_expire_tests {
     fn not_expired_before_retention() {
         let completed = "2026-01-01T00:00:00Z";
         let manifest = completed_manifest(completed, 24);
-        let now = chrono::DateTime::parse_from_rfc3339("2026-01-01T12:00:00Z")
-            .unwrap()
-            .with_timezone(&chrono::Utc);
+        let now = "2026-01-01T12:00:00Z".parse::<jiff::Timestamp>().unwrap();
         assert!(!should_expire(&manifest, 24, now));
     }
 
@@ -469,16 +458,12 @@ mod should_expire_tests {
     fn uses_default_when_manifest_retention_zero() {
         let completed = "2026-01-01T00:00:00Z";
         let manifest = completed_manifest(completed, 0);
-        let now = chrono::DateTime::parse_from_rfc3339("2026-01-03T00:00:00Z")
-            .unwrap()
-            .with_timezone(&chrono::Utc);
+        let now = "2026-01-03T00:00:00Z".parse::<jiff::Timestamp>().unwrap();
         assert!(should_expire(&manifest, 48, now));
         assert!(!should_expire(
             &manifest,
             72,
-            chrono::DateTime::parse_from_rfc3339("2026-01-02T00:00:00Z")
-                .unwrap()
-                .with_timezone(&chrono::Utc)
+            "2026-01-02T00:00:00Z".parse::<jiff::Timestamp>().unwrap()
         ));
     }
 }

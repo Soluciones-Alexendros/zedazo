@@ -263,5 +263,5 @@ pub fn save_manifest_result(state: &AppState, manifest: &JobManifest) -> anyhow:
 }
 
 pub fn now_rfc3339() -> String {
-    chrono::Utc::now().to_rfc3339()
+    jiff::Timestamp::now().to_string()
 }

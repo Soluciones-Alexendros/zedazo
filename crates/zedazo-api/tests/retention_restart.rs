@@ -81,7 +81,7 @@ async fn orphan_upload_swept_by_ttl() {
     let path = state.storage.upload_path(upload_id);
     fs::write(&path, b"orphan").unwrap();
     // Meta antigua (48 h).
-    let old = (chrono::Utc::now() - chrono::Duration::hours(48)).to_rfc3339();
+    let old = (jiff::Timestamp::now() - jiff::SignedDuration::from_secs(48 * 3600)).to_string();
     Storage::atomic_write(
         &state.storage.upload_meta_path(upload_id),
         serde_json::json!({ "created_at": old, "bytes": 6, "sha256": "x" })

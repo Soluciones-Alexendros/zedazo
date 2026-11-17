@@ -14,6 +14,11 @@
   "internalChecksFilter": "strict",
   "ignoreDeps": [],
   "packageRules": [
+    {
+      "description": "MSRV 1.80 / imagen rust:1.85 (Opción A): el refresh de lock de cargo sube encoding_rs a >=0.8.40 (rustc 1.88) y uuid a >=1.27.0 (rustc 1.89) y rompe Compose smoke. Los PRs de deps directas siguen activos.",
+      "matchManagers": ["cargo"],
+      "lockFileMaintenance": { "enabled": false }
+    },
     {"matchManagers":["cargo"],"matchUpdateTypes":["minor","patch"],"groupName":"Rust (non-major)","automerge":false},
     {"matchManagers":["cargo"],"matchUpdateTypes":["major"],"groupName":"Rust major","automerge":false,"minimumReleaseAge":"14 days"},
     {"matchManagers":["github-actions"],"groupName":"GitHub Actions","automerge":false},
@@ -22,6 +27,16 @@
     {"matchPackageNames":["toml"],"allowedVersions":"<1"},
     {"matchPackageNames":["chardetng"],"allowedVersions":"<1"},
     {"matchPackageNames":["tempfile"],"allowedVersions":"<3.20"},
+    {
+      "description": "0.8.40+ declara rust-version 1.88 y rompe rust:1.85-bookworm (Compose smoke).",
+      "matchPackageNames":["encoding_rs"],
+      "allowedVersions":"<0.8.40"
+    },
+    {
+      "description": "1.27.0+ declara rust-version 1.89 y rompe rust:1.85-bookworm (Compose smoke).",
+      "matchPackageNames":["uuid"],
+      "allowedVersions":"<1.27.0"
+    },
     {"matchPackageNames":["dtolnay/rust-toolchain"],"allowedVersions":"<1.100"}
   ],
   "platformAutomerge": false
