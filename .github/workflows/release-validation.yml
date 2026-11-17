@@ -212,7 +212,9 @@ jobs:
   appimage:
     name: AppImage
     needs: [resolve]
-    runs-on: ubuntu-latest
+    # ubuntu-22.04: es donde el repo mantiene las deps de escritorio
+    # (webkit2gtk-driver no tiene candidato en 26.04).
+    runs-on: ubuntu-22.04
     timeout-minutes: 20
     permissions:
       contents: read
