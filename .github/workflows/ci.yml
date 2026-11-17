@@ -834,9 +834,14 @@ jobs:
           NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
           set -euo pipefail
+          # `release-validation-pr` solo corre en PRs de release-please; fuera de ahí
+          # queda skipped y no debe tumbar el gate. El resto exige success.
           echo "$NEEDS_JSON" | jq -e '
             to_entries
-            | map(select(.value.result != "success"))
+            | map(select(
+                .value.result != "success"
+                and ((.key == "release-validation-pr" and .value.result == "skipped") | not)
+              ))
             | if length == 0 then true else
                 error("ci-gate: jobs no success: " + (map(.key + "=" + .value.result) | join(", ")))
               end
