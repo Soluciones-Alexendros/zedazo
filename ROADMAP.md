@@ -154,3 +154,16 @@ supersedes: "v0.3.2"
 ## Dependencias congeladas (ver DECISIONS)
 
 - `nom` < 8, `toml` < 1, `chardetng` < 1 (Renovate `allowedVersions`)
+- `encoding_rs` < 0.8.40 y `uuid` < 1.27.0: declaran `rust-version` 1.88/1.89 y rompen
+  la imagen `rust:1.85-bookworm` de `deploy/Dockerfile.api` (ADR-0022).
+- `tempfile` < 3.20; `dtolnay/rust-toolchain` < 1.100.
+- `lockFileMaintenance` de Renovate desactivado **solo para cargo**: refresca el lock
+  saltándose los `allowedVersions` y es lo que rompió Compose smoke en #114.
+
+## Deuda de mantenimiento registrada
+
+- **`chrono` unmaintained** (RUSTSEC-2026-0543): migrar `zedazo-api` a `jiff` (ya en el
+  árbol); el resto de `chrono` es transitivo de Tauri (`serde_with`/`tauri-utils`),
+  se resuelve al subir Tauri. Revisión: primer trimestre tras v0.7.
+- **`rustix` unsound** (RUSTSEC-2026-0486): transitivo de `tempfile`; revisar al
+  publicarse parche. Ninguno bloquea el gate de `cargo audit` (ver `.cargo/audit.toml`).

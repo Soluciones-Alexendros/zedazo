@@ -345,3 +345,22 @@ supersedes: "v0.3.1"
 - Relacionado: ADR-0015, ADR-0016, ADR-0020, [SPECS.md](./SPECS.md) O10/O11, [ROADMAP.md](./ROADMAP.md) v0.6.0, [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 </details>
+
+<details>
+<summary><strong>ADR-0022</strong> — Mantenimiento de dependencias: MSRV 1.80 con pins, no subida de mínimo</summary>
+
+- Estado: **aceptada**
+- Fecha: 2026-11-17
+- Contexto: El lock-file-maintenance de Renovate (#114) subió `encoding_rs` a 0.8.44 (declara `rust-version` 1.88) y `uuid` a 1.29.2 (1.89). La imagen de build `deploy/Dockerfile.api` es `rust:1.85-bookworm` y el workspace declara `rust-version = 1.80`, así que Compose smoke rompía con «rustc 1.85.1 is not supported by the following packages». Renovate ejecuta `lockFileMaintenance` borrando el lock y lanzando el package manager, de modo que `allowedVersions` no contiene ese refresco.
+- Decisión (Opción A, elegida por el operador):
+  1. **No subir MSRV.** Se mantiene `rust-version = 1.80` y la imagen `rust:1.85-bookworm`.
+  2. **Pins en Renovate** para los directos que rompen el build: `encoding_rs < 0.8.40`, `uuid < 1.27.0`, junto a los ya vigentes (`nom` < 8, `toml` < 1, `chardetng` < 1, `tempfile` < 3.20, `dtolnay/rust-toolchain` < 1.100).
+  3. **`lockFileMaintenance` desactivado solo para el manager `cargo`.** Los PRs de dependencias directas siguen activos; npm/pnpm conserva el suyo.
+  4. Los avisos RustSec no bloqueantes no fuerzan downgrades: `chrono` (unmaintained) se migrará a `jiff` y `rustix` (unsound, vía `tempfile`) se revisa al publicarse parche; ambos registrados en [ROADMAP.md](./ROADMAP.md).
+- Alternativas rechazadas:
+  - **Opción B — subir MSRV/imagen a ≥1.89:** contradice el contrato declarado (AGENTS.md §5, MSRV 1.80) y no aporta valor al producto.
+  - **`[resolver] incompatible-rust-versions = "fallback"` en `.cargo/config.toml`:** con `rust-version = 1.80` el resolver degradaría media flota (clap, brotli, cfb, darling…) por debajo de lo que ya usa el árbol; no es proporcional.
+- Consecuencias: el gate de MSRV y Compose smoke vuelven a ser verdes sin tocar el mínimo; un futuro salto de MSRV exige otro ADR. Verificación: `cargo audit`, `make compose-smoke`, `renovate-config-validator`.
+- Relacionado: ADR-0013 (supply chain), ADR-0021 (Docker/escritorio), [ROADMAP.md](./ROADMAP.md), [SPECS.md](./SPECS.md), [AGENTS.md](./AGENTS.md).
+
+</details>
