@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "webdriverio": "^10.1.0"
+    "webdriverio": "^10.2.0"
+  },
+  "overrides": {
+    "readdir-glob": "^4.0.0"
   }
 }
