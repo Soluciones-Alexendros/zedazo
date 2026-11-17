@@ -1,11 +1,12 @@
 # Validación automática de cada release.
 #
-# Se dispara al empujar un tag `v*` (a la vez que el workflow `Release`, que
-# construye los artefactos y los sube al draft de release-please) y también a
-# mano con `workflow_dispatch` + tag.
-#
-# Como ambos arrancan en paralelo, este workflow ESPERA (con reintentos) a que
-# los assets aparezcan en la release; luego los valida.
+# Se dispara en tres momentos:
+# 1. Al empujar un tag `v*` (a la vez que el workflow `Release`, que construye
+#    los artefactos y los sube al draft de release-please); espera con reintentos
+#    a que aparezcan los assets.
+# 2. Al publicar la release (manual): valida también el AppImage que sube
+#    publish.yml en ese instante.
+# 3. A mano con `workflow_dispatch` + tag.
 #
 # Valida lo que de verdad se va a publicar: assets requeridos, checksums, SBOM,
 # smoke del binario y paridad CLI↔API sobre el código del tag.
