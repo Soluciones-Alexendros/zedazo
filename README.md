@@ -105,6 +105,11 @@ zedazo cribar examples/sample.vcf -o /tmp/out.vcf -a /tmp/audit.tsv
 
 ## Configuración
 
+Variables de entorno de la API/GUI: copia [`.env.example`](./.env.example) a `.env` y ajusta.
+`.env` no se versiona (ver `.gitignore`); los secretos (`ZEDAZO_AUTH_TOKEN`,
+`ZEDAZO_CARDDAV_PASSWORD`) van por entorno, nunca en el repo. Referencia completa en
+[docs/gui/deploy.md](./docs/gui/deploy.md) y [SECURITY.md](./SECURITY.md).
+
 Opcional: crea un archivo TOML para personalizar el cribado.
 
 ```toml
