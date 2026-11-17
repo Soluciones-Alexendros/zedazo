@@ -11,10 +11,8 @@
 # smoke del binario y paridad CLI↔API sobre el código del tag.
 #
 # No publica nada: el draft lo crea release-please y los assets los sube
-# `release.yml` (job `host`).
-#
-# La validación pre-merge del PR de release-please vive en `ci.yml`
-# (job `release-validation-pr`, agregado en `ci-gate`).
+# `release.yml` (job `host`). La validación pre-merge del PR de release la
+# cubre el `ci-gate` habitual (base=main).
 
 name: Release Validation
 
@@ -22,6 +20,10 @@ on:
   push:
     tags:
       - '**[0-9]+.[0-9]+.[0-9]+*'
+  # Al publicar (manual) la release, para validar también el AppImage que
+  # sube publish.yml en ese momento.
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -73,7 +75,7 @@ jobs:
     name: Assets y checksums
     needs: [resolve]
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
     permissions:
       contents: read
     steps:
@@ -87,44 +89,27 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          # `Release` arranca en paralelo; su job `host` sube los assets al draft.
-          # Se deja de esperar cuando el número de ficheros se estabiliza (3
-          # lecturas iguales): entonces manda el checklist, que falla con un
-          # mensaje concreto en vez de agotar el tiempo.
-          last_count=-1
-          stable=0
-          for attempt in $(seq 1 60); do
+          # `Release` construye y sube los 12 assets al draft de una sola vez
+          # al final (job `host`). Mientras tanto el draft existe pero está
+          # vacío, así que no se puede distinguir «aún construyendo» de
+          # «incompleto» por el número de ficheros: se espera a que aparezcan
+          # o se agota el tiempo y el checklist de abajo falla con la lista.
+          for attempt in $(seq 1 90); do
             if gh release view "$TAG" >/dev/null 2>&1; then
               gh release download "$TAG" --dir artifacts --clobber 2>/dev/null || true
               count=$(find artifacts -type f | wc -l)
               if [[ "$count" -ge 12 ]]; then
-                echo "OK: $count assets descargados en el intento $attempt."
+                echo "OK: $count assets descargados (intento $attempt)."
                 ls -la artifacts
                 exit 0
               fi
-              if [[ "$count" -eq "$last_count" ]]; then
-                stable=$((stable + 1))
-              else
-                stable=0
-                last_count="$count"
-              fi
-              echo "intento $attempt: $count assets (estable en $stable/3)"
-              if [[ "$stable" -ge 3 ]]; then
-                echo "Aviso: la lista de assets se estabilizó en $count; se valida con lo que hay."
-                ls -la artifacts
-                exit 0
-              fi
+              echo "intento $attempt: $count assets (release.yml sigue construyendo)"
             else
-              echo "intento $attempt: release '$TAG' aún no existe o no es accesible"
-              stable=$((stable + 1))
-              if [[ "$stable" -ge 6 ]]; then
-                echo "error: la release '$TAG' no aparece tras $attempt intentos" >&2
-                exit 1
-              fi
+              echo "intento $attempt: release '$TAG' aún no existe"
             fi
-            sleep 20
+            sleep 30
           done
-          echo "error: timeout esperando los assets de '$TAG'" >&2
+          echo "error: timeout esperando los assets de '$TAG' (¿falló release.yml?)" >&2
           exit 1
       - name: Checklist de assets requeridos
         shell: bash
@@ -311,6 +296,7 @@ jobs:
     steps:
       - name: Resumen
         env:
+          RESOLVE: ${{ needs.resolve.result }}
           ASSETS: ${{ needs.assets.result }}
           APPIMAGE: ${{ needs.appimage.result }}
           PARITY: ${{ needs.parity.result }}
@@ -318,11 +304,12 @@ jobs:
         run: |
           set -euo pipefail
           echo "=== Validación de $TAG ==="
+          echo "resolve:  $RESOLVE"
           echo "assets:   $ASSETS"
           echo "appimage: $APPIMAGE"
           echo "parity:   $PARITY"
           failed=0
-          for r in "$ASSETS" "$APPIMAGE" "$PARITY"; do
+          for r in "$RESOLVE" "$ASSETS" "$APPIMAGE" "$PARITY"; do
             if [[ "$r" != "success" && "$r" != "skipped" ]]; then
               failed=1
             fi

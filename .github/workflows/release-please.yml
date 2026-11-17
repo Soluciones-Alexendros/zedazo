@@ -57,12 +57,10 @@ jobs:
           set -euo pipefail
           echo "tag: $TAG"
           gh workflow run release.yml --ref "$TAG"
-      - name: Despachar validación de release (best-effort)
+      - name: Despachar validación de release
         run: |
           set -euo pipefail
-          # El workflow existe desde 0.6.2+; en tags anteriores puede no estar.
-          gh workflow run release-validation.yml --ref "$TAG" || \
-            echo "::warning::release-validation.yml no existe en $TAG (tag anterior al pipeline)"
+          gh workflow run release-validation.yml --ref "$TAG"
 
   # Solo en el PR de release: actualizar Cargo.lock de crates del workspace y empujar.
   # El commit se crea vía GraphQL `createCommitOnBranch` para que GitHub lo firme;
