@@ -69,11 +69,15 @@ funcionalidad de producto; es un cierre de salud del repo.
 - [x] **Task 5**: consolidar fixture duplicado `sample-contacts.vcf` / `examples/sample.vcf`.
 - [x] **Task 6**: añadir `.env.example`.
 - [x] **Task 7**: registrar plan de migración `chrono → jiff` y revisión `rustix` (ADR-0022).
+- [x] **Task 8 (añadida)**: ejecutar esos dos arreglos, no sólo documentarlos — `rustix`
+  1.1.6 y `zedazo-api` migrado a `jiff`, porque `Deny` y `sca` seguían en rojo.
 
 ### Checkpoint C (final)
 
-- [ ] `make ci` local verde y `ci-gate` verde en CI
-- [ ] `Security Audit`, `Security`, `Web (apps/web)`, `Desktop e2e` verdes
+- [x] `ci-gate` verde en CI: 41 pass / 0 fail / 8 skipping (run 44110799290).
+      `make ci` local completa todo salvo `playwright install --with-deps`, que exige
+      elevar privilegios para dependencias del sistema.
+- [x] `Security Audit`, `Security`, `Deny`, `Web (apps/web)`, `Desktop e2e` verdes.
 
 ## Riesgos
 
