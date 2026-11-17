@@ -162,8 +162,9 @@ supersedes: "v0.3.2"
 
 ## Deuda de mantenimiento registrada
 
-- **`chrono` unmaintained** (RUSTSEC-2026-0543): migrar `zedazo-api` a `jiff` (ya en el
-  árbol); el resto de `chrono` es transitivo de Tauri (`serde_with`/`tauri-utils`),
-  se resuelve al subir Tauri. Revisión: primer trimestre tras v0.7.
-- **`rustix` unsound** (RUSTSEC-2026-0486): transitivo de `tempfile`; revisar al
-  publicarse parche. Ninguno bloquea el gate de `cargo audit` (ver `.cargo/audit.toml`).
+- **`chrono` unmaintained** (RUSTSEC-2026-0543): `zedazo-api` migró a `jiff` (ADR-0022);
+  el `chrono` restante es transitivo de Tauri (`serde_with` → `tauri-utils`) y se
+  resuelve al subir Tauri. Mientras exista, `osv-scanner.toml` lo silencia con motivo
+  y fecha de revisión (primer trimestre tras v0.7).
+- **`rustix` unsound** (RUSTSEC-2026-0486): **resuelto** subiendo a 1.1.6 (parche del
+  advisory), transitivo de `tempfile`.

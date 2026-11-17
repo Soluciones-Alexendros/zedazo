@@ -16,3 +16,7 @@ reason = "proc-macro-error unmaintained; transitivo de Tauri/gtk-rs. No hay reem
 [[IgnoredVulns]]
 id = "GHSA-qwgh-2vcv-g2f7"
 reason = "block-buffer <0.12.1 (panic en buffer inline); sha2 0.10 / digest 0.10 fijan 0.10.4 y no hay 0.10.x parcheado. Revisión: al subir sha2 a 0.11+ (API digest nueva) en zedazo-api y tauri-codegen."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0543"
+reason = "chrono 0.4.45 unmaintained (informativo, no vulnerabilidad), ya solo transitivo de Tauri (serde_with -> tauri-utils). zedazo-api migró a jiff; el proyecto no bloquea avisos informativos (ver .cargo/audit.toml). Se elimina al subir Tauri, cuando serde_with deje de fijar chrono. Revisión: primer trimestre tras v0.7."

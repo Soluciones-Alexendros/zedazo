@@ -114,7 +114,7 @@ pub async fn create_upload(
         size = total as u64;
         sha = hex::encode(hasher.finalize());
         let meta = serde_json::json!({
-            "created_at": chrono::Utc::now().to_rfc3339(),
+            "created_at": jiff::Timestamp::now().to_string(),
             "bytes": size,
             "sha256": sha,
         });

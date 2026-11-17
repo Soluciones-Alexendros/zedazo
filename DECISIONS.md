@@ -356,11 +356,11 @@ supersedes: "v0.3.1"
   1. **No subir MSRV.** Se mantiene `rust-version = 1.80` y la imagen `rust:1.85-bookworm`.
   2. **Pins en Renovate** para los directos que rompen el build: `encoding_rs < 0.8.40`, `uuid < 1.27.0`, junto a los ya vigentes (`nom` < 8, `toml` < 1, `chardetng` < 1, `tempfile` < 3.20, `dtolnay/rust-toolchain` < 1.100).
   3. **`lockFileMaintenance` desactivado solo para el manager `cargo`.** Los PRs de dependencias directas siguen activos; npm/pnpm conserva el suyo.
-  4. Los avisos RustSec no bloqueantes no fuerzan downgrades: `chrono` (unmaintained) se migrará a `jiff` y `rustix` (unsound, vía `tempfile`) se revisa al publicarse parche; ambos registrados en [ROADMAP.md](./ROADMAP.md).
+  4. Avisos RustSec informativos: `rustix` (unsound, vía `tempfile`) se **parchea** subiendo a 1.1.6; `zedazo-api` deja de depender de `chrono` (unmaintained) y migra a `jiff`, que ya estaba en el workspace. El `chrono` restante es transitivo de Tauri y se silencia en `osv-scanner.toml` con motivo y fecha; se retira al subir Tauri.
 - Alternativas rechazadas:
   - **Opción B — subir MSRV/imagen a ≥1.89:** contradice el contrato declarado (AGENTS.md §5, MSRV 1.80) y no aporta valor al producto.
   - **`[resolver] incompatible-rust-versions = "fallback"` en `.cargo/config.toml`:** con `rust-version = 1.80` el resolver degradaría media flota (clap, brotli, cfb, darling…) por debajo de lo que ya usa el árbol; no es proporcional.
-- Consecuencias: el gate de MSRV y Compose smoke vuelven a ser verdes sin tocar el mínimo; un futuro salto de MSRV exige otro ADR. Verificación: `cargo audit`, `make compose-smoke`, `renovate-config-validator`.
+- Consecuencias: el gate de MSRV y Compose smoke vuelven a ser verdes sin tocar el mínimo; un futuro salto de MSRV exige otro ADR. `cargo deny` deja de fallar por `chrono` (ya no es dependencia directa del workspace) y `cargo audit`/OSV quedan sin vulnerabilidades. Verificación: `cargo audit`, `cargo deny check`, `osv-scanner --config=osv-scanner.toml`, `make compose-smoke`, `renovate-config-validator`.
 - Relacionado: ADR-0013 (supply chain), ADR-0021 (Docker/escritorio), [ROADMAP.md](./ROADMAP.md), [SPECS.md](./SPECS.md), [AGENTS.md](./AGENTS.md).
 
 </details>

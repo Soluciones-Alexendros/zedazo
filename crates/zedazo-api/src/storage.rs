@@ -174,7 +174,7 @@ impl Storage {
             items.push(PendingDelete {
                 kind,
                 id: id.to_string(),
-                enqueued_at: chrono::Utc::now().to_rfc3339(),
+                enqueued_at: jiff::Timestamp::now().to_string(),
             });
             self.save_pending_deletes(&items)?;
         }
