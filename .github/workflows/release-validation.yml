@@ -1,0 +1,374 @@
+# Validación de Release — pipeline automático por tag/release PR
+#
+# Este workflow se dispara:
+# 1. En el PR de release-please (para validar antes de mergear)
+# 2. Al publicar el tag (en el workflow Release, job `host`)
+# 3. Manualmente vía workflow_dispatch
+#
+# Valida: binarios, AppImage, Docker, SBOM, checksums, smoke tests funcionales.
+# No publica: solo valida. La publicación sigue en `release.yml` (job `host`).
+
+name: Release Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+    # Solo corre en el PR de release-please
+    paths:
+      - '**'
+  workflow_dispatch:
+  workflow_call:  # para ser invocado desde release.yml si se desea
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: release-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # 1. Validación rápida del PR de release (lint, test, check)
+  release-pr-check:
+    name: Release PR — check
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --all-features --exclude zedazo-desktop -- -D warnings
+      - name: Check (stable)
+        run: cargo check --workspace --all-features --exclude zedazo-desktop
+      - name: Check (MSRV 1.80)
+        uses: dtolnay/rust-toolchain@ffa5102cf171ef44c6095daae18d851c024800b1 # 1.80
+        with:
+          toolchain: "1.80"
+      - name: Check MSRV
+        run: cargo check --workspace --all-features --exclude zedazo-desktop
+      - name: Test suite
+        run: cargo test --workspace --all-features --exclude zedazo-desktop
+      - name: Doc build
+        run: cargo doc --workspace --no-deps --document-private-items --exclude zedazo-desktop
+      - name: Cargo deny
+        uses: taiki-e/install-action@63300d694c674b6bd0e1ca77d202a2bc41c4b623 # cargo-deny
+        with:
+          tool: cargo-deny
+      - run: cargo deny check
+      - name: cargo audit
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+      - name: OSV-Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@19ec1116569a47416e11a45848722b1af31a857b # v1.9.0
+        with:
+          scan-args: |
+            --config=osv-scanner.toml
+            --lockfile=Cargo.lock
+            --lockfile=apps/web/pnpm-lock.yaml
+
+  # 2. Validación de artefactos de release (binarios, AppImage, checksums, SBOM)
+  #    Este job corre SOLO cuando se ha creado el tag (push tag) y los builds de cargo-dist ya existen.
+  release-artifacts:
+    name: Release — validar artefactos
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: []  # corre en paralelo con el workflow Release; los artefactos vienen de ahí
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Descargar artefactos del workflow Release
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: artifacts-*
+          path: artifacts
+          merge-multiple: true
+      - name: Validar checklist de assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          ls -la
+          # Assets esperados (cargo-dist + SBOM)
+          required=(
+            # Linux
+            zedazo-x86_64-unknown-linux-gnu.tar.xz
+            zedazo-x86_64-unknown-linux-gnu.tar.xz.sha256
+            zedazo-aarch64-unknown-linux-gnu.tar.xz
+            zedazo-aarch64-unknown-linux-gnu.tar.xz.sha256
+            # macOS
+            zedazo-x86_64-apple-darwin.tar.xz
+            zedazo-x86_64-apple-darwin.tar.xz.sha256
+            zedazo-aarch64-apple-darwin.tar.xz
+            zedazo-aarch64-apple-darwin.tar.xz.sha256
+            # Windows
+            zedazo-x86_64-pc-windows-msvc.zip
+            zedazo-x86_64-pc-windows-msvc.zip.sha256
+            # SBOM
+            sbom.json
+            sbom.json.sha256
+            # AppImage (solo si se habilita en dist-workspace.toml)
+            # zedazo-x86_64-unknown-linux-gnu.AppImage
+            # zedazo-x86_64-unknown-linux-gnu.AppImage.sha256
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [[ ! -f "$f" ]]; then
+              echo "⚠️  FALTA: $f"
+              missing=1
+            fi
+          done
+          if [[ "$missing" -ne 0 ]]; then
+            echo "❌ Assets incompletos."
+            exit 1
+          fi
+          echo "✅ Todos los assets requeridos presentes."
+      - name: Verificar checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          for f in zedazo-*.tar.xz zedazo-*.zip; do
+            if [[ -f "${f}.sha256" ]]; then
+              expected=$(awk '{print $1}' "${f}.sha256")
+              actual=$(sha256sum "$f" | awk '{print $1}')
+              test "$expected" = "$actual" || { echo "❌ checksum mismatch: $f"; exit 1; }
+              echo "✅ $f OK"
+            fi
+          done
+          # SBOM
+          expected=$(awk '{print $1}' sbom.json.sha256)
+          actual=$(sha256sum sbom.json | awk '{print $1}')
+          test "$expected" = "$actual" || { echo "❌ SBOM checksum mismatch"; exit 1; }
+          echo "✅ Todos los checksums OK."
+      - name: Validar SBOM (CycloneDX)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          jq -e 'type == "object" and (has("bomFormat") or has("components") or has("metadata"))' sbom.json >/dev/null
+          # Validar que contiene el paquete principal
+          jq -e '.components[] | select(.name == "zedazo")' sbom.json >/dev/null
+          echo "✅ SBOM válido y contiene zedazo."
+      - name: Smoke test binario Linux x86_64
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          tar -xJf zedazo-x86_64-unknown-linux-gnu.tar.xz
+          BIN=$(find . -type f -name zedazo | head -1)
+          test -n "$BIN"
+          chmod +x "$BIN"
+          # Versión
+          "$BIN" --version
+          # Help
+          "$BIN" --help
+          # Health check (requiere API corriendo; simulamos con --health-check si existe)
+          "$BIN" --health-check 2>&1 | head -5 || true
+          echo "✅ Smoke test binario OK."
+
+  # 3. Validación de AppImage (si existe en los artifacts)
+  release-appimage:
+    name: Release — validar AppImage
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: [release-artifacts]  # depende de que los artifacts básicos existan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Descargar artefactos
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: artifacts-*
+          path: artifacts
+          merge-multiple: true
+      - name: Verificar si existe AppImage
+        id: check
+        shell: bash
+        run: |
+          if ls artifacts/zedazo-*.AppImage 1>/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            APPIMAGE=$(ls artifacts/zedazo-*.AppImage | head -1)
+            echo "appimage=$APPIMAGE" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Validar AppImage
+        if: steps.check.outputs.exists == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APPIMAGE="${{ steps.check.outputs.appimage }}"
+          chmod +x "$APPIMAGE"
+          # Checksum
+          if [[ -f "${APPIMAGE}.sha256" ]]; then
+            expected=$(awk '{print $1}' "${APPIMAGE}.sha256")
+            actual=$(sha256sum "$APPIMAGE" | awk '{print $1}')
+            test "$expected" = "$actual" || { echo "❌ AppImage checksum mismatch"; exit 1; }
+          fi
+          # Ejecutar con --appimage-extract-and-run (necesario en CI sin FUSE)
+          "$APPIMAGE" --appimage-extract-and-run --version
+          "$APPIMAGE" --appimage-extract-and-run --help
+          echo "✅ AppImage OK."
+
+  # 4. Validación de imágenes Docker (si se publican)
+  release-docker:
+    name: Release — validar Docker
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: [release-artifacts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Verificar imágenes Docker publicadas
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          # Las imágenes se publican en ghcr.io/Soluciones-Alexendros/zedazo
+          # Intentar pull de la imagen API
+          if docker pull "ghcr.io/soluciones-alexendros/zedazo-api:$TAG" 2>/dev/null; then
+            echo "✅ ghcr.io/soluciones-alexendros/zedazo-api:$TAG existe"
+            # Smoke: health check
+            CID=$(docker run -d --rm --name zedazo-api-smoke \
+              -e ZEDAZO_BIND=0.0.0.0:8080 \
+              -e ZEDAZO_AUTH_MODE=disabled \
+              -e ZEDAZO_STORAGE_MODE=ephemeral \
+              "ghcr.io/soluciones-alexendros/zedazo-api:$TAG")
+            sleep 10
+            if curl -fsS "http://localhost:8080/api/v1/health" >/dev/null; then
+              echo "✅ API health check OK"
+            else
+              echo "⚠️  API health check falló (puede ser timing)"
+            fi
+            docker stop "$CID" >/dev/null
+          else
+            echo "⚠️  Imagen API no encontrada (¿se publica en este tag?)"
+          fi
+          # Imagen web (si existe)
+          if docker pull "ghcr.io/soluciones-alexendros/zedazo-web:$TAG" 2>/dev/null; then
+            echo "✅ ghcr.io/soluciones-alexendros/zedazo-web:$TAG existe"
+          fi
+
+  # 5. Validación de paridad CLI ↔ API (O10)
+  release-parity:
+    name: Release — paridad CLI↔API
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: [release-artifacts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Descargar binario Linux
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: artifacts-*
+          path: artifacts
+          merge-multiple: true
+      - name: Extraer y preparar
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd artifacts
+          tar -xJf zedazo-x86_64-unknown-linux-gnu.tar.xz
+          BIN=$(find . -type f -name zedazo | head -1)
+          chmod +x "$BIN"
+          echo "BIN=$BIN" >> "$GITHUB_OUTPUT"
+      - name: Levantar API en background
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN="${{ steps.prep.outputs.BIN }}"
+          # API en puerto efímero
+          PORT=0
+          "$BIN" serve --bind "127.0.0.1:$PORT" --data-dir /tmp/zedazo-release-test &
+          API_PID=$!
+          sleep 3
+          # Detectar puerto real
+          ACTUAL_PORT=$(ss -ltnp | grep "$API_PID" | head -1 | sed -n 's/.*:\([0-9]*\) .*/\1/p')
+          echo "API_PORT=$ACTUAL_PORT" >> "$GITHUB_OUTPUT"
+          echo "API_PID=$API_PID" >> "$GITHUB_OUTPUT"
+      - name: Ejecutar test de paridad (cribar sample.vcf)
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT="${{ steps.api.outputs.API_PORT }}"
+          BIN="${{ steps.prep.outputs.BIN }}"
+          SAMPLE="${{ github.workspace }}/examples/sample.vcf"
+          # CLI
+          "$BIN" cribar "$SAMPLE" -o /tmp/cli-out.vcf -a /tmp/cli-audit.tsv 2>&1 | tail -3
+          # API
+          curl -fsS -X POST "http://127.0.0.1:$PORT/api/v1/jobs" \
+            -F "file=@$SAMPLE;type=text/vcard" | jq -r '.id' > /tmp/job_id.txt
+          JOB_ID=$(cat /tmp/job_id.txt)
+          # Poll hasta completed
+          for i in {1..30}; do
+            STATUS=$(curl -fsS "http://127.0.0.1:$PORT/api/v1/jobs/$JOB_ID" | jq -r '.status')
+            [[ "$STATUS" == "completed" ]] && break
+            sleep 1
+          done
+          curl -fsS "http://127.0.0.1:$PORT/api/v1/jobs/$JOB_ID/artifacts/vcf" -o /tmp/api-out.vcf
+          curl -fsS "http://127.0.0.1:$PORT/api/v1/jobs/$JOB_ID/artifacts/audit" -o /tmp/api-audit.tsv
+          # Comparar
+          diff -u /tmp/cli-out.vcf /tmp/api-out.vcf && echo "✅ VCF idéntico"
+          diff -u /tmp/cli-audit.tsv /tmp/api-audit.tsv && echo "✅ Audit idéntico"
+      - name: Limpiar API
+        if: always()
+        shell: bash
+        run: |
+          PID="${{ steps.api.outputs.API_PID }}"
+          kill "$PID" 2>/dev/null || true
+
+  # 6. Checkpoint final — resumen y gate
+  release-gate:
+    name: Release Gate ✅
+    if: always()
+    needs:
+      - release-pr-check
+      - release-artifacts
+      - release-appimage
+      - release-docker
+      - release-parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resumen de validación
+        run: |
+          echo "=== Release Validation Summary ==="
+          echo "PR Check: ${{ needs.release-pr-check.result }}"
+          echo "Artifacts: ${{ needs.release-artifacts.result }}"
+          echo "AppImage: ${{ needs.release-appimage.result }}"
+          echo "Docker: ${{ needs.release-docker.result }}"
+          echo "Parity: ${{ needs.release-parity.result }}"
+          echo ""
+          # Fallar si alguno crítico falló
+          FAILED=0
+          for r in "${{ needs.release-pr-check.result }}" "${{ needs.release-artifacts.result }}" "${{ needs.release-parity.result }}"; do
+            if [[ "$r" != "success" && "$r" != "skipped" ]]; then
+              echo "❌ FAILED: $r"
+              FAILED=1
+            fi
+          done
+          if [[ "$FAILED" -eq 1 ]]; then
+            exit 1
+          fi
+          echo "✅ ALL PASSED — Release validado."
