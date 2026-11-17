@@ -1,14 +1,17 @@
 # Validación automática de cada release.
 #
-# Se dispara cuando termina el workflow `Release` (que corre al empujar un tag
-# `v*` y sube los artefactos al draft de release-please), y también a mano con
-# `workflow_dispatch` + tag.
+# Se dispara al empujar un tag `v*` (a la vez que el workflow `Release`, que
+# construye los artefactos y los sube al draft de release-please) y también a
+# mano con `workflow_dispatch` + tag.
 #
-# Valida lo que de verdad se va a publicar: assets, checksums, SBOM, smoke del
-# binario, y paridad CLI↔API sobre el código del tag.
+# Como ambos arrancan en paralelo, este workflow ESPERA (con reintentos) a que
+# los assets aparezcan en la release; luego los valida.
+#
+# Valida lo que de verdad se va a publicar: assets requeridos, checksums, SBOM,
+# smoke del binario y paridad CLI↔API sobre el código del tag.
 #
 # No publica nada: el draft lo crea release-please y los assets los sube
-# `release.yml` (job `host`). Este workflow solo verifica y falla si algo no cuadra.
+# `release.yml` (job `host`).
 #
 # La validación pre-merge del PR de release-please vive en `ci.yml`
 # (job `release-validation-pr`, agregado en `ci-gate`).
@@ -16,9 +19,9 @@
 name: Release Validation
 
 on:
-  workflow_run:
-    workflows: ["Release"]
-    types: [completed]
+  push:
+    tags:
+      - '**[0-9]+.[0-9]+.[0-9]+*'
   workflow_dispatch:
     inputs:
       tag:
@@ -30,7 +33,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-validation-${{ github.event.workflow_run.head_branch || inputs.tag }}
+  group: release-validation-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 env:
@@ -38,62 +41,70 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  # Resuelve el tag a validar. En workflow_run, head_branch es el nombre del tag.
   resolve:
     name: Resolver tag
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
-      release_ok: ${{ steps.tag.outputs.release_ok }}
     steps:
       - id: tag
         env:
           EVENT: ${{ github.event_name }}
           INPUT_TAG: ${{ inputs.tag }}
-          RUN_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           if [[ "$EVENT" == "workflow_dispatch" ]]; then
             TAG="$INPUT_TAG"
           else
-            TAG="$RUN_BRANCH"
+            TAG="$REF_NAME"
           fi
           if [[ ! "$TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-            echo "Aviso: '$TAG' no parece un tag de release; se omite la validación."
-            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-            echo "release_ok=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            echo "error: '$TAG' no parece un tag de release" >&2
+            exit 1
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "release_ok=true" >> "$GITHUB_OUTPUT"
           echo "tag a validar: $TAG"
-          if [[ "$EVENT" != "workflow_dispatch" ]]; then
-            echo "resultado del workflow Release: $RUN_CONCLUSION"
-          fi
 
-  # 1. Assets publicados: presencia, checksums, SBOM y smoke del binario Linux.
+  # 1. Assets publicados: espera, presencia, checksums, SBOM y smoke del binario.
   assets:
     name: Assets y checksums
     needs: [resolve]
-    if: needs.resolve.outputs.release_ok == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     permissions:
       contents: read
     steps:
-      - name: Descargar assets del draft release
+      - name: Esperar a que release.yml suba los assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.resolve.outputs.tag }}
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          gh release download "$TAG" --dir artifacts --clobber
-          ls -la artifacts
+          # `Release` arranca en paralelo; su job `host` sube los assets al draft.
+          for attempt in $(seq 1 60); do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              if gh release download "$TAG" --dir artifacts --clobber 2>/dev/null; then
+                count=$(find artifacts -type f | wc -l)
+                if [[ "$count" -ge 12 ]]; then
+                  echo "OK: $count assets descargados en el intento $attempt."
+                  ls -la artifacts
+                  exit 0
+                fi
+                echo "intento $attempt: $count assets (esperando al menos 12)"
+              else
+                echo "intento $attempt: release '$TAG' aún sin assets"
+              fi
+            else
+              echo "intento $attempt: release '$TAG' aún no existe"
+            fi
+            sleep 20
+          done
+          echo "error: timeout esperando los assets de '$TAG'" >&2
+          exit 1
       - name: Checklist de assets requeridos
         shell: bash
         run: |
@@ -168,42 +179,40 @@ jobs:
           fi
           VERSION=$("$BIN" --version)
           echo "version: $VERSION"
-          # La versión del binario debe coincidir con el tag.
           TAG="${{ needs.resolve.outputs.tag }}"
           echo "$VERSION" | grep -q -- "${TAG#v}" || {
             echo "error: versión del binario ($VERSION) no coincide con el tag ($TAG)" >&2
             exit 1
           }
           "$BIN" --help >/dev/null
-          "$BIN" stats /dev/null >/dev/null 2>&1 || true
           echo "OK: smoke del binario."
-      - name: Aviso si el workflow Release no terminó bien
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success'
-        env:
-          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
-        run: |
-          echo "::warning::El workflow Release terminó con '$CONCLUSION'; los assets pueden estar incompletos."
 
-  # 2. AppImage (lo sube publish.yml al publicar la release).
-  #    Si existe, se valida; si no, se avisa (no bloquea hasta que se publique).
+  # 2. AppImage (lo sube publish.yml al publicar la release; puede no estar aún).
   appimage:
     name: AppImage
     needs: [resolve]
-    if: needs.resolve.outputs.release_ok == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
-      - name: Descargar assets
+      - name: Esperar / descargar AppImage si existe
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.resolve.outputs.tag }}
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          gh release download "$TAG" --dir artifacts --clobber --pattern '*.AppImage*' || true
-          ls -la artifacts
+          # publish.yml sube el AppImage al publicar la release; se espera un rato.
+          for attempt in $(seq 1 15); do
+            gh release download "$TAG" --dir artifacts --clobber --pattern '*.AppImage*' 2>/dev/null || true
+            if ls artifacts/*.AppImage 1>/dev/null 2>&1; then
+              echo "OK: AppImage presente (intento $attempt)"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "Aviso: aún no hay AppImage en '$TAG' (se publica con publish.yml)."
       - name: Validar AppImage
         shell: bash
         run: |
@@ -211,7 +220,7 @@ jobs:
           shopt -s nullglob
           files=(artifacts/*.AppImage)
           if [[ ${#files[@]} -eq 0 ]]; then
-            echo "::notice::Sin AppImage en la release (se publica con publish.yml al publicar)."
+            echo "::notice::Sin AppImage en la release todavía; nada que validar."
             exit 0
           fi
           APPIMAGE="${files[0]}"
@@ -234,7 +243,6 @@ jobs:
   parity:
     name: Paridad CLI↔API (O10)
     needs: [resolve]
-    if: needs.resolve.outputs.release_ok == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -245,7 +253,9 @@ jobs:
           persist-credentials: false
           ref: ${{ needs.resolve.outputs.tag }}
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
-      - uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
+      # Sin rust-cache: este workflow corre sobre tags y valida artefactos
+      # publicados; escribir caché aquí abre la puerta a cache poisoning
+      # (zizmor: cache-poisoning).
       - name: Paridad (harness HTTP real)
         run: cargo test -p zedazo-api --test equivalence_http --all-features
 
@@ -253,7 +263,7 @@ jobs:
   gate:
     name: Release Gate
     needs: [resolve, assets, appimage, parity]
-    if: always() && needs.resolve.outputs.release_ok == 'true'
+    if: always()
     runs-on: ubuntu-latest
     permissions: {}
     steps:
