@@ -244,8 +244,9 @@ jobs:
             sleep 20
           done
           echo "Aviso: aún no hay AppImage en '$TAG' (se publica con publish.yml)."
-      - name: Validar AppImage
+      - name: Validar AppImage (estructural)
         shell: bash
+        timeout-minutes: 10
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -256,22 +257,29 @@ jobs:
           fi
           APPIMAGE="${files[0]}"
           chmod +x "$APPIMAGE"
+          # Checksum: fichero propio o SHA256SUMS de la release.
           if [[ -f "${APPIMAGE}.sha256" ]]; then
             expected=$(awk '{print $1}' "${APPIMAGE}.sha256")
             actual=$(sha256sum "$APPIMAGE" | awk '{print $1}')
-            if [[ "$expected" != "$actual" ]]; then
-              echo "error: checksum mismatch del AppImage" >&2
-              exit 1
-            fi
+            [[ "$expected" == "$actual" ]] || { echo "error: checksum mismatch del AppImage" >&2; exit 1; }
             echo "OK: checksum del AppImage."
+          elif [[ -f artifacts/SHA256SUMS ]]; then
+            base=$(basename "$APPIMAGE")
+            grep -q " $base\$" artifacts/SHA256SUMS && echo "OK: AppImage listado en SHA256SUMS."
           fi
-          # --appimage-extract-and-run evita FUSE; xvfb porque el binario Tauri
-          # inicializa GTK incluso para --version (sin display paniquea).
-          xvfb-run -a -s "-screen 0 1280x800x24" \
-            "$APPIMAGE" --appimage-extract-and-run --version
-          xvfb-run -a -s "-screen 0 1280x800x24" \
-            "$APPIMAGE" --appimage-extract-and-run --help >/dev/null
-          echo "OK: AppImage ejecuta."
+          # Descomprimir (squashfs) y verificar contenido. NO se ejecuta el
+          # binario: es una app GTK y no termina con --version (se colgaría).
+          timeout 300 "$APPIMAGE" --appimage-extract >/dev/null
+          BIN=$(find squashfs-root -type f -name 'zedazo-desktop' | head -1)
+          if [[ -z "$BIN" ]]; then
+            echo "error: el AppImage no contiene zedazo-desktop" >&2
+            exit 1
+          fi
+          file "$BIN" | grep -q ELF || { echo "error: zedazo-desktop no es ELF" >&2; exit 1; }
+          test -s "$BIN"
+          test -x squashfs-root/AppRun
+          echo "OK: AppImage íntegro ($(stat -c%s "$BIN") bytes de binario)."
+          echo "::notice::Smoke de ejecución real cubierto por 'Desktop smoke (xvfb)' en cada push."
 
   # 3. Paridad CLI↔API (O10) sobre el código del tag.
   parity:
