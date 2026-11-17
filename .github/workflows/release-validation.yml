@@ -217,6 +217,13 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      # El AppImage enlaza libEGL/libGL/GTK: sin estas libs ni `--version` arranca
+      # ("libEGL.so.1: cannot open shared object file"). Reusa el script del repo.
+      - name: Dependencias de sistema (AppImage)
+        run: bash scripts/desktop/install-linux-deps.sh
       - name: Esperar / descargar AppImage si existe
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
