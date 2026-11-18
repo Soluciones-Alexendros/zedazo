@@ -1,6 +1,7 @@
 # Política cargo-audit (RustSec) para Zedazo
 #
-# Criterio de fallo del workflow `.github/workflows/audit.yml` y de `make audit`:
+# Criterio de fallo del job `sca` (ci.yml / security.yml vía reusable-security.yml)
+# y de `make audit`:
 # - Falla solo ante vulnerabilidades (advisory type = vulnerability).
 # - No falla por avisos informativos: unmaintained, unsound, yanked.
 # - Cada ID en `ignore` es una excepción temporal: motivo, fecha y revisión.

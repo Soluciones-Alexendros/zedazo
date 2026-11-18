@@ -115,7 +115,7 @@ deploy/               Compose local/remoto/landing + Caddy
 |---------|-------------|
 | CI | GitHub Actions en `ubuntu-latest` (`make ci`: fmt, clippy, test, check, doc, docs-validate, parity, web-ci) |
 | Release | Tag semver → cargo-dist + SBOM + crates.io (`zedazo-core` luego `zedazo`) |
-| Security | `cargo audit` semanal |
+| Security | `security.yml` semanal (`cargo audit` + OSV + gitleaks) |
 | Dependencias | **Renovate** (no Dependabot); pins en ADR-0009 |
 | Pre-commit | `make hooks` → fmt + clippy |
 | Paridad | O10: `make parity` + matriz en `docs/gui/` |

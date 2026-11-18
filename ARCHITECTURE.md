@@ -33,18 +33,23 @@ supersedes: "v0.3.1"
 
 El proyecto usa **GitHub Actions** en **`ubuntu-latest`**. ADR-0008 prefiere runners `[self-hosted, ts]`; enmienda 2026-08-15: con 0 runners registrados, los workflows usan `ubuntu-latest` hasta restaurar el runner `ts`.
 
-| Workflow          | Trigger                    | Jobs                                     |
-| ----------------- | -------------------------- | ---------------------------------------- |
-| `ci.yml`          | push/PR a `main`           | Jobs maduros (Check, MSRV, Format, Clippy, Test, Doc, Coverage, Docs validate, Parity O10, Web, Deny) + wrappers canónicos `quality` (fmt+clippy+docs-validate) y `smoke` (health+check). `test` ya es el nombre canónico. |
-| `audit.yml`       | Lunes 08:00 UTC; PR/push a lockfile/política | cargo audit (falla solo en vulns RustSec) |
-| `release.yml`     | Tag `v*`                   | Build + Package + Publish to crates.io   |
-| Renovate          | Schedule + PRs             | `.github/renovate.json` (no Dependabot)  |
+| Workflow | Trigger | En `ci-gate` | Rol |
+| --- | --- | --- | --- |
+| `ci.yml` | push/PR a `main` (+ `workflow_dispatch`) | sí (rollup) | Jobs maduros Rust/GUI/desktop + `gitleaks`/`supply-chain` + `ci-gate`. Canon P0: `quality` ≡ fmt+clippy+docs-validate; `smoke` ≡ health+check; `test` ya es el nombre canónico. |
+| `reusable-security.yml` | `workflow_call` | vía jobs de `ci.yml` | gitleaks + SCA (`pnpm audit`, `cargo audit`, OSV). |
+| `security.yml` | lunes 05:17 UTC + `workflow_dispatch` | no | Misma suite que el reusable, en cron (no duplica el rollup del PR). |
+| `codeql.yml` | push/PR (paths API/carddav/Cargo) + dispatch | no | SAST Rust (CodeQL). |
+| `scorecard.yml` | mensual + dispatch | no | OpenSSF Scorecard → SARIF. |
+| `sbom-crates.yml` | `workflow_dispatch` | no | CycloneDX del binario publicable al GitHub Release del tag. |
+| `release-please.yml` | push a `main` + dispatch | no | PR de release + draft GitHub Release. |
+| `release.yml` | tag `v*` / PR (cargo-dist) | no | Artefactos nativos Rust al draft; no hace `cargo publish`. |
+| `release-validation.yml` | tag `v*` / release published / dispatch | no | Checksums, SBOM, smoke y paridad del tag. |
+| `publish.yml` | release published | no | AppImage + `SHA256SUMS` + atestación. |
+| `publish-crates.yml` | `workflow_dispatch` | no | Publicación manual a crates.io. |
+| `publish-legacy.yml` | `workflow_dispatch` | no | Publicación legada `vcf-cribador` 0.1.2. |
+| Renovate | schedule + PRs | no | [`.github/renovate.json`](.github/renovate.json) (no Dependabot). |
 
-**Branch protection:** `main` requiere:
-- Todos los checks CI verdes
-- 1 approving review + code owner
-- Linear history (no merge commits)
-- Sin pushes directos
+**Branch protection:** `main` requiere el check único `ci-gate`, 1 approving review + code owner, linear history (no merge commits) y sin pushes directos.
 
 → Ver [ROADMAP.md](./ROADMAP.md) y [DECISIONS.md](./DECISIONS.md) (ADR-0007 Renovate, ADR-0008 runners, ADR-0011 coverage).
 

@@ -7,7 +7,7 @@
 - **Contenido a integrar según contexto:** Conserva copy, wordmark `zedazo` y dual license. No copies un README de landing/SaaS ni tokens/DS de otro paquete. CI canónico = wrappers `quality` / `test` / `smoke` sobre jobs Rust maduros.
 
 [![CI](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/ci.yml/badge.svg)](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/ci.yml)
-[![Security Audit](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/audit.yml/badge.svg)](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/audit.yml)
+[![Security](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/security.yml/badge.svg)](https://github.com/Soluciones-Alexendros/zedazo/actions/workflows/security.yml)
 [![Coverage Status](https://coveralls.io/repos/github/Soluciones-Alexendros/zedazo/badge.svg?branch=main)](https://coveralls.io/github/Soluciones-Alexendros/zedazo?branch=main)
 [![Crates.io](https://img.shields.io/crates/v/zedazo?color=orange)](https://crates.io/crates/zedazo)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
