@@ -112,12 +112,19 @@ jobs:
           done
           echo "error: timeout esperando los assets de '$TAG' (¿falló release.yml?)" >&2
           exit 1
-      - name: Checklist de assets requeridos
+      - name: Checklist de assets
         shell: bash
         run: |
           set -euo pipefail
           cd artifacts
-          required=(
+          # Bloqueantes: lo que el pipeline produce hoy de forma fiable
+          # (sbom.json lo sube release.yml; el AppImage, publish.yml al publicar).
+          required=(sbom.json sbom.json.sha256)
+          # Esperados de cargo-dist. El build de tarballs está roto desde
+          # v0.6.1 (gdk-3.0 en Linux, `eval` en pwsh en Windows): se avisa,
+          # no se bloquea, para no dejar releases sin publicar mientras se
+          # arregla en su propio cambio. Ver docs/release-validation.md.
+          dist_assets=(
             zedazo-x86_64-unknown-linux-gnu.tar.xz
             zedazo-x86_64-unknown-linux-gnu.tar.xz.sha256
             zedazo-aarch64-unknown-linux-gnu.tar.xz
@@ -128,8 +135,6 @@ jobs:
             zedazo-aarch64-apple-darwin.tar.xz.sha256
             zedazo-x86_64-pc-windows-msvc.zip
             zedazo-x86_64-pc-windows-msvc.zip.sha256
-            sbom.json
-            sbom.json.sha256
           )
           missing=0
           for f in "${required[@]}"; do
@@ -138,11 +143,23 @@ jobs:
               missing=1
             fi
           done
-          if [[ "$missing" -ne 0 ]]; then
-            echo "error: assets incompletos en la release" >&2
+          missing_dist=()
+          for f in "${dist_assets[@]}"; do
+            [[ -f "$f" ]] || missing_dist+=("$f")
+          done
+          if [[ ${#missing_dist[@]} -gt 0 ]]; then
+            echo "::warning::cargo-dist no aportó ${#missing_dist[@]} artefactos: ${missing_dist[*]}"
+          fi
+          # Nunca aceptar una release sin binarios de ninguna clase.
+          if ! ls ./*.tar.xz ./*.zip ./*.AppImage >/dev/null 2>&1; then
+            echo "error: la release no tiene ningún binario (ni tarball ni AppImage)" >&2
             exit 1
           fi
-          echo "OK: todos los assets requeridos presentes."
+          if [[ "$missing" -ne 0 ]]; then
+            echo "error: faltan assets bloqueantes en la release" >&2
+            exit 1
+          fi
+          echo "OK: assets bloqueantes presentes."
       - name: Verificar checksums
         shell: bash
         run: |

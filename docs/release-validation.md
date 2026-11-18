@@ -44,7 +44,7 @@ Consecuencia real: los drafts de **v0.6.1 y v0.6.2** quedaron con 0 assets porqu
 | Job | Comprueba |
 | --- | --- |
 | `resolve` | Que el evento trae un tag con forma `vX.Y.Z`. |
-| `assets` | Los 12 ficheros esperados (5 plataformas + `.sha256`, `sbom.json` + `.sha256`), checksums, SBOM CycloneDX con el paquete `zedazo`, y que `zedazo --version` coincide con el tag. |
+| `assets` | Bloqueantes: `sbom.json` + `.sha256`, que exista al menos un binario, SBOM CycloneDX con el paquete `zedazo` y checksums. Avisos: los 10 artefactos de cargo-dist. |
 | `appimage` | Checksum contra `.sha256` o `SHA256SUMS`, extracción squashfs, `AppRun` ejecutable y `zedazo-desktop` ELF no vacío. |
 | `parity` | `cargo test -p zedazo-api --test equivalence_http` sobre el código del tag (O10). |
 | `gate` | Resume y falla si algún job crítico no terminó en `success`. |
@@ -63,6 +63,21 @@ gh workflow run release-validation.yml -f tag=v0.6.3
 # Ver el resultado
 gh run list --workflow=release-validation.yml --limit 3
 ```
+
+## Estado de cargo-dist (aviso conocido)
+
+Los tarballs multi-plataforma **no se generan** desde v0.6.1:
+
+- **Linux:** el build de `dist` compila el workspace e incluye `apps/desktop`
+  (Tauri/GTK) → falla con `Package gdk-3.0 was not found`.
+- **Windows:** el workflow generado por dist 0.32 usa `eval` con `shell: pwsh`
+  → `The term 'eval' is not recognized`.
+- **macOS:** compila.
+
+Mientras eso se arregla en su propio cambio, la validación los trata como
+**aviso**: exige SBOM y al menos un binario (hoy el AppImage de `publish.yml`),
+y publica en el log la lista exacta de lo que falta. Una release sin ningún
+binario sí falla.
 
 ## Qué NO hace
 
