@@ -60,7 +60,9 @@ jobs:
       - name: Despachar validación de release
         run: |
           set -euo pipefail
-          gh workflow run release-validation.yml --ref "$TAG"
+          # `tag` es input obligatorio del workflow: sin -f la API responde
+          # 422 "Required input 'tag' not provided" (visto en v0.6.3).
+          gh workflow run release-validation.yml --ref "$TAG" -f tag="$TAG"
 
   # Solo en el PR de release: actualizar Cargo.lock de crates del workspace y empujar.
   # El commit se crea vía GraphQL `createCommitOnBranch` para que GitHub lo firme;
