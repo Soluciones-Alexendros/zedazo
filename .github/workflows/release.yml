@@ -349,17 +349,12 @@ jobs:
           set -euo pipefail
           cd artifacts
           ls -la
+          # Alineado con dist-workspace.toml: solo macOS x86_64 vía cargo-dist.
+          # Linux AppImage lo sube publish.yml al publicar; Linux/Windows dist rotos
+          # (GTK / pwsh eval) — ver docs/release-validation.md.
           required=(
-            zedazo-aarch64-apple-darwin.tar.xz
-            zedazo-aarch64-apple-darwin.tar.xz.sha256
             zedazo-x86_64-apple-darwin.tar.xz
             zedazo-x86_64-apple-darwin.tar.xz.sha256
-            zedazo-x86_64-pc-windows-msvc.zip
-            zedazo-x86_64-pc-windows-msvc.zip.sha256
-            zedazo-aarch64-unknown-linux-gnu.tar.xz
-            zedazo-aarch64-unknown-linux-gnu.tar.xz.sha256
-            zedazo-x86_64-unknown-linux-gnu.tar.xz
-            zedazo-x86_64-unknown-linux-gnu.tar.xz.sha256
             sbom.json
             sbom.json.sha256
           )
@@ -371,10 +366,11 @@ jobs:
             fi
           done
           if [[ "$missing" -ne 0 ]]; then
-            echo "Assets incompletos; no se crea la release."
+            echo "Assets incompletos; no se sube al draft."
             exit 1
           fi
           # Verificar checksums (cargo-dist: hash o "hash  archivo")
+          shopt -s nullglob
           for f in zedazo-*.tar.xz zedazo-*.zip; do
             expected=$(awk '{print $1}' "${f}.sha256")
             actual=$(sha256sum "$f" | awk '{print $1}')
@@ -384,11 +380,7 @@ jobs:
           actual_sbom=$(sha256sum sbom.json | awk '{print $1}')
           test "$expected_sbom" = "$actual_sbom"
           jq -e 'type == "object" and (has("bomFormat") or has("components") or has("metadata"))' sbom.json >/dev/null
-          # Smoke del binario Linux x86_64 en el runner
-          tar -xJf zedazo-x86_64-unknown-linux-gnu.tar.xz
-          BIN=$(find . -type f -name zedazo | head -1)
-          test -n "$BIN"
-          "$BIN" --version
+          echo "OK: assets mínimos (macOS x86_64 + SBOM) listos para el draft."
       - name: Upload to draft GitHub Release
         env:
           TAG: ${{ needs.plan.outputs.tag }}

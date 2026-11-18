@@ -183,10 +183,14 @@ jobs:
             jq -e 'type == "object" and (has("bomFormat") or has("metadata"))' "$s" >/dev/null
             echo "OK: $s es CycloneDX válido"
           done
-          # Si está el SBOM del binario, debe declarar el paquete zedazo.
+          # El paquete CLI `zedazo` vive en metadata.component (CycloneDX);
+          # components[] suele traer zedazo-core / zedazo-carddav.
           if [[ -f sbom.json ]]; then
-            jq -e '[.components[]? | select(.name == "zedazo")] | length > 0' sbom.json >/dev/null
-            echo "OK: sbom.json contiene zedazo"
+            jq -e '
+              (.metadata.component.name == "zedazo")
+              or ([.components[]? | select(.name == "zedazo" or .name == "zedazo-core")] | length > 0)
+            ' sbom.json >/dev/null
+            echo "OK: sbom.json declara zedazo (metadata o components)"
           fi
       - name: Smoke del binario Linux (si hay tarball)
         shell: bash
