@@ -71,7 +71,7 @@ docker compose -f deploy/docker-compose.remote.yml --env-file deploy/.env up --b
 # → https://localhost:8443
 ```
 
-Docs: [docs/gui/](docs/gui/) · [escritorio AppImage](docs/desktop.md) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi.yaml) · [deploy.md](docs/gui/deploy.md) · acta de cierre [`docs/validation/acta-cierre-operativo.md`](docs/validation/acta-cierre-operativo.md). Variables de diseño: núcleo `design-references` en [`apps/web/src/design-system/`](apps/web/src/design-system/).
+Docs: [docs/gui/](docs/gui/) · [escritorio AppImage](docs/desktop.md) · OpenAPI [docs/api/openapi.yaml](docs/api/openapi.yaml) · [deploy.md](docs/gui/deploy.md) · [validación de release](docs/release-validation.md) · acta de cierre [`docs/validation/acta-cierre-operativo.md`](docs/validation/acta-cierre-operativo.md). Variables de diseño: núcleo `design-references` en [`apps/web/src/design-system/`](apps/web/src/design-system/).
 
 ## Capturas
 
