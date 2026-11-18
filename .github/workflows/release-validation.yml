@@ -80,37 +80,35 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Esperar a que release.yml suba los assets
+      - name: Esperar assets publicados (AppImage + SBOMs)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Sin checkout no hay repo git: `gh` necesita GH_REPO explícito
-          # (misma causa que el fallo corregido en #111).
           GH_REPO: ${{ github.repository }}
           TAG: ${{ needs.resolve.outputs.tag }}
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          # `Release` construye y sube los 12 assets al draft de una sola vez
-          # al final (job `host`). Mientras tanto el draft existe pero está
-          # vacío, así que no se puede distinguir «aún construyendo» de
-          # «incompleto» por el número de ficheros: se espera a que aparezcan
-          # o se agota el tiempo y el checklist de abajo falla con la lista.
+          # El job `host` de release.yml sube los tarballs de cargo-dist (si compilan).
+          # publish.yml sube el AppImage y los SBOMs al publicar.
+          # Esperamos a que aparezcan AL MENOS los SBOMs y un binario.
           for attempt in $(seq 1 90); do
             if gh release view "$TAG" >/dev/null 2>&1; then
               gh release download "$TAG" --dir artifacts --clobber 2>/dev/null || true
               count=$(find artifacts -type f | wc -l)
-              if [[ "$count" -ge 12 ]]; then
-                echo "OK: $count assets descargados (intento $attempt)."
+              bins=$(find artifacts -name 'zedazo-*.tar.xz' -o -name 'zedazo-*.zip' -o -name '*.AppImage' | wc -l)
+              sboms=$(find artifacts -name 'sbom*.json' | wc -l)
+              if [[ "$bins" -ge 1 && "$sboms" -ge 1 ]]; then
+                echo "OK: $count assets ($bins binario(s), $sboms SBOM(s)) en intento $attempt."
                 ls -la artifacts
                 exit 0
               fi
-              echo "intento $attempt: $count assets (release.yml sigue construyendo)"
+              echo "intento $attempt: $count assets ($bins bin, $sboms sbom)"
             else
               echo "intento $attempt: release '$TAG' aún no existe"
             fi
             sleep 30
           done
-          echo "error: timeout esperando los assets de '$TAG' (¿falló release.yml?)" >&2
+          echo "error: timeout esperando binario+SBOM en '$TAG' (¿falló release.yml y publish.yml?)" >&2
           exit 1
       - name: Checklist de assets
         shell: bash
