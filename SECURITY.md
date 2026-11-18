@@ -10,15 +10,19 @@
 
 Si descubres una vulnerabilidad de seguridad, por favor **no abras un issue público**.
 
-Envía un correo a los mantenedores del proyecto con los detalles. Responderemos en un plazo máximo de 48 horas.
+Abre un aviso privado en GitHub:
+
+<https://github.com/Soluciones-Alexendros/zedazo/security/advisories/new>
+
+Ese formulario solo llega a los mantenedores si el repositorio tiene activado **Private vulnerability reporting** (Settings → Code security). Responderemos en un plazo máximo de 48 horas. No hay dirección de correo publicada en este documento.
 
 ## Versiones soportadas
 
 | Versión | Soportada |
 |---------|-----------|
-| 0.5.x (CLI + API/GUI en `main`) | ✅ Código activo |
-| 0.3.x (crates.io) | ✅ Publicada |
-| 0.2.x / 0.1.x | ⚠️ Solo histórico |
+| 0.6.x (tag **v0.6.4**, CLI + API/GUI + AppImage) | ✅ Línea activa |
+| 0.5.x | ⚠️ Anterior; sin línea de parches propia |
+| 0.3.x y anteriores | ⚠️ Solo histórico |
 
 ## Consideraciones de seguridad
 
@@ -37,3 +41,4 @@ Envía un correo a los mantenedores del proyecto con los detalles. Responderemos
   - Una excepción temporal exige el mismo `RUSTSEC-*` en [`.cargo/audit.toml`](.cargo/audit.toml) y [`deny.toml`](deny.toml), con motivo y fecha de revisión. No ignores un advisory si hay parche publicable (p. ej. `rustls` ≥ 0.23.45 para [RUSTSEC-2026-0285](https://rustsec.org/advisories/RUSTSEC-2026-0285)).
   - Local: `make audit` (y `make deny` para cargo-deny, ADR-0013).
 - **CI Security en PR/push**: jobs `gitleaks` y `supply-chain` de [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (gitleaks binario redactado; `pnpm audit --prod --audit-level=high` en `apps/web`; `cargo audit`; OSV high/critical). [`.github/workflows/security.yml`](.github/workflows/security.yml) es la misma suite en cron semanal + `workflow_dispatch` (no duplica el rollup del PR). El check requerido del ruleset sigue siendo `ci-gate`.
+- **SAST**: [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml) analiza Rust con CodeQL cuando cambian `crates/zedazo-api`, `crates/zedazo-carddav` o el grafo Cargo. El foco del informe son esas dos crates; la base de CodeQL es el workspace. **No** forma parte de `ci-gate`.

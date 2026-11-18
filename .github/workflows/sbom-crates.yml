@@ -1,0 +1,46 @@
+name: SBOM crates
+
+# CycloneDX del binario publicable, subido al GitHub Release del tag.
+# No publica en crates.io. crates.io no aloja este fichero.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag cuyo GitHub Release recibirá sbom-crates.json"
+        required: true
+        default: "v0.6.4"
+
+permissions: {}
+
+jobs:
+  sbom:
+    name: SBOM crates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref }}
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - name: Install cargo-cyclonedx
+        run: cargo install cargo-cyclonedx --locked
+      - name: Generate SBOM
+        run: |
+          set -euo pipefail
+          cargo cyclonedx --manifest-path crates/zedazo-cli/Cargo.toml --format json --override-filename sbom-crates
+          if [ ! -f sbom-crates.json ] && [ -f crates/zedazo-cli/sbom-crates.json ]; then
+            mv crates/zedazo-cli/sbom-crates.json sbom-crates.json
+          fi
+          test -f sbom-crates.json
+          sha256sum sbom-crates.json > sbom-crates.json.sha256
+      - name: Upload al release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" >/dev/null
+          gh release upload "$TAG" sbom-crates.json sbom-crates.json.sha256 --clobber

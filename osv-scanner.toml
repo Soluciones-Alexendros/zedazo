@@ -3,7 +3,7 @@
 
 [[IgnoredVulns]]
 id = "RUSTSEC-2024-0429"
-reason = "glib 0.18.x (unsound VariantStrIter) transitivo de Tauri/wry en apps/desktop; sin bump publicable en el grafo actual. Revisión: tras upgrade Tauri/gtk-rs."
+reason = "glib 0.18.5 (unsound VariantStrIter) transitivo de Tauri/wry en apps/desktop. Parche upstream en glib >=0.20, ausente del grafo. Comprobado 2026-11-18. Revisión 2027-02-18."
 
 [[IgnoredVulns]]
 id = "GHSA-wrw7-89jp-8q8g"
@@ -11,7 +11,7 @@ reason = "Mismo advisory que RUSTSEC-2024-0429 (glib); ver ignore anterior."
 
 [[IgnoredVulns]]
 id = "RUSTSEC-2024-0370"
-reason = "proc-macro-error unmaintained; transitivo de Tauri/gtk-rs. No hay reemplazo en el grafo actual. Revisión: tras upgrade Tauri."
+reason = "proc-macro-error 1.0.4 unmaintained; transitivo de Tauri/gtk-rs. RustSec no publica versión parcheada. Comprobado 2026-11-18. Revisión 2027-02-18."
 
 [[IgnoredVulns]]
 id = "GHSA-qwgh-2vcv-g2f7"

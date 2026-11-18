@@ -54,6 +54,15 @@ colgaría el job. Su smoke de ejecución real ya lo cubre `Desktop smoke (xvfb)`
 en cada push de `ci.yml`; aquí solo se verifica que el artefacto está íntegro y
 completo.
 
+## SBOM del tag de crates
+
+crates.io no aloja el SBOM. El workflow [`.github/workflows/sbom-crates.yml`](../.github/workflows/sbom-crates.yml) es manual (`workflow_dispatch`): genera `sbom-crates.json` y `sbom-crates.json.sha256` con el mismo `cargo cyclonedx` del job `sbom` de `release.yml` y los sube al GitHub Release del tag indicado. No ejecuta `cargo publish`.
+
+```bash
+gh workflow run sbom-crates.yml -f ref=v0.6.4
+sha256sum -c sbom-crates.json.sha256
+```
+
 ## Cómo relanzarla
 
 ```bash

@@ -25,3 +25,15 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }
 same-file = { workspace = true }
+
+[dev-dependencies]
+# Sin features default (rayon, plotters). criterion 0.5.1 arrastra criterion-plot igual.
+criterion = { version = "0.5", default-features = false, features = ["cargo_bench_support"] }
+
+[[bench]]
+name = "parse_vcf"
+harness = false
+
+[[bench]]
+name = "dedup"
+harness = false
