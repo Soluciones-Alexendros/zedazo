@@ -30,7 +30,7 @@ Revisión de la superficie S/V del plan de cierre (rama `plan/zedazo-v060-seguri
 | S-15 | Permisos mínimos / digests Docker | [#100](https://github.com/Soluciones-Alexendros/zedazo/pull/100) `ff09d58e` | hadolint + dockerfile-digests | Hecho (Caddy sin `cap_drop:ALL`) |
 | S-16 | Renovate pin digests Actions | [#100](https://github.com/Soluciones-Alexendros/zedazo/pull/100) `ff09d58e` | `renovate.json` | Hecho |
 | S-17 | cargo-fuzz unfold/parse/… | — | — | Fase C |
-| S-18 | glib / RUSTSEC-2024-0429 (Tauri) | ignore OSV | `osv-scanner.toml` | **Riesgo aceptado** — revisión tras upgrade Tauri/gtk-rs (fecha revisión: 2026-10-26; no quitar ignore: OSV aún lo reporta) |
+| S-18 | glib / RUSTSEC-2024-0429 (Tauri) y proc-macro-error / RUSTSEC-2024-0370 | ignore OSV + audit + deny | `osv-scanner.toml`, `.cargo/audit.toml`, `deny.toml` | **Riesgo aceptado** — comprobado 2026-11-18: `glib` 0.18.5 (parche solo en >=0.20) y `proc-macro-error` 1.0.4 (sin patched). Próxima revisión 2027-02-18. No quitar el ignore en este gesto. |
 | S-19 | CardDAV tope / redirects privadas | — | — | Fase C |
 | V-01 | Descarga artefacto con Bearer | [#96](https://github.com/Soluciones-Alexendros/zedazo/pull/96) `4155f743` | e2e desktop | Hecho |
 | V-02 | CSP / cabeceras siempre | — | — | Fase C |
@@ -44,4 +44,4 @@ Revisión de la superficie S/V del plan de cierre (rama `plan/zedazo-v060-seguri
 ## Notas
 
 - Escritorio = **ADR-0021**. Guía operador: [`docs/desktop.md`](../desktop.md).
-- Ignore OSV `RUSTSEC-2024-0429` / `GHSA-wrw7-89jp-8q8g`: se mantiene (S-18). Comprobado 2026-10-26 con `osv-scanner` sin config: sigue saliendo en `glib 0.18.5`. No tocar `.cargo/audit.toml` ni `deny.toml` en el mismo gesto.
+- Ignore OSV `RUSTSEC-2024-0429` / `GHSA-wrw7-89jp-8q8g` y `RUSTSEC-2024-0370`: se mantienen (S-18). Revisión 2026-11-18: `glib` sigue en 0.18.5 y `proc-macro-error` en 1.0.4; se renovó la fecha a 2027-02-18 sin quitar los ignores.

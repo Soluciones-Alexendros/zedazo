@@ -134,6 +134,22 @@ El webview carga `http://127.0.0.1:<puerto>/`; el servidor loopback sirve la GUI
 - **P-02 / `desktop-no-network`:** el e2e AppImage corre bajo `unshare -rn` + `strace -f -e trace=connect` (`scripts/desktop/e2e-no-network.sh`). Falla si hay `connect` a IP distinta de `127.0.0.1` / `::1`. Los `AF_UNIX` (X11/DBus) se ignoran. Forma parte de `ci-gate`. Incluye prueba negativa del detector.
 - **P-07 / smoke en `container: ubuntu:26.04`:** no está en `ci-gate`. Probe 2026-10-26: con `libwebkit2gtk-4.1-0`, xvfb y `--appimage-extract-and-run` la API llega a escuchar en loopback, pero el proceso aborta o queda inutilizable por EGL (`Could not create default EGL display: EGL_BAD_PARAMETER`) y choques de símbolos GIO/libcurl-gnutls (`nghttp2_option_set_no_rfc9113_leading_and_trailing_ws_validation`). No se añade un job rojo ni `continue-on-error` al gate. **Validación Ubuntu 26 = prueba manual del operador** en máquina real (esta guía). Acta: [`tasks/ubuntu26-acta.md`](../tasks/ubuntu26-acta.md).
 
+## Verificar el AppImage
+
+El release publica el AppImage junto con `SHA256SUMS` y `build-info.txt`. `SHA256SUMS` lista esos ficheros; hay que descargarlos en el mismo directorio.
+
+```bash
+TAG=v0.6.4
+mkdir -p /tmp/zedazo-verify && cd /tmp/zedazo-verify
+gh release download "$TAG" -R Soluciones-Alexendros/zedazo \
+  -p '*.AppImage' -p 'SHA256SUMS' -p 'build-info.txt'
+sha256sum -c SHA256SUMS
+APP=$(find . -maxdepth 1 -name '*.AppImage' -type f | sort | head -1)
+gh attestation verify "$APP" --repo Soluciones-Alexendros/zedazo
+```
+
+Eso comprueba el checksum y la atestación que genera [`.github/workflows/publish.yml`](../.github/workflows/publish.yml). La validación automática del release está descrita en [release-validation.md](release-validation.md). Esta guía no cubre los tarballs de cargo-dist ni una firma minisign/GPG.
+
 ## Ver también
 
 - [ADR-0021](../DECISIONS.md) — decisión de producto (escritorio AppImage)
