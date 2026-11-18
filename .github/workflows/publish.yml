@@ -124,7 +124,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist/desktop
-          gh release download "$TAG" -D dist/desktop -p '*.AppImage' -p 'SHA256SUMS'
+          # SHA256SUMS incluye AppImage + build-info.txt (subidos juntos).
+          gh release download "$TAG" -D dist/desktop \
+            -p '*.AppImage' -p 'SHA256SUMS' -p 'build-info.txt'
           ls -la dist/desktop
       - name: sha256sum -c
         run: |
