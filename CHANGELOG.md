@@ -11,6 +11,14 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ### Bug Fixes
 
 * **release:** despacho de la validación y aviso por el build roto de cargo-dist ([#122](https://github.com/Soluciones-Alexendros/zedazo/issues/122)) ([01882a4](https://github.com/Soluciones-Alexendros/zedazo/commit/01882a4f904eaab141df24a6ff154d9909543030))
+* **release:** despacho de la validación y aviso por el build roto de cargo-dist ([#125](https://github.com/Soluciones-Alexendros/zedazo/issues/125)) ([f50acc4](https://github.com/Soluciones-Alexendros/zedazo/commit/f50acc4fba03d6d9461236514e80131b95aea2b8))
+
+## [0.6.4](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.3...v0.6.4) (2026-11-18)
+
+
+### Bug Fixes
+
+* **release:** despacho de la validación y aviso por el build roto de cargo-dist ([#122](https://github.com/Soluciones-Alexendros/zedazo/issues/122)) ([01882a4](https://github.com/Soluciones-Alexendros/zedazo/commit/01882a4f904eaab141df24a6ff154d9909543030))
 
 ## [0.6.3](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.2...v0.6.3) (2026-11-18)
 
