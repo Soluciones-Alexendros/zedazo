@@ -5,6 +5,13 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.6.3](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.2...v0.6.3) (2026-11-18)
+
+
+### Documentation
+
+* **release:** documentar el pipeline de validación de release ([#120](https://github.com/Soluciones-Alexendros/zedazo/issues/120)) ([1128422](https://github.com/Soluciones-Alexendros/zedazo/commit/1128422d0d700b364937306e4b81cb02465979d5))
+
 ## [0.6.2](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.1...v0.6.2) (2026-11-17)
 
 
