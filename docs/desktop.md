@@ -13,7 +13,7 @@ Guía del binario Linux empaquetado con Tauri v2: GUI estática + API same-proce
 
 ## Descargar y ejecutar
 
-1. Obtén el `.AppImage` del draft de release `v0.6.0` (artefacto CI; no crates.io).
+1. Obtén el `.AppImage` del release `v0.6.4` (artefacto CI; no crates.io).
 2. Marca ejecutable y lanza:
 
 ```bash
