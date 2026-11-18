@@ -117,12 +117,12 @@ cargo llvm-cov --lcov --output-path coverage/lcov.info
 - O10: harness HTTP en `crates/zedazo-api/tests/equivalence_http.rs` vía `make parity`; matriz en `docs/gui/functional-parity-matrix.md`.
 - CI en `ubuntu-latest` (sin runners self-hosted); job `ci-gate` agrega el resto de jobs de [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) como check único de auto-merge; release-please (`bump-minor-pre-major`) + cargo-dist = un release por tag.
 - `make web-ci` incluye build de `apps/web` y Playwright e2e/a11y + regresión visual (`e2e/visual.spec.ts`); excluye el spec opt-in `screenshots` (`docs/screenshots/`).
-- Canon de flota P0 (`quality` / `test` / `smoke`) **no sustituye** los jobs Rust maduros. Wrappers en `.github/workflows/ci.yml`:
+- Canon de flota P0 (`quality` / `test` / `smoke`) **no sustituye** los jobs Rust maduros. Se afirma dentro de `ci-gate` (sin jobs wrapper vacíos):
 
-| Canon | Equivale a (jobs existentes) |
+| Canon | Equivale a (jobs existentes en `ci-gate`) |
 | --- | --- |
 | `quality` | `fmt` + `clippy` + `docs-validate` |
 | `test` | `test` (ya canónico: `cargo test --workspace --all-features`) |
 | `smoke` | `health` + `check` (compilación workspace) |
 
-  El resto (`msrv`, `doc`, `parity`, `web`, `deny`, `coverage`, AppImage) sigue siendo la superficie Rust/GUI; no se aplasta. Workflow aparte [`.github/workflows/security.yml`](./.github/workflows/security.yml): jobs `secrets` (gitleaks binario, redactado; no `gitleaks-action`) y `sca`. ADR-0020 = alineación de flota (número no reutilizable; escritorio = ADR-0021). ADRs en [`DECISIONS.md`](./DECISIONS.md). Renovate (ADR-0007) en [`.github/renovate.json`](./.github/renovate.json); no hay `dependabot.yml`. Dual license MIT OR Apache-2.0 y [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) se conservan.
+  El resto (`msrv`, `doc`, `parity`, `web`, `deny`, `coverage`, AppImage) sigue siendo la superficie Rust/GUI; no se aplasta. En cada PR/push, gitleaks y SCA viven en `ci.yml` (`gitleaks` / `supply-chain` → reusable). [`.github/workflows/security.yml`](./.github/workflows/security.yml) solo cron + `workflow_dispatch` (misma suite; no duplica el rollup). ADR-0020 = alineación de flota (número no reutilizable; escritorio = ADR-0021). ADRs en [`DECISIONS.md`](./DECISIONS.md). Renovate (ADR-0007) en [`.github/renovate.json`](./.github/renovate.json); no hay `dependabot.yml`. Dual license MIT OR Apache-2.0 y [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) se conservan.
