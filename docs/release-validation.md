@@ -44,7 +44,7 @@ Consecuencia real: los drafts de **v0.6.1 y v0.6.2** quedaron con 0 assets porqu
 | Job | Comprueba |
 | --- | --- |
 | `resolve` | Que el evento trae un tag con forma `vX.Y.Z`. |
-| `assets` | Bloqueantes: `sbom.json` + `.sha256`, que exista al menos un binario, SBOM CycloneDX con el paquete `zedazo` y checksums. Avisos: los 10 artefactos de cargo-dist. |
+| `assets` | Bloqueantes: al menos un binario y al menos un SBOM (`sbom.json` o `sbom-*.json`), CycloneDX válido y checksums de todo lo que traiga `.sha256`/`SHA256SUMS`. Avisos: los tarballs de cargo-dist. |
 | `appimage` | Checksum contra `.sha256` o `SHA256SUMS`, extracción squashfs, `AppRun` ejecutable y `zedazo-desktop` ELF no vacío. |
 | `parity` | `cargo test -p zedazo-api --test equivalence_http` sobre el código del tag (O10). |
 | `gate` | Resume y falla si algún job crítico no terminó en `success`. |
@@ -75,9 +75,13 @@ Los tarballs multi-plataforma **no se generan** desde v0.6.1:
 - **macOS:** compila.
 
 Mientras eso se arregla en su propio cambio, la validación los trata como
-**aviso**: exige SBOM y al menos un binario (hoy el AppImage de `publish.yml`),
-y publica en el log la lista exacta de lo que falta. Una release sin ningún
-binario sí falla.
+**aviso**: exige al menos un binario y un SBOM (hoy el AppImage y los
+`sbom-*.json` de `publish.yml`), y publica en el log la lista exacta de lo que
+falta. Una release sin binarios o sin SBOM sí falla.
+
+El smoke del binario CLI solo corre si existe el tarball Linux; si la release
+solo trae AppImage, ese job termina con un `notice` y la validación del
+AppImage la hace el job `appimage`.
 
 ## Qué NO hace
 
