@@ -14,7 +14,7 @@ No sustituye a `tasks/todo.md`.
 
 - [x] Enlace a `https://github.com/Soluciones-Alexendros/zedazo/security/advisories/new`.
 - [x] Tabla de versiones con 0.6.x como línea activa.
-- [x] Sin correo inventado. Activar Private vulnerability reporting queda en la UI del operador.
+- [x] Sin correo inventado. Private vulnerability reporting activado: la API devolvió `enabled: true` el 2026-11-18.
 
 ## Task 3: Verificación del AppImage — HECHA
 

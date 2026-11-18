@@ -14,7 +14,7 @@ Abre un aviso privado en GitHub:
 
 <https://github.com/Soluciones-Alexendros/zedazo/security/advisories/new>
 
-Ese formulario solo llega a los mantenedores si el repositorio tiene activado **Private vulnerability reporting** (Settings → Code security). Responderemos en un plazo máximo de 48 horas. No hay dirección de correo publicada en este documento.
+**Private vulnerability reporting** está activado en este repositorio (comprobado el 2026-11-18). Responderemos en un plazo máximo de 48 horas. No hay dirección de correo publicada en este documento.
 
 ## Versiones soportadas
 

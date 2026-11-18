@@ -15,7 +15,7 @@ Un control está `cubierto` solo si la evidencia de esta tabla existe en el árb
 
 | ID | Nivel | Estado | Evidencia |
 |---|---|---|---|
-| Canal de reporte (informe H-01; no hay un requisito L1 con este texto) | gobernanza | parcial | [`SECURITY.md`](../../SECURITY.md) enlaza el formulario de avisos privados. La activación del ajuste en GitHub no se ha comprobado en esta sesión. |
+| Canal de reporte (informe H-01; no hay un requisito L1 con este texto) | gobernanza | cubierto | [`SECURITY.md`](../../SECURITY.md) enlaza el formulario de avisos privados. El 2026-11-18 la API del repo devolvió `private-vulnerability-reporting` con `enabled: true`. |
 | Verificación de artefacto (informe INT-1) | gobernanza | cubierto | [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml) sube `SHA256SUMS` y atestación. [`docs/desktop.md`](../desktop.md) documenta `sha256sum -c` y `gh attestation verify`. |
 | SAST CodeQL (informe H-02) | gobernanza | parcial | [`.github/workflows/codeql.yml`](../../.github/workflows/codeql.yml) existe y no está en `needs` de `ci-gate`. La primera corrida en GitHub queda pendiente. |
 | V9.1.1 TLS en la conectividad del cliente | L1 | parcial | [`SECURITY.md`](../../SECURITY.md): remoto con HTTPS y CardDAV con TLS 1.2+ fuera de loopback. El uso local en loopback no exige TLS. |

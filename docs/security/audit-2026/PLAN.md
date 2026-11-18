@@ -14,9 +14,21 @@ Aterrizar las nueve specs de [`MAP.md`](./MAP.md) en cambios pequeños, en el or
 
 Este archivo es el plan de **esta** iniciativa. [`tasks/plan.md`](../../../tasks/plan.md) y [`tasks/todo.md`](../../../tasks/todo.md) son la remediación P0–P2 ya cerrada (8/8, 2026-11-17). No se sobrescriben. Si Phase 3 se aprueba, la lista vive en `docs/security/audit-2026/TODO.md`.
 
+## Ejecución paralela
+
+Las tareas 1–9 quedaron aterrizadas en el commit `550e85f7` (`chore/aligerar-ci`). El residuo de evidencia (2026-11-18) se verificó en paralelo sin rehacer esas tareas:
+
+| Informe | Resultado |
+| --- | --- |
+| [evidence/release-v064.md](./evidence/release-v064.md) | PASS — AppImage, `SHA256SUMS` y `build-info.txt` en el release `v0.6.4` |
+| [evidence/sbom-local.md](./evidence/sbom-local.md) | `not_run` — `cargo cyclonedx` no instalado en el host |
+| [evidence/workflows.md](./evidence/workflows.md) | Confirmado — CodeQL, Scorecard y `sbom-crates` fuera de `ci-gate`; Actions pinneadas por SHA |
+
+Private vulnerability reporting: API `enabled: true` (2026-11-18); documentado en [`SECURITY.md`](../../../SECURITY.md).
+
 ## Architecture Decisions
 
-- **D1.** Canal verificable = URL de Private Vulnerability Reporting (`https://github.com/Soluciones-Alexendros/zedazo/security/advisories/new`) más la tabla de versiones en **0.6.x**. No se inventa correo ni clave PGP. Activar el ajuste en GitHub queda en checklist del operador, fuera del diff.
+- **D1.** Canal verificable = URL de Private Vulnerability Reporting (`https://github.com/Soluciones-Alexendros/zedazo/security/advisories/new`) más la tabla de versiones en **0.6.x**. No se inventa correo ni clave PGP. El ajuste está activado: la API devolvió `enabled: true` el 2026-11-18.
 - **D2.** Verificación de artefactos = sección nueva en [`docs/desktop.md`](../../desktop.md) con `sha256sum -c` y `gh attestation verify`, copiando el contrato de [`.github/workflows/publish.yml`](../../../.github/workflows/publish.yml) (`verify-release`). Sin minisign/GPG y sin editar el workflow.
 - **D3.** SAST = workflow nuevo `.github/workflows/codeql.yml` (`github/codeql-action`, lenguaje `rust`, pin SHA en el momento de implementar). Se dispara en `pull_request`, `push` a `main` y `workflow_dispatch`, con filtro de paths `crates/zedazo-api/**`, `crates/zedazo-carddav/**` y ficheros de workspace que cambian el grafo (`Cargo.toml`, `Cargo.lock`). El análisis es el del workspace Rust: CodeQL no aísla dos crates. **No** se añade a `needs` de `ci-gate` en [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml). Si el action rechaza `rust`, se para y se informa; no se cambia a Semgrep en la misma tarea.
 - **D4.** Revisión RustSec = volver a ejecutar `make deny` y `make audit`. Si `RUSTSEC-2024-0429` y `RUSTSEC-2024-0370` siguen sin parche publicable, se renueva la fecha en [`deny.toml`](../../../deny.toml), [`.cargo/audit.toml`](../../../.cargo/audit.toml) y el `reason` de [`osv-scanner.toml`](../../../osv-scanner.toml), y se actualiza S-18 en [`docs/security/owasp-review-0.6.0.md`](../owasp-review-0.6.0.md). El ignore no se quita en ese gesto. El issue de Tauri/gtk-rs se redacta en este directorio; no se crea en GitHub sin un sí.
@@ -135,7 +147,7 @@ Phase 3 copiará esta lista a `docs/security/audit-2026/TODO.md`. Aquí es el í
 - [ ] Sigue la prohibición de issue público y el plazo de 48 h
 - [ ] La tabla marca 0.6.x como línea activa
 - [ ] No aparece una dirección de correo inventada
-- [ ] Checklist del operador: habilitar Private Vulnerability Reporting en la UI (no vía API en esta tarea)
+- [x] Private Vulnerability Reporting activado (API `enabled: true`, 2026-11-18)
 
 **Verification:**
 
