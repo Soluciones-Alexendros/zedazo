@@ -266,57 +266,21 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file: coverage/lcov.info
 
-  # Wrappers canónicos P0 (no sustituyen jobs Rust maduros).
-  # Equivalencia documentada en AGENTS.md.
-  quality:
-    name: quality
-    if: ${{ always() && !cancelled() }}
-    needs: [fmt, clippy, docs-validate]
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Agregar fmt + clippy + docs-validate
-        env:
-          FMT: ${{ needs.fmt.result }}
-          CLIPPY: ${{ needs.clippy.result }}
-          DOCS_VALIDATE: ${{ needs.docs-validate.result }}
-        run: |
-          echo "quality ≡ fmt + clippy + docs-validate"
-          echo "fmt=${FMT}"
-          echo "clippy=${CLIPPY}"
-          echo "docs-validate=${DOCS_VALIDATE}"
-          test "${FMT}" = success
-          test "${CLIPPY}" = success
-          test "${DOCS_VALIDATE}" = success
+  # Canon P0 quality/smoke: se afirman dentro de ci-gate (needs de
+  # fmt/clippy/docs-validate y health/check). Sin jobs agregadores vacíos.
 
-  smoke:
-    name: smoke
-    if: ${{ always() && !cancelled() }}
-    needs: [health, check]
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Agregar health + check
-        env:
-          HEALTH: ${{ needs.health.result }}
-          CHECK: ${{ needs.check.result }}
-        run: |
-          echo "smoke ≡ health + check (compilación workspace)"
-          echo "health=${HEALTH}"
-          echo "check=${CHECK}"
-          test "${HEALTH}" = success
-          test "${CHECK}" = success
-
-  secrets:
-    name: secrets
+  # Nombres de job distintos a security.yml (cron) para no duplicar
+  # `secrets / secrets` en el rollup del PR.
+  gitleaks:
+    name: gitleaks
     permissions:
       contents: read
     uses: ./.github/workflows/reusable-security.yml
     with:
       suite: secrets
 
-  sca:
-    name: sca
+  supply-chain:
+    name: supply-chain
     permissions:
       contents: read
     uses: ./.github/workflows/reusable-security.yml
@@ -716,9 +680,10 @@ jobs:
         with:
           subject-path: dist/desktop/*.AppImage
 
-  # S-03: métricas dedup (no bloqueante; fuera de ci-gate).
+  # S-03: métricas dedup (solo dispatch manual de este workflow; fuera de ci-gate).
   release-build:
     name: release-build (dedup perf)
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     continue-on-error: true
     timeout-minutes: 30
@@ -744,7 +709,8 @@ jobs:
           path: dedup-perf.txt
           if-no-files-found: ignore
 
-  # Check único required (ruleset): agrega todos los jobs + secrets/sca + desktop.
+  # Check único required (ruleset): agrega jobs de producto + gitleaks/supply-chain + desktop.
+  # quality ≡ fmt+clippy+docs-validate; smoke ≡ health+check (canon P0, sin jobs wrapper).
   ci-gate:
     name: ci-gate
     if: ${{ always() && !cancelled() }}
@@ -763,10 +729,8 @@ jobs:
       - compose-smoke
       - deny
       - coverage
-      - quality
-      - smoke
-      - secrets
-      - sca
+      - gitleaks
+      - supply-chain
       - zizmor
       - hadolint
       - dockerfile-digests

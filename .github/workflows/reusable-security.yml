@@ -1,5 +1,6 @@
 # Jobs secrets (gitleaks) + sca (pnpm audit / cargo audit / OSV).
-# Llamado desde security.yml (cron/PR/push) y desde ci.yml (grafo ci-gate).
+# Llamado desde ci.yml (grafo ci-gate: jobs gitleaks / supply-chain) y desde
+# security.yml (solo cron + workflow_dispatch).
 # Sin gitleaks-action@v2 (licencia). Sin continue-on-error.
 name: Reusable security
 
