@@ -31,7 +31,7 @@ supersedes: "v0.3.2"
 
 | Dimensión | Estado |
 |-----------|--------|
-| Versión publicada | Tag **v0.5.1** existe (assets/SBOM: ver [`docs/validation/release-v0.5.1.md`](docs/validation/release-v0.5.1.md)); workspace **0.5.1**; GUI ADR-0015 + remoto ADR-0016; escritorio AppImage planificado **v0.6.0** (ADR-0021) |
+| Versión publicada | Tag **v0.6.4**; workspace **0.6.4**; GUI ADR-0015 + remoto ADR-0016; escritorio AppImage ADR-0021 (prueba manual Ubuntu 26 pendiente) |
 | Tests | core + I4–I6; parity O10 ampliada; `auth_http`; retención; web `pnpm test` + Playwright; CardDAV mocks CLI |
 | CI | `ubuntu-latest`; `make ci` + jobs Compose smoke / E2E API real; Renovate |
 | GUI/API | Same-origin Docker (Caddy); local + remoto single-user (O11) |
