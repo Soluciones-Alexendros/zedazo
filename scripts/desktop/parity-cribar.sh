@@ -88,7 +88,6 @@ if [[ -n "${ZEDAZO_ADDR:-}" && -n "${ZEDAZO_TOKEN:-}" ]]; then
 
   curl -sS "${HDR[@]}" "${BASE}/api/v1/jobs/${JOB_ID}/artifacts/vcf" -o "$WORK/api.vcf"
   test -s "$WORK/api.vcf"
-  API_SHA="$(sha256sum "$WORK/api.vcf" | awk '{print $1}')"
 
   SHA_AFTER_API="$(sha256sum "$WORK/sample.vcf" | awk '{print $1}')"
   if [[ "$SHA_BEFORE" != "$SHA_AFTER_API" ]]; then
@@ -96,13 +95,44 @@ if [[ -n "${ZEDAZO_ADDR:-}" && -n "${ZEDAZO_TOKEN:-}" ]]; then
     exit 1
   fi
 
-  echo "CLI sha256=${CLI_SHA}"
-  echo "API sha256=${API_SHA}"
-  if [[ "$CLI_SHA" != "$API_SHA" ]]; then
-    echo "error: paridad cribar fallida (VCF distinto)" >&2
+  # Diff semántico (como equivalence_http::normalize_vcf): ignora X-ZEDAZO-DATE
+  # (timestamp por segundo del job) y orden de CATEGORIES.
+  normalize_vcf() {
+    python3 - "$1" <<'PY'
+import pathlib, sys
+path = pathlib.Path(sys.argv[1])
+out = []
+for raw in path.read_text(encoding="utf-8").splitlines():
+    line = raw.rstrip("\r")
+    if line.startswith("X-ZEDAZO-DATE:"):
+        out.append("X-ZEDAZO-DATE:<TS>")
+        continue
+    if line.startswith("CATEGORIES:"):
+        cats = [c for c in line[len("CATEGORIES:") :].split(",") if c]
+        cats.sort()
+        out.append("CATEGORIES:" + ",".join(cats))
+        continue
+    out.append(line)
+sys.stdout.write("\n".join(out) + "\n")
+PY
+  }
+  normalize_vcf "$WORK/limpio.vcf" >"$WORK/limpio.norm.vcf"
+  normalize_vcf "$WORK/api.vcf" >"$WORK/api.norm.vcf"
+  CLI_NORM_SHA="$(sha256sum "$WORK/limpio.norm.vcf" | awk '{print $1}')"
+  API_NORM_SHA="$(sha256sum "$WORK/api.norm.vcf" | awk '{print $1}')"
+  API_SHA="$(sha256sum "$WORK/api.vcf" | awk '{print $1}')"
+
+  echo "CLI sha256=${CLI_SHA} (norm=${CLI_NORM_SHA})"
+  echo "API sha256=${API_SHA} (norm=${API_NORM_SHA})"
+  if [[ "$CLI_NORM_SHA" != "$API_NORM_SHA" ]]; then
+    echo "error: paridad cribar fallida (VCF distinto tras normalizar)" >&2
+    if command -v diff >/dev/null; then
+      diff -u "$WORK/limpio.norm.vcf" "$WORK/api.norm.vcf" >&2 || true
+    fi
     exit 1
   fi
   echo "api_sha256=${API_SHA}" >>"$OUT_DIR/parity-cribar.txt"
+  echo "api_norm_sha256=${API_NORM_SHA}" >>"$OUT_DIR/parity-cribar.txt"
   echo "OK paridad API↔CLI"
 fi
 
