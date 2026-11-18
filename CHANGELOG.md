@@ -5,6 +5,14 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.6.5](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.4...v0.6.5) (2026-11-18)
+
+
+### Bug Fixes
+
+* **ci:** paridad VCF sin X-ZEDAZO-DATE y actions en Node 24 ([#135](https://github.com/Soluciones-Alexendros/zedazo/issues/135)) ([1a351e6](https://github.com/Soluciones-Alexendros/zedazo/commit/1a351e6994e71da967089a4f0eeaf4c28078415f))
+* **release:** alinear host/verify con assets reales de v0.6.4 ([#129](https://github.com/Soluciones-Alexendros/zedazo/issues/129)) ([7f7c457](https://github.com/Soluciones-Alexendros/zedazo/commit/7f7c457a5c035552be5c34da697fde7fdce0809d))
+
 ## [0.6.4](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.3...v0.6.4) (2026-11-18)
 
 
