@@ -78,13 +78,13 @@ docs/security/audit-2026/SPEC-*.md   → esta spec
 
 ## Success Criteria
 
-- [ ] `SECURITY.md` contiene contacto verificable **y/o** enlace a Private Vulnerability Reporting.
-- [ ] Tabla de versiones menciona **0.6.x** como línea activa.
-- [ ] Diff limitado a `SECURITY.md` (más docs de auditoría si se enlazan).
+- [x] `SECURITY.md` contiene enlace a Private Vulnerability Reporting.
+- [x] Tabla de versiones menciona **0.6.x** como línea activa.
+- [x] Diff de canal documentado en la rama de auditoría.
 - [x] Private Vulnerability Reporting habilitado (API `enabled: true`, 2026-11-18).
 
 ## Open Questions
 
-1. ¿Qué dirección de correo o alias publica el operador? (no se inventa aquí)
-2. Resuelta el 2026-11-18: Private Vulnerability Reporting está activado (`enabled: true` en la API del repo).
-3. ¿Se incluye clave PGP pública en este módulo o se aplaza?
+1. Correo: no se publica (canal = GitHub Private Vulnerability Reporting).
+2. Resuelta: Private Vulnerability Reporting activado (`enabled: true`, 2026-11-18).
+3. Resuelta: clave PGP **aplazada** (fuera de este cierre).

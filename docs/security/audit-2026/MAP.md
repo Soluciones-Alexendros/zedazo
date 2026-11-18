@@ -17,8 +17,8 @@ Las specs de módulo viven junto a este mapa (`SPEC-<id>.md`). No sustituyen a [
 |---|---|
 | Sin `SHA256SUMS` / attestation en release | **Falso:** [`.github/workflows/publish.yml`](../../../.github/workflows/publish.yml) genera, sube y verifica `SHA256SUMS`, SBOM y `gh attestation verify`. Hueco real: guía de usuario en [`docs/desktop.md`](../../desktop.md). |
 | Sin `CODEOWNERS` | **Falso:** [`.github/CODEOWNERS`](../../../.github/CODEOWNERS) existe. |
-| Sin fechas en ignores RustSec | **Parcial:** hay motivo y fecha `2026-10-25` en [`deny.toml`](../../../deny.toml) y [`.cargo/audit.toml`](../../../.cargo/audit.toml); la fecha ya venció → renovar revisión. |
-| Benchmarks ausentes | Previstos en hito v1.0 de [`ROADMAP.md`](../../../ROADMAP.md); adelantarlos aquí exige confirmación de dep. |
+| Sin fechas en ignores RustSec | **Resuelto (2026-11-18):** fechas renovadas a **2027-02-18** en [`deny.toml`](../../../deny.toml), [`.cargo/audit.toml`](../../../.cargo/audit.toml) y [`osv-scanner.toml`](../../../osv-scanner.toml). |
+| Benchmarks ausentes | Benches `criterion` en `zedazo-core` (auditoría 2026); presupuesto CI sigue en hito v1.0 de [`ROADMAP.md`](../../../ROADMAP.md). |
 | Multi-arch / `.deb`/`.rpm` | Choca con ADR-0012, ADR-0021 y [`dist-workspace.toml`](../../../dist-workspace.toml); este mapa solo propone ADR borrador. |
 | SBOM en crates.io | ADR-0013 ya cubre CycloneDX en release de escritorio; [`publish-crates.yml`](../../../.github/workflows/publish-crates.yml) no adjunta SBOM al release GitHub del tag. |
 
@@ -83,14 +83,15 @@ flowchart TD
 
 Plan técnico: [PLAN.md](./PLAN.md). No sustituye a [`tasks/plan.md`](../../../tasks/plan.md) (remediación P0–P2 cerrada).
 
-## Límites de esta fase (Phase 1)
+## Límites (implementación cerrada)
 
 - **Always:** documentos en español; ids kebab-case estables; evidencia del árbol local cuando discrepe del informe.
-- **Ask first (implementación futura):** dirección de contacto, CodeQL → `ci-gate`, clave minisign/GPG, ADR de empaquetado, `cargo publish`, dep `criterion`.
-- **Never (esta fase):** editar workflows, `deny.toml`, crates, `apps/web`, `apps/desktop`; fusionar PRs; activar Security Advisories por API; afirmar ASVS no evidenciado.
+- **Ask first (fuera de este cierre):** CodeQL → `ci-gate`, clave minisign/GPG, aceptar ADR de empaquetado, `cargo publish`, crear issue Tauri.
+- **Never en el cierre:** mezclar con el commit de aligerar CI; afirmar ASVS L2; meter Scorecard/CodeQL en `ci-gate`.
 
-## Criterio de cierre Phase 1
+## Criterio de cierre
 
 - [x] Este `MAP.md` con nueve ids y orden.
-- [x] Nueve `SPEC-<id>.md` con objetivo, comandos, límites y preguntas abiertas.
-- [x] Diff solo bajo `docs/security/audit-2026/` (esta fase documental).
+- [x] Nueve `SPEC-<id>.md`.
+- [x] Implementación en rama limpia `docs/security-audit-2026` + [`PLAN.md`](./PLAN.md) status Cerrado.
+- [x] Evidencia de AppImage + workflows; PVR activo; issue Tauri aplazado.

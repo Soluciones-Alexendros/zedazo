@@ -142,7 +142,7 @@ supersedes: "v0.3.2"
 ### v1.0.0 — Producción — L
 
 - API de crate estable (semver estricto del core/CLI)
-- Benchmarks (criterion)
+- Benchmarks (criterion) — benches `parse_vcf` / `dedup` en `zedazo-core` (auditoría 2026); presupuesto CI / tendencia sigue en este hito
 - Cross-compile macOS/Windows — artefactos vía **cargo-dist** (ADR-0012); validar releases reales en el hito
 - Corpus de regresión >10k contactos
 - GUI/API maduras (post-v0.5.0) opcionales en distribución Docker

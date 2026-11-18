@@ -1,8 +1,8 @@
 ---
 title: "Implementation plan — auditoría de seguridad 2026"
 date: "2026-11-18"
-status: "Borrador"
-phase: "2"
+status: "Cerrado"
+phase: "4"
 traza: "docs/security/audit-2026/MAP.md"
 ---
 
@@ -10,21 +10,22 @@ traza: "docs/security/audit-2026/MAP.md"
 
 ## Overview
 
-Aterrizar las nueve specs de [`MAP.md`](./MAP.md) en cambios pequeños, en el orden de abajo. Cada tarea deja el repo compilable y `ci-gate` intacto. Esta fase no implementa: el humano revisa este plan antes de Phase 3 (lista de tareas).
+Aterrizar las nueve specs de [`MAP.md`](./MAP.md). **Cerrado** el 2026-11-18 en la rama `docs/security-audit-2026` (cherry-pick limpio desde `main`; sin el commit de aligerar CI). Lista operativa: [`TODO.md`](./TODO.md).
 
-Este archivo es el plan de **esta** iniciativa. [`tasks/plan.md`](../../../tasks/plan.md) y [`tasks/todo.md`](../../../tasks/todo.md) son la remediación P0–P2 ya cerrada (8/8, 2026-11-17). No se sobrescriben. Si Phase 3 se aprueba, la lista vive en `docs/security/audit-2026/TODO.md`.
+Este archivo es el plan de **esta** iniciativa. [`tasks/plan.md`](../../../tasks/plan.md) y [`tasks/todo.md`](../../../tasks/todo.md) son la remediación P0–P2 ya cerrada (8/8, 2026-11-17). No se sobrescriben.
 
-## Ejecución paralela
+## Ejecución paralela y cierre
 
-Las tareas 1–9 quedaron aterrizadas en el commit `550e85f7` (`chore/aligerar-ci`). El residuo de evidencia (2026-11-18) se verificó en paralelo sin rehacer esas tareas:
+Las tareas 1–9 están aterrizadas. Evidencia de cierre:
 
 | Informe | Resultado |
 | --- | --- |
-| [evidence/release-v064.md](./evidence/release-v064.md) | PASS — AppImage, `SHA256SUMS` y `build-info.txt` en el release `v0.6.4` |
-| [evidence/sbom-local.md](./evidence/sbom-local.md) | `not_run` — `cargo cyclonedx` no instalado en el host |
-| [evidence/workflows.md](./evidence/workflows.md) | Confirmado — CodeQL, Scorecard y `sbom-crates` fuera de `ci-gate`; Actions pinneadas por SHA |
+| [evidence/release-v064.md](./evidence/release-v064.md) | PASS — presencia de AppImage, `SHA256SUMS` y `build-info.txt` en `v0.6.4` |
+| [evidence/appimage-verify.md](./evidence/appimage-verify.md) | PASS — `sha256sum -c` + `gh attestation verify` |
+| [evidence/sbom-local.md](./evidence/sbom-local.md) | `not_run` local (sin `cargo cyclonedx`); el asset se genera vía `sbom-crates` en GitHub |
+| [evidence/workflows.md](./evidence/workflows.md) | Confirmado — CodeQL, Scorecard y `sbom-crates` fuera de `ci-gate`; pins SHA |
 
-Private vulnerability reporting: API `enabled: true` (2026-11-18); documentado en [`SECURITY.md`](../../../SECURITY.md).
+Private vulnerability reporting: API `enabled: true` (2026-11-18). Issue Tauri/gtk-rs: **aplazado** (markdown en [`issue-tauri-glib.md`](./issue-tauri-glib.md); sin issue en GitHub hasta profundizar).
 
 ## Architecture Decisions
 
@@ -63,43 +64,43 @@ Phase 3 copiará esta lista a `docs/security/audit-2026/TODO.md`. Aquí es el í
 
 ### Ola A
 
-- [ ] Task 1: Renovar revisión RustSec 2024-0429 / 2024-0370
-- [ ] Task 2: Canal en `SECURITY.md` + versiones 0.6.x
-- [ ] Task 3: Sección de verificación del AppImage en `docs/desktop.md`
-- [ ] Task 4: Workflow CodeQL fuera de `ci-gate`
-- [ ] Task 5: Workflow `sbom-crates` sin `cargo publish`
-- [ ] Task 6: Benches `criterion` en `zedazo-core` (sí de dep = aprobar este plan)
+- [x] Task 1: Renovar revisión RustSec 2024-0429 / 2024-0370
+- [x] Task 2: Canal en `SECURITY.md` + versiones 0.6.x
+- [x] Task 3: Sección de verificación del AppImage en `docs/desktop.md`
+- [x] Task 4: Workflow CodeQL fuera de `ci-gate`
+- [x] Task 5: Workflow `sbom-crates` sin `cargo publish`
+- [x] Task 6: Benches `criterion` en `zedazo-core`
 
 ### Checkpoint: supply-chain (tras Task 1)
 
-- [ ] `make deny` ejecutado en la sesión
-- [ ] `make audit` ejecutado en la sesión
-- [ ] Ignores renovados solo si el advisory sigue sin parche; si hay parche, se para y se informa
+- [x] `make deny` ejecutado en la sesión
+- [x] `make audit` ejecutado en la sesión
+- [x] Ignores renovados (sin parche publicable; fecha 2027-02-18)
 
 ### Checkpoint: CI (tras Tasks 2–4)
 
-- [ ] `make docs-validate`
-- [ ] `ci-gate` `needs` sin `codeql` ni `scorecard`
-- [ ] Actions nuevas con SHA completo y comentario de versión
-- [ ] `zizmor` sobre `.github/workflows` si el binario está en el entorno; si no, `not_run` con motivo
+- [x] `make docs-validate`
+- [x] `ci-gate` `needs` sin `codeql` ni `scorecard`
+- [x] Actions nuevas con SHA completo y comentario de versión
+- [x] `zizmor` v1.31.1 sin findings (offline)
 
 ### Checkpoint: ola A (tras Tasks 5–6)
 
-- [ ] `sbom-crates.yml` no contiene `cargo publish` ni `CRATES_IO_TOKEN`
-- [ ] `cargo test -p zedazo-core` (tests no ignorados) verde si Task 6 tocó el crate
-- [ ] `tests/dedup_perf.rs` sigue presente
+- [x] `sbom-crates.yml` sin `cargo publish` ni `CRATES_IO_TOKEN`
+- [x] `cargo test -p zedazo-core` verde
+- [x] `tests/dedup_perf.rs` presente
 
 ### Ola B
 
-- [ ] Task 7: Matriz `docs/security/asvs-l1-matrix.md`
-- [ ] Task 8: Brecha + `ADR-DRAFT-packaging.md` (opción A)
-- [ ] Task 9: Workflow Scorecard mensual + guía anual
+- [x] Task 7: Matriz `docs/security/asvs-l1-matrix.md`
+- [x] Task 8: Brecha + `ADR-DRAFT-packaging.md` (opción A)
+- [x] Task 9: Workflow Scorecard mensual + guía anual
 
 ### Checkpoint: ola B
 
-- [ ] `make docs-validate`
-- [ ] Diff de producto limitado a los ficheros de cada tarea; sin `apps/web/**` ni código de `apps/desktop/**`
-- [ ] Ningún check nuevo marcado required
+- [x] `make docs-validate`
+- [x] Sin `apps/web/**` ni código de `apps/desktop/**` en el diff de auditoría
+- [x] Ningún check nuevo marcado required
 
 ## Tasks (detalle)
 
@@ -393,10 +394,10 @@ Phase 3 copiará esta lista a `docs/security/audit-2026/TODO.md`. Aquí es el í
 
 ## Open Questions
 
-- Resuelta el 2026-11-18: el operador pidió ejecutar el plan **con Task 6**. `criterion` queda autorizado como dev-dependency de `zedazo-core`.
-- ¿Se crea el issue de Tauri en GitHub al cerrar Task 1, o basta `issue-tauri-glib.md`?
-- ¿La matriz ASVS cita 4.0.3 o 5.x? Se fija una versión al escribir Task 7.
-- ¿El primer `workflow_dispatch` de SBOM y de Scorecard lo lanza el operador tras el merge?
+- Resuelta: Task 6 con `criterion` autorizada (2026-11-18).
+- Resuelta: issue Tauri **aplazado** — solo [`issue-tauri-glib.md`](./issue-tauri-glib.md) hasta profundizar (operador, 2026-11-18).
+- Resuelta: ASVS **4.0.3** en [`asvs-l1-matrix.md`](../asvs-l1-matrix.md).
+- Resuelta: primer `workflow_dispatch` de CodeQL, Scorecard y `sbom-crates` en el cierre del PR (rama limpia `docs/security-audit-2026`).
 
 ## Fuera de este plan
 

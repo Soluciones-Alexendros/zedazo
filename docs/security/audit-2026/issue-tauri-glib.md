@@ -1,6 +1,6 @@
 # Issue propuesto: upgrade Tauri/gtk-rs (glib y proc-macro-error)
 
-No crear este issue en GitHub sin un sí del operador.
+**Estado (2026-11-18):** aplazado. No crear el issue en GitHub hasta verificar y profundizar el upgrade Tauri/gtk-rs. Este fichero es el borrador.
 
 ## Título
 

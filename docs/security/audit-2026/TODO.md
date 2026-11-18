@@ -20,7 +20,7 @@ No sustituye a `tasks/todo.md`.
 
 - [x] Sección en `docs/desktop.md` con `sha256sum -c` y `gh attestation verify`.
 - [x] `publish.yml` sin cambios.
-- [x] Descarga real del tag: `not_run` (no se ha comprobado el asset del release en esta sesión).
+- [x] Descarga + checksum + attestation: **PASS** — [evidence/appimage-verify.md](./evidence/appimage-verify.md).
 
 ## Task 4: CodeQL — HECHA en árbol
 
@@ -34,7 +34,7 @@ No sustituye a `tasks/todo.md`.
 
 - [x] `.github/workflows/sbom-crates.yml` sin `cargo publish` ni `CRATES_IO_TOKEN`.
 - [x] Nota en `docs/release-validation.md`.
-- [x] `cargo cyclonedx` local: `not_run` (no se ha generado el JSON en esta sesión).
+- [x] `cargo cyclonedx` local: `not_run` en host; generación vía `workflow_dispatch` `sbom-crates` en el cierre.
 - [x] `zizmor` sin findings.
 
 ## Task 6: criterion — HECHA
@@ -64,7 +64,7 @@ No sustituye a `tasks/todo.md`.
 - [x] `.github/workflows/scorecard.yml`, cron mensual, `ossf/scorecard-action` `fa7117db83c52d787ae5a89f350999701505d78e` (v2.5.0).
 - [x] `docs/security/scorecard-review.md` con la primera fila vacía.
 - [x] Ausente de `ci-gate`. `zizmor` sin findings.
-- [x] Primer `workflow_dispatch`: `not_run` (lo lanza el operador tras el merge).
+- [x] Primer `workflow_dispatch`: en el cierre del PR (`docs/security-audit-2026`).
 
 ## Checkpoint ola B
 

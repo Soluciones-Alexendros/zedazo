@@ -85,6 +85,6 @@ SECURITY.md                              → canal, auth, CardDAV
 
 ## Open Questions
 
-1. ¿Versión exacta de ASVS a citar (4.0.3 vs 5.x)?
-2. ¿Matriz completa L1 o subset «aplicable a CLI/API single-user» con el resto `no aplica` justificado?
-3. ¿Frecuencia de revisión (por release menor vs anual junto a Scorecard)?
+1. Resuelta: ASVS **4.0.3**.
+2. Resuelta: subset con capítulos no recorridos como `no evaluado` (ver matriz).
+3. Resuelta: revisión anual alineada a Scorecard ([`scorecard-review.md`](../scorecard-review.md)).

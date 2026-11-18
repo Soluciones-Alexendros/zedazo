@@ -83,10 +83,9 @@ docs/release-validation.md      → referencia cruzada opcional (CI/operador)
 
 ## Success Criteria
 
-- [ ] `docs/desktop.md` incluye pasos `sha256sum` + `gh attestation verify`.
-- [ ] Un operador sigue la guía sin leer el workflow YAML.
-- [ ] Diff limitado a docs (principalmente `docs/desktop.md`).
-- [ ] Sin cambios en `.github/workflows/**` en este módulo.
+- [x] `docs/desktop.md` incluye pasos `sha256sum` + `gh attestation verify`.
+- [x] Evidencia real: [evidence/appimage-verify.md](./evidence/appimage-verify.md).
+- [x] Diff de guía en docs; `publish.yml` sin cambios en este módulo.
 
 ## Open Questions
 
