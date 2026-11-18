@@ -111,7 +111,10 @@ docs-validate: ## Valida documentación canónica (frontmatter, enlaces, stubs, 
 	@grep -q "zedazo.alexendros.dev" deploy/Caddyfile.landing || (echo "❌ Caddyfile.landing: falta hostname de producto"; exit 1)
 	@grep -Eq 'class="wordmark">zedazo</(span|h1)>' apps/landing/index.html || (echo "❌ landing: wordmark no está en minúsculas"; exit 1)
 	@grep -q 'href="./tokens.css"' apps/landing/index.html || (echo "❌ landing: no consume tokens.css generado"; exit 1)
+	@grep -q 'href="./landing.css"' apps/landing/index.html || (echo "❌ landing: no consume landing.css"; exit 1)
 	@test -f apps/landing/tokens.css || (echo "❌ falta apps/landing/tokens.css (pnpm tokens:build)"; exit 1)
+	@test -f apps/landing/landing.css || (echo "❌ falta apps/landing/landing.css"; exit 1)
+	@python3 scripts/check-landing.py
 	@grep -q 'ZEDAZO_WORDMARK = "zedazo"' apps/web/src/components/brand/zedazo-wordmark.tsx || (echo "❌ GUI: wordmark no está en minúsculas"; exit 1)
 	@test -f docs/brand.md || (echo "❌ falta docs/brand.md"; exit 1)
 	@echo "✓ Landing OK"
