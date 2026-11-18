@@ -397,7 +397,7 @@ Phase 3 copiará esta lista a `docs/security/audit-2026/TODO.md`. Aquí es el í
 - Resuelta: Task 6 con `criterion` autorizada (2026-11-18).
 - Resuelta: issue Tauri **aplazado** — solo [`issue-tauri-glib.md`](./issue-tauri-glib.md) hasta profundizar (operador, 2026-11-18).
 - Resuelta: ASVS **4.0.3** en [`asvs-l1-matrix.md`](../asvs-l1-matrix.md).
-- Resuelta: primer `workflow_dispatch` de CodeQL, Scorecard y `sbom-crates` en el cierre del PR (rama limpia `docs/security-audit-2026`).
+- Resuelta: primer `workflow_dispatch` **tras merge a `main`** (GitHub 404 si el YAML solo está en la rama del PR; ver [evidence/dispatch-blocked.md](./evidence/dispatch-blocked.md)).
 
 ## Fuera de este plan
 

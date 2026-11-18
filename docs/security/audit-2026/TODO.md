@@ -28,7 +28,7 @@ No sustituye a `tasks/todo.md`.
 - [x] Ausente de `ci-gate`.
 - [x] Párrafo en `SECURITY.md`.
 - [x] `zizmor` v1.31.1 sobre el workflow: sin findings (offline; 7 suppressed por la config del repo).
-- [x] Corrida de CodeQL en GitHub: `not_run` en local.
+- [x] Corrida de CodeQL en GitHub: pendiente de merge a `main` ([evidence/dispatch-blocked.md](./evidence/dispatch-blocked.md)).
 
 ## Task 5: SBOM crates — HECHA en árbol
 
@@ -64,7 +64,7 @@ No sustituye a `tasks/todo.md`.
 - [x] `.github/workflows/scorecard.yml`, cron mensual, `ossf/scorecard-action` `fa7117db83c52d787ae5a89f350999701505d78e` (v2.5.0).
 - [x] `docs/security/scorecard-review.md` con la primera fila vacía.
 - [x] Ausente de `ci-gate`. `zizmor` sin findings.
-- [x] Primer `workflow_dispatch`: en el cierre del PR (`docs/security-audit-2026`).
+- [x] Primer `workflow_dispatch`: bloqueado hasta merge (404 API); comandos en [evidence/dispatch-blocked.md](./evidence/dispatch-blocked.md).
 
 ## Checkpoint ola B
 
