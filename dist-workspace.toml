@@ -10,7 +10,9 @@ ci = "github"
 # The installers to generate for each app
 installers = []
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+# Linux/Windows rotos en cargo-dist 0.32 (GTK en Linux, eval en pwsh Windows).
+# AppImage Linux sale por publish.yml; solo macOS funciona en cargo-dist.
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin"]
 # release.yml se regenera con 'dist generate ci' pero mantiene pasos manuales
 # (sbom + upload a draft; crates.io solo vía publish-crates.yml) que cargo-dist
 # no genera; permitir desincronización.
