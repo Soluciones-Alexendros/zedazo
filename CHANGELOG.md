@@ -5,6 +5,13 @@ Todas las modificaciones notables de este proyecto se documentan en este archivo
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [0.6.4](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.3...v0.6.4) (2026-11-18)
+
+
+### Bug Fixes
+
+* **release:** despacho de la validación y aviso por el build roto de cargo-dist ([#122](https://github.com/Soluciones-Alexendros/zedazo/issues/122)) ([01882a4](https://github.com/Soluciones-Alexendros/zedazo/commit/01882a4f904eaab141df24a6ff154d9909543030))
+
 ## [0.6.3](https://github.com/Soluciones-Alexendros/zedazo/compare/v0.6.2...v0.6.3) (2026-11-18)
 
 
