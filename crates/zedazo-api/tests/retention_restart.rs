@@ -114,13 +114,13 @@ async fn failed_delete_stays_in_pending() {
         .storage
         .enqueue_pending_delete(PendingKind::Job, job_id)
         .unwrap();
-    let pending = state.storage.load_pending_deletes();
+    let pending = state.storage.load_pending_deletes().unwrap();
     assert!(pending.iter().any(|p| p.id == job_id));
 
     // Reintento exitoso tras borrado real.
     state.storage.delete_job_dir(job_id).unwrap();
     retention::retention_sweep(&state).await;
-    let pending = state.storage.load_pending_deletes();
+    let pending = state.storage.load_pending_deletes().unwrap();
     assert!(!pending.iter().any(|p| p.id == job_id));
 }
 

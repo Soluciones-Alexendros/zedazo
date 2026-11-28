@@ -2,9 +2,18 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context};
+use fs2::FileExt;
 
 /// TTL por defecto para uploads sin trabajo asociado (horas).
 pub const DEFAULT_UPLOAD_TTL_HOURS: u64 = 24;
+
+/// Resultado de process_pending_deletes_locked.
+#[derive(Debug)]
+pub struct ProcessResult {
+    pub processed_ok: usize,
+    pub errors: Vec<(PendingDelete, anyhow::Error)>,
+    pub remaining: Vec<PendingDelete>,
+}
 
 #[derive(Clone)]
 pub struct Storage {
@@ -155,30 +164,143 @@ impl Storage {
         Ok(next)
     }
 
-    pub fn load_pending_deletes(&self) -> Vec<PendingDelete> {
+    fn open_pending_deletes_locked(&self, exclusive: bool) -> anyhow::Result<fs::File> {
         let path = self.pending_deletes_path();
-        let Ok(raw) = fs::read_to_string(&path) else {
-            return Vec::new();
-        };
-        serde_json::from_str(&raw).unwrap_or_default()
+        // Ensure parent dir exists
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        let file = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(&path)?;
+        #[allow(clippy::incompatible_msrv)]
+        if exclusive {
+            file.lock_exclusive()?;
+        } else {
+            file.lock_shared()?;
+        }
+        Ok(file)
+    }
+
+    pub fn load_pending_deletes(&self) -> anyhow::Result<Vec<PendingDelete>> {
+        let file = self.open_pending_deletes_locked(false)?;
+        let raw = std::io::read_to_string(&file)?;
+        if raw.trim().is_empty() {
+            return Ok(Vec::new());
+        }
+        // Parse estricto: JSON inválido = error (no lista vacía)
+        let items: Vec<PendingDelete> = serde_json::from_str(&raw).with_context(|| {
+            format!("JSON inválido en {}", self.pending_deletes_path().display())
+        })?;
+        Ok(items)
     }
 
     pub fn save_pending_deletes(&self, items: &[PendingDelete]) -> anyhow::Result<()> {
+        let mut file = self.open_pending_deletes_locked(true)?;
         let raw = serde_json::to_string_pretty(items)?;
-        Self::atomic_write(&self.pending_deletes_path(), raw.as_bytes())
+        // Escribir atómico: truncate + write (el lock ya protege)
+        file.set_len(0)?;
+        use std::io::{Seek, Write};
+        file.seek(std::io::SeekFrom::Start(0))?;
+        file.write_all(raw.as_bytes())?;
+        file.flush()?;
+        Ok(())
     }
 
     pub fn enqueue_pending_delete(&self, kind: PendingKind, id: &str) -> anyhow::Result<()> {
-        let mut items = self.load_pending_deletes();
+        // Validar ID canónico antes de encolar (evita basura en la cola)
+        if Storage::validate_id(id).is_err() {
+            // ID no canónico: mover a quarantine/ y loggear
+            let quarantine_dir = self.root.join("quarantine");
+            fs::create_dir_all(&quarantine_dir)?;
+            let qpath = quarantine_dir.join(format!("{}_{}.json", kind.as_str(), id));
+            let entry = serde_json::json!({
+                "kind": kind.as_str(),
+                "id": id,
+                "enqueued_at": jiff::Timestamp::now().to_string(),
+                "reason": "invalid_id"
+            });
+            fs::write(&qpath, serde_json::to_string_pretty(&entry)?)?;
+            tracing::warn!(kind = %kind.as_str(), %id, "ID no canónico encolado en quarantine");
+            return Ok(());
+        }
+        // Read-modify-write bajo LOCK_EX
+        let mut file = self.open_pending_deletes_locked(true)?;
+        let raw = std::io::read_to_string(&file)?;
+        let mut items: Vec<PendingDelete> = if raw.trim().is_empty() {
+            Vec::new()
+        } else {
+            serde_json::from_str(&raw).with_context(|| {
+                format!("JSON inválido en {}", self.pending_deletes_path().display())
+            })?
+        };
         if !items.iter().any(|p| p.kind == kind && p.id == id) {
             items.push(PendingDelete {
                 kind,
                 id: id.to_string(),
                 enqueued_at: jiff::Timestamp::now().to_string(),
             });
-            self.save_pending_deletes(&items)?;
+            // Escribir de vuelta bajo mismo lock
+            let raw = serde_json::to_string_pretty(&items)?;
+            file.set_len(0)?;
+            use std::io::{Seek, Write};
+            file.seek(std::io::SeekFrom::Start(0))?;
+            file.write_all(raw.as_bytes())?;
+            file.flush()?;
         }
         Ok(())
+    }
+
+    /// Procesa borrados pendientes bajo LOCK_EX: carga, filtra válidos, procesa, guarda resto.
+    /// Devuelve ProcessResult con procesados_ok, errores, items_restantes.
+    pub fn process_pending_deletes_locked(
+        &self,
+        process_fn: &mut dyn FnMut(&PendingDelete) -> anyhow::Result<()>,
+    ) -> anyhow::Result<ProcessResult> {
+        let mut file = self.open_pending_deletes_locked(true)?;
+        let raw = std::io::read_to_string(&file)?;
+        let mut items: Vec<PendingDelete> = if raw.trim().is_empty() {
+            Vec::new()
+        } else {
+            serde_json::from_str(&raw).with_context(|| {
+                format!("JSON inválido en {}", self.pending_deletes_path().display())
+            })?
+        };
+
+        let mut processed_ok = 0;
+        let mut errors = Vec::new();
+        let mut remaining = Vec::new();
+
+        for item in items.drain(..) {
+            match process_fn(&item) {
+                Ok(()) => {
+                    processed_ok += 1;
+                }
+                Err(e) => {
+                    tracing::error!(id = %item.id, kind = ?item.kind, error = %e, "borrado pendiente sigue fallando");
+                    errors.push((item, e));
+                }
+            }
+        }
+        // Los items con error se reencolan (remaining)
+        remaining.extend(errors.iter().map(|(item, _)| item.clone()));
+
+        // Escribir items restantes bajo mismo lock
+        let raw = serde_json::to_string_pretty(&remaining)?;
+        file.set_len(0)?;
+        use std::io::{Seek, Write};
+        file.seek(std::io::SeekFrom::Start(0))?;
+        file.write_all(raw.as_bytes())?;
+        file.flush()?;
+
+        Ok(ProcessResult {
+            processed_ok,
+            errors,
+            remaining,
+        })
     }
 
     /// Escritura atómica vía `secure_fs` (0600 / persist).
@@ -265,6 +387,16 @@ pub enum PendingKind {
     Job,
     Upload,
     JobDir,
+}
+
+impl PendingKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            PendingKind::Job => "job",
+            PendingKind::Upload => "upload",
+            PendingKind::JobDir => "job_dir",
+        }
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

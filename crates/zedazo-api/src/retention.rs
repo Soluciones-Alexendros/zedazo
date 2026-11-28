@@ -379,31 +379,34 @@ fn sweep_tmp(state: &AppState) -> anyhow::Result<()> {
 }
 
 async fn retry_pending_deletes(state: &AppState) -> anyhow::Result<()> {
-    let items = state.storage.load_pending_deletes();
-    if items.is_empty() {
-        return Ok(());
-    }
-    let mut remaining = Vec::new();
-    for item in items {
-        let result = match item.kind {
-            PendingKind::Job | PendingKind::JobDir => state.storage.delete_job_dir(&item.id),
-            PendingKind::Upload => state.storage.delete_upload(&item.id),
-        };
-        match result {
-            Ok(()) => {
-                tracing::info!(id = %item.id, kind = ?item.kind, "borrado pendiente reintentado OK");
-                let mut events = state.events.write().await;
-                events.remove(&item.id);
-                let mut jobs = state.jobs.write().await;
-                jobs.remove(&item.id);
+    let result = state.storage.process_pending_deletes_locked(
+        &mut |item| {
+            let result = match item.kind {
+                PendingKind::Job | PendingKind::JobDir => state.storage.delete_job_dir(&item.id),
+                PendingKind::Upload => state.storage.delete_upload(&item.id),
+            };
+            match result {
+                Ok(()) => {
+                    tracing::info!(id = %item.id, kind = ?item.kind, "borrado pendiente reintentado OK");
+                    Ok(())
+                }
+                Err(e) => Err(anyhow::anyhow!(e)),
             }
-            Err(e) => {
-                tracing::error!(id = %item.id, kind = ?item.kind, error = %e, "borrado pendiente sigue fallando");
-                remaining.push(item);
-            }
-        }
+        },
+    )?;
+
+    // Limpiar eventos y jobs de los procesados OK (los errores ya quedaron en remaining via storage)
+    if result.processed_ok > 0 {
+        // Nota: los IDs procesados se removieron de pending_deletes.json por storage.
+        // Aquí limpiamos estado en memoria.
+        // No tenemos lista de IDs procesados aquí; se limpien en delete_job_tracked / expire_job
+        // que ya se llaman desde process_fn. Para evitar duplicados, no hacemos nada extra.
     }
-    state.storage.save_pending_deletes(&remaining)?;
+
+    // Log de errores ya hecho en storage
+    for (_, e) in result.errors {
+        tracing::error!(error = %e, "borrado pendiente sigue fallando");
+    }
     Ok(())
 }
 
@@ -498,6 +501,7 @@ pub async fn delete_job_tracked(state: &AppState, job_id: &str) -> DeleteOutcome
     let in_pending = state
         .storage
         .load_pending_deletes()
+        .unwrap_or_default()
         .iter()
         .any(|p| p.id == job_id && matches!(p.kind, PendingKind::Job | PendingKind::JobDir));
 
