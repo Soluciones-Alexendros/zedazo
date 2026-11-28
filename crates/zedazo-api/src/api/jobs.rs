@@ -73,7 +73,38 @@ pub async fn create_job(
     }
     let upload_path = state.storage.upload_path(&body.upload_id);
     if !upload_path.exists() {
-        return Err((StatusCode::NOT_FOUND, "upload_id desconocido".into()));
+        // W2-T1 compatibilidad: commit implícito si el archivo sigue en temp.
+        let meta_path = state.storage.upload_meta_path(&body.upload_id);
+        let committed = std::fs::read_to_string(&meta_path)
+            .ok()
+            .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+            .and_then(|v| {
+                v.get("temp_path")
+                    .and_then(|t| t.as_str())
+                    .map(std::path::PathBuf::from)
+            })
+            .filter(|p| p.exists())
+            .map(|temp| {
+                std::fs::rename(&temp, &upload_path)?;
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    let _ = std::fs::set_permissions(
+                        &upload_path,
+                        std::fs::Permissions::from_mode(0o600),
+                    );
+                }
+                Ok::<(), std::io::Error>(())
+            });
+        match committed {
+            Some(Ok(())) => {}
+            Some(Err(e)) => {
+                return Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()));
+            }
+            None => {
+                return Err((StatusCode::NOT_FOUND, "upload_id desconocido".into()));
+            }
+        }
     }
     let meta = std::fs::metadata(&upload_path)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -149,6 +180,10 @@ pub async fn create_job(
         artifacts: vec![],
         error: None,
         retention_hours: retention,
+        config_toml: config_toml.clone(),
+        persisted_at: None,
+        persisted: false,
+        retryable: false,
     };
 
     state

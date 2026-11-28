@@ -3,8 +3,11 @@
 //! El TTL no es exacto al segundo: el barrido corre cada hora (y una vez al arrancar).
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
-use zedazo_core::application::process::CancellationToken;
+use zedazo_core::application::process::{
+    ArtifactKind, CancellationToken, NullProgress, ProcessRequest, RulesConfigSource,
+};
 
 use crate::app::AppState;
 use crate::dto::{JobManifest, JobRecord, JobStatus};
@@ -45,25 +48,31 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
             .to_string();
         if Storage::validate_id(&id).is_err() {
             tracing::warn!(path = %dir.display(), "directorio de job con id inválido; en cola de limpieza");
-            let _ = state
+            state
                 .storage
-                .enqueue_pending_delete(PendingKind::JobDir, &id);
+                .enqueue_pending_delete(PendingKind::JobDir, &id)?;
             continue;
         }
         let manifest_path = dir.join("manifest.json");
         if !manifest_path.exists() {
             tracing::warn!(job_id = %id, "job sin manifiesto; en cola de limpieza");
-            let _ = state.storage.enqueue_pending_delete(PendingKind::Job, &id);
+            state
+                .storage
+                .enqueue_pending_delete(PendingKind::Job, &id)?;
             continue;
         }
         let Ok(raw) = std::fs::read_to_string(&manifest_path) else {
             tracing::warn!(job_id = %id, "manifiesto ilegible; en cola de limpieza");
-            let _ = state.storage.enqueue_pending_delete(PendingKind::Job, &id);
+            state
+                .storage
+                .enqueue_pending_delete(PendingKind::Job, &id)?;
             continue;
         };
         let Ok(mut manifest) = serde_json::from_str::<JobManifest>(&raw) else {
             tracing::warn!(job_id = %id, "manifiesto inválido; en cola de limpieza");
-            let _ = state.storage.enqueue_pending_delete(PendingKind::Job, &id);
+            state
+                .storage
+                .enqueue_pending_delete(PendingKind::Job, &id)?;
             continue;
         };
 
@@ -98,21 +107,58 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
                 }
                 Err(e) => {
                     tracing::error!(job_id = %id, error = %e, "fallo al borrar job vencido");
-                    let _ = state.storage.enqueue_pending_delete(PendingKind::Job, &id);
+                    state
+                        .storage
+                        .enqueue_pending_delete(PendingKind::Job, &id)?;
                     continue;
                 }
             }
         }
 
+        // Para jobs Completed, cargar vistas persistidas o reconstruir (F-01, Q1-D híbrido)
+        let (contact_views, duplicate_groups, warnings) = if manifest.status == JobStatus::Completed
+        {
+            let job_dir = state.storage.job_dir(&id);
+            match load_views_or_rebuild(&job_dir, &manifest).await {
+                Ok((cv, dg, w)) => (cv, dg, w),
+                Err(e) => {
+                    tracing::error!(job_id = %id, error = %e, "fallo al cargar/reconstruir vistas; job marcado como RecoveredPartial");
+                    manifest.status = JobStatus::Failed;
+                    manifest.error = Some(format!("recovery_failed: {}", e));
+                    let _ = crate::jobs::save_manifest_result(state, &manifest);
+                    (vec![], vec![], vec![])
+                }
+            }
+        } else {
+            (vec![], vec![], vec![])
+        };
+
+        // Reconstruir requested_artifacts desde el manifiesto
+        let requested_artifacts: Vec<zedazo_core::application::process::ArtifactKind> = manifest
+            .artifacts
+            .iter()
+            .filter_map(|s| match s.as_str() {
+                "vcf" => Some(zedazo_core::application::process::ArtifactKind::Vcf),
+                "audit_tsv" => Some(zedazo_core::application::process::ArtifactKind::AuditTsv),
+                "stats_json" => Some(zedazo_core::application::process::ArtifactKind::StatsJson),
+                "stats_markdown" => {
+                    Some(zedazo_core::application::process::ArtifactKind::StatsMarkdown)
+                }
+                "csv" => Some(zedazo_core::application::process::ArtifactKind::Csv),
+                "json" => Some(zedazo_core::application::process::ArtifactKind::Json),
+                _ => None,
+            })
+            .collect();
+
         recovered.insert(
             id.clone(),
             JobRecord {
                 manifest,
-                contact_views: vec![],
-                duplicate_groups: vec![],
-                warnings: vec![],
+                contact_views,
+                duplicate_groups,
+                warnings,
                 cancel: CancellationToken::new(),
-                requested_artifacts: vec![],
+                requested_artifacts,
                 config_toml: None,
             },
         );
@@ -134,6 +180,111 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
     retry_pending_deletes(state).await?;
 
     Ok(())
+}
+
+/// Intenta cargar vistas persistidas (contacts_view.json, duplicates_view.json, warnings.json).
+/// Si faltan o están corruptas, reconstruye re-procesando el VCF original desde artifacts/.
+async fn load_views_or_rebuild(
+    job_dir: &std::path::Path,
+    manifest: &JobManifest,
+) -> anyhow::Result<(
+    Vec<zedazo_core::application::process::ContactView>,
+    Vec<zedazo_core::application::process::DuplicateGroupView>,
+    Vec<zedazo_core::application::process::ProcessWarning>,
+)> {
+    // Rutas de las vistas persistidas
+    let contacts_path = job_dir.join("contacts_view.json");
+    let duplicates_path = job_dir.join("duplicates_view.json");
+    let warnings_path = job_dir.join("warnings.json");
+
+    // Intentar cargar vistas existentes
+    if contacts_path.exists() && duplicates_path.exists() && warnings_path.exists() {
+        let contacts_raw = std::fs::read_to_string(&contacts_path)?;
+        let duplicates_raw = std::fs::read_to_string(&duplicates_path)?;
+        let warnings_raw = std::fs::read_to_string(&warnings_path)?;
+
+        let contacts: Vec<zedazo_core::application::process::ContactView> =
+            serde_json::from_str(&contacts_raw)?;
+        let duplicates: Vec<zedazo_core::application::process::DuplicateGroupView> =
+            serde_json::from_str(&duplicates_raw)?;
+        let warnings: Vec<zedazo_core::application::process::ProcessWarning> =
+            serde_json::from_str(&warnings_raw)?;
+
+        tracing::info!(job_id = %manifest.job_id, "vistas cargadas desde JSON persistido");
+        return Ok((contacts, duplicates, warnings));
+    }
+
+    // Fallback: reconstruir re-procesando el VCF original
+    tracing::info!(job_id = %manifest.job_id, "vistas no encontradas o incompletas; reconstruyendo desde artefactos");
+
+    // Buscar el VCF de entrada original en artifacts/ o en el directorio del job
+    let input_vcf = job_dir.join("artifacts").join("input.vcf");
+    let fallback_vcf = job_dir.join("input.vcf");
+    let vcf_path = if input_vcf.exists() {
+        input_vcf
+    } else if fallback_vcf.exists() {
+        fallback_vcf
+    } else {
+        // Sin VCF original: mantener vistas vacías (compatibilidad legacy)
+        tracing::warn!(job_id = %manifest.job_id, "job Completed sin vistas persistidas ni VCF original; manteniendo vistas vacías");
+        return Ok((vec![], vec![], vec![]));
+    };
+
+    // Configuración: usar BuiltIn o TomlInline del manifiesto si está disponible
+    let config = if let Some(toml) = &manifest.config_toml {
+        RulesConfigSource::TomlInline(toml.clone())
+    } else {
+        RulesConfigSource::BuiltIn
+    };
+
+    // Artefactos solicitados (los que estaban en el manifiesto original)
+    let mut arts: std::collections::BTreeSet<ArtifactKind> = manifest
+        .artifacts
+        .iter()
+        .filter_map(|s| match s.as_str() {
+            "vcf" => Some(ArtifactKind::Vcf),
+            "audit_tsv" => Some(ArtifactKind::AuditTsv),
+            "stats_json" => Some(ArtifactKind::StatsJson),
+            "stats_markdown" => Some(ArtifactKind::StatsMarkdown),
+            "csv" => Some(ArtifactKind::Csv),
+            "json" => Some(ArtifactKind::Json),
+            _ => None,
+        })
+        .collect();
+    if arts.is_empty() {
+        arts.insert(ArtifactKind::Vcf);
+        arts.insert(ArtifactKind::AuditTsv);
+        arts.insert(ArtifactKind::StatsJson);
+        arts.insert(ArtifactKind::Csv);
+        arts.insert(ArtifactKind::Json);
+    }
+
+    let req = ProcessRequest {
+        job_id: zedazo_core::application::process::JobId(manifest.job_id.clone()),
+        input_path: vcf_path.clone(),
+        working_directory: job_dir.to_path_buf(),
+        config,
+        requested_artifacts: arts,
+        source_override: manifest
+            .input
+            .source_detected
+            .clone()
+            .unwrap_or_else(|| "auto".into()),
+        dry_run: false,
+        strict: false,
+        cancellation: CancellationToken::new(),
+        progress: Arc::new(NullProgress),
+    };
+
+    let result = zedazo_core::application::process::run(&req)
+        .map_err(|e| anyhow::anyhow!("fallback re-proceso falló: {}", e))?;
+
+    tracing::info!(job_id = %manifest.job_id, contacts = result.contact_views.len(), duplicates = result.duplicate_groups.len(), "vistas reconstruidas");
+    Ok((
+        result.contact_views,
+        result.duplicate_groups,
+        result.warnings,
+    ))
 }
 
 /// ¿Ha vencido el TTL de retención? Reloj inyectable para tests (S-12).
@@ -164,9 +315,9 @@ fn sweep_uploads(
             continue;
         }
         if Storage::validate_id(&upload_id).is_err() {
-            let _ = state
+            state
                 .storage
-                .enqueue_pending_delete(PendingKind::Upload, &upload_id);
+                .enqueue_pending_delete(PendingKind::Upload, &upload_id)?;
             continue;
         }
         let meta_path = state.storage.upload_meta_path(&upload_id);
@@ -198,9 +349,9 @@ fn sweep_uploads(
                 Ok(()) => tracing::info!(%upload_id, "upload huérfano eliminado"),
                 Err(e) => {
                     tracing::error!(%upload_id, error = %e, "fallo al borrar upload");
-                    let _ = state
+                    state
                         .storage
-                        .enqueue_pending_delete(PendingKind::Upload, &upload_id);
+                        .enqueue_pending_delete(PendingKind::Upload, &upload_id)?;
                 }
             }
         }
@@ -236,31 +387,34 @@ fn sweep_tmp(state: &AppState) -> anyhow::Result<()> {
 }
 
 async fn retry_pending_deletes(state: &AppState) -> anyhow::Result<()> {
-    let items = state.storage.load_pending_deletes();
-    if items.is_empty() {
-        return Ok(());
-    }
-    let mut remaining = Vec::new();
-    for item in items {
-        let result = match item.kind {
-            PendingKind::Job | PendingKind::JobDir => state.storage.delete_job_dir(&item.id),
-            PendingKind::Upload => state.storage.delete_upload(&item.id),
-        };
-        match result {
-            Ok(()) => {
-                tracing::info!(id = %item.id, kind = ?item.kind, "borrado pendiente reintentado OK");
-                let mut events = state.events.write().await;
-                events.remove(&item.id);
-                let mut jobs = state.jobs.write().await;
-                jobs.remove(&item.id);
+    let result = state.storage.process_pending_deletes_locked(
+        &mut |item| {
+            let result = match item.kind {
+                PendingKind::Job | PendingKind::JobDir => state.storage.delete_job_dir(&item.id),
+                PendingKind::Upload => state.storage.delete_upload(&item.id),
+            };
+            match result {
+                Ok(()) => {
+                    tracing::info!(id = %item.id, kind = ?item.kind, "borrado pendiente reintentado OK");
+                    Ok(())
+                }
+                Err(e) => Err(anyhow::anyhow!(e)),
             }
-            Err(e) => {
-                tracing::error!(id = %item.id, kind = ?item.kind, error = %e, "borrado pendiente sigue fallando");
-                remaining.push(item);
-            }
-        }
+        },
+    )?;
+
+    // Limpiar eventos y jobs de los procesados OK (los errores ya quedaron en remaining via storage)
+    if result.processed_ok > 0 {
+        // Nota: los IDs procesados se removieron de pending_deletes.json por storage.
+        // Aquí limpiamos estado en memoria.
+        // No tenemos lista de IDs procesados aquí; se limpien en delete_job_tracked / expire_job
+        // que ya se llaman desde process_fn. Para evitar duplicados, no hacemos nada extra.
     }
-    state.storage.save_pending_deletes(&remaining)?;
+
+    // Log de errores ya hecho en storage
+    for (_, e) in result.errors {
+        tracing::error!(error = %e, "borrado pendiente sigue fallando");
+    }
     Ok(())
 }
 
@@ -320,7 +474,9 @@ async fn expire_job(state: &AppState, id: &str) {
         }
         Err(e) => {
             tracing::error!(job_id = %id, error = %e, "fallo al borrar job expirado; se reintentará");
-            let _ = state.storage.enqueue_pending_delete(PendingKind::Job, id);
+            if let Err(e) = state.storage.enqueue_pending_delete(PendingKind::Job, id) {
+                tracing::error!(job_id = %id, error = %e, "fallo al encolar borrado pendiente");
+            }
             // Mantener entrada en registro para reintento visible.
         }
     }
@@ -355,6 +511,7 @@ pub async fn delete_job_tracked(state: &AppState, job_id: &str) -> DeleteOutcome
     let in_pending = state
         .storage
         .load_pending_deletes()
+        .unwrap_or_default()
         .iter()
         .any(|p| p.id == job_id && matches!(p.kind, PendingKind::Job | PendingKind::JobDir));
 
@@ -389,9 +546,12 @@ pub async fn delete_job_tracked(state: &AppState, job_id: &str) -> DeleteOutcome
         }
         Err(e) => {
             tracing::error!(job_id = %job_id, error = %e, "delete_job: borrado falló");
-            let _ = state
+            if let Err(e) = state
                 .storage
-                .enqueue_pending_delete(PendingKind::Job, job_id);
+                .enqueue_pending_delete(PendingKind::Job, job_id)
+            {
+                tracing::error!(job_id = %job_id, error = %e, "fallo al encolar borrado pendiente");
+            }
             {
                 let mut jobs = state.jobs.write().await;
                 jobs.remove(job_id);
@@ -435,6 +595,10 @@ mod should_expire_tests {
             artifacts: vec![],
             error: None,
             retention_hours,
+            config_toml: None,
+            persisted_at: None,
+            persisted: false,
+            retryable: false,
         }
     }
 

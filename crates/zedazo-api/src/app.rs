@@ -16,8 +16,26 @@ use crate::host_guard::{self, HostPolicy};
 use crate::jobs::{JobEvent, JobRecord};
 use crate::storage::Storage;
 
+/// Errores de configuración con mensajes accionables.
+#[derive(Debug, thiserror::Error)]
+pub enum ConfigError {
+    #[error("retention_max_hours debe ser >= 1 y <= 8760 (1 año); valor: {0}")]
+    RetentionMaxHours(u64),
+    #[error("retention_hours ({0}) debe ser >= 1 y <= retention_max_hours ({1})")]
+    RetentionHours(u64, u64),
+    #[error("max_upload_bytes debe ser > 0; valor: {0}")]
+    MaxUploadBytes(usize),
+    #[error("max_concurrent_jobs debe ser > 0; valor: {0}")]
+    MaxConcurrentJobs(usize),
+    #[error("data_dir no escribible: {0}")]
+    DataDirNotWritable(PathBuf),
+}
+
 /// Tope de retención de job (horas); defecto del plan S-13.
 pub const DEFAULT_RETENTION_MAX_HOURS: u64 = 168;
+
+/// Límite superior absoluto para retention_max_hours (1 año).
+pub const MAX_RETENTION_MAX_HOURS: u64 = 8760;
 
 /// Cupo interno de uploads concurrentes (sin env nueva).
 const UPLOAD_SEM_PERMITS: usize = 2;
@@ -43,6 +61,44 @@ pub struct AppState {
     pub upload_sem: Arc<Semaphore>,
 }
 
+/// Valida la configuración antes de construir el estado.
+/// Devuelve error con mensaje accionable si hay valores inválidos.
+pub fn validate_config(
+    data_dir: &PathBuf,
+    max_upload_bytes: usize,
+    max_concurrent_jobs: usize,
+    retention_hours: u64,
+    retention_max_hours: u64,
+) -> Result<(), ConfigError> {
+    if retention_max_hours == 0 || retention_max_hours > MAX_RETENTION_MAX_HOURS {
+        return Err(ConfigError::RetentionMaxHours(retention_max_hours));
+    }
+    if retention_hours == 0 || retention_hours > retention_max_hours {
+        return Err(ConfigError::RetentionHours(
+            retention_hours,
+            retention_max_hours,
+        ));
+    }
+    if max_upload_bytes == 0 {
+        return Err(ConfigError::MaxUploadBytes(max_upload_bytes));
+    }
+    if max_concurrent_jobs == 0 {
+        return Err(ConfigError::MaxConcurrentJobs(max_concurrent_jobs));
+    }
+    // Verificar que data_dir es escribible (crear si no existe)
+    if !data_dir.exists() {
+        std::fs::create_dir_all(data_dir)
+            .map_err(|_| ConfigError::DataDirNotWritable(data_dir.clone()))?;
+    } else {
+        // Test de escritura
+        let test_file = data_dir.join(".zedazo_write_test");
+        std::fs::write(&test_file, b"test")
+            .map_err(|_| ConfigError::DataDirNotWritable(data_dir.clone()))?;
+        let _ = std::fs::remove_file(&test_file);
+    }
+    Ok(())
+}
+
 impl AppState {
     pub fn from_env() -> anyhow::Result<Self> {
         let data_dir =
@@ -62,8 +118,18 @@ impl AppState {
         let retention_hours: u64 = std::env::var("ZEDAZO_JOB_RETENTION_HOURS")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(24)
-            .clamp(1, retention_max_hours);
+            .unwrap_or(24);
+
+        // Validar antes de clamp/build
+        validate_config(
+            &data_dir,
+            max_upload_bytes,
+            max_concurrent_jobs,
+            retention_hours,
+            retention_max_hours,
+        )?;
+
+        let retention_hours = retention_hours.clamp(1, retention_max_hours);
         let auth = AuthConfig::from_env()?;
         let bind = std::env::var("ZEDAZO_BIND").unwrap_or_else(|_| "127.0.0.1:8080".into());
         let host_policy = HostPolicy::from_bind(&bind);
@@ -213,6 +279,9 @@ pub fn router(state: AppState) -> Router {
         .merge(uploads)
         .merge(protected)
         .layer(TraceLayer::new_for_http())
+        .layer(middleware::from_fn(
+            api::cache_control::cache_control_middleware,
+        ))
         .layer(cors)
         .layer(middleware::from_fn_with_state(
             state.clone(),

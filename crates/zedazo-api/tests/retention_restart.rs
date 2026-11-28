@@ -40,6 +40,10 @@ fn write_interrupted_job(storage: &Storage, job_id: &str) {
         artifacts: vec![],
         error: None,
         retention_hours: 24,
+        config_toml: None,
+        persisted_at: None,
+        persisted: false,
+        retryable: false,
     };
     let path = storage.job_dir(job_id).join("manifest.json");
     Storage::atomic_write(
@@ -110,13 +114,13 @@ async fn failed_delete_stays_in_pending() {
         .storage
         .enqueue_pending_delete(PendingKind::Job, job_id)
         .unwrap();
-    let pending = state.storage.load_pending_deletes();
+    let pending = state.storage.load_pending_deletes().unwrap();
     assert!(pending.iter().any(|p| p.id == job_id));
 
     // Reintento exitoso tras borrado real.
     state.storage.delete_job_dir(job_id).unwrap();
     retention::retention_sweep(&state).await;
-    let pending = state.storage.load_pending_deletes();
+    let pending = state.storage.load_pending_deletes().unwrap();
     assert!(!pending.iter().any(|p| p.id == job_id));
 }
 
@@ -212,6 +216,10 @@ async fn completed_job_survives_restart() {
             artifacts: vec!["vcf".into()],
             error: None,
             retention_hours: 24,
+            config_toml: None,
+            persisted_at: None,
+            persisted: false,
+            retryable: false,
         };
         // Asegurar no vencido.
         manifest.completed_at = Some(now_rfc3339());

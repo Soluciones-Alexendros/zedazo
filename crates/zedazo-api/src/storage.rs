@@ -1,23 +1,61 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 use anyhow::{bail, Context};
+use fs2::FileExt;
 
 /// TTL por defecto para uploads sin trabajo asociado (horas).
 pub const DEFAULT_UPLOAD_TTL_HOURS: u64 = 24;
 
+/// Resultado de process_pending_deletes_locked.
+#[derive(Debug)]
+pub struct ProcessResult {
+    pub processed_ok: usize,
+    pub errors: Vec<(PendingDelete, anyhow::Error)>,
+    pub remaining: Vec<PendingDelete>,
+}
+
 #[derive(Clone)]
 pub struct Storage {
     pub root: PathBuf,
+    /// Mutex para serializar acceso a pending_deletes.json entre threads del mismo proceso.
+    /// El flock protege entre procesos; este mutex protege entre threads del mismo proceso.
+    pending_deletes_lock: Arc<Mutex<()>>,
 }
 
 impl Storage {
-    pub fn new(root: PathBuf) -> anyhow::Result<Self> {
-        use zedazo_core::infrastructure::secure_fs;
-        for sub in ["jobs", "tmp", "uploads"] {
-            secure_fs::ensure_dir_0700(&root.join(sub))?;
+    /// Crea directorio con permisos 0700 (owner only).
+    pub fn ensure_dir_restricted(path: &Path) -> anyhow::Result<()> {
+        fs::create_dir_all(path)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(path, fs::Permissions::from_mode(0o700))?;
         }
-        let s = Self { root };
+        Ok(())
+    }
+
+    /// Crea archivo con permisos 0600 (owner only).
+    pub fn create_file_restricted(path: &Path) -> anyhow::Result<fs::File> {
+        use std::os::unix::fs::OpenOptionsExt;
+        let file = fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(path)?;
+        Ok(file)
+    }
+
+    pub fn new(root: PathBuf) -> anyhow::Result<Self> {
+        for sub in ["jobs", "tmp", "uploads"] {
+            Self::ensure_dir_restricted(&root.join(sub))?;
+        }
+        let s = Self {
+            root,
+            pending_deletes_lock: Arc::new(Mutex::new(())),
+        };
         s.harden_tree_permissions()?;
         Ok(s)
     }
@@ -101,7 +139,7 @@ impl Storage {
         Self::validate_id(job_id)?;
         let d = self.job_dir(job_id);
         self.assert_under_root(&d)?;
-        fs::create_dir_all(&d)?;
+        Self::ensure_dir_restricted(&d)?;
         Ok(d)
     }
 
@@ -129,14 +167,14 @@ impl Storage {
         Ok(())
     }
 
-    /// Borra todos los jobs, uploads y tmp bajo el data dir.
+    /// Borra todos los jobs, uploads y tmp bajo el data dir; recrea con permisos 0700.
     pub fn wipe_all(&self) -> anyhow::Result<()> {
         for sub in ["jobs", "uploads", "tmp"] {
             let p = self.root.join(sub);
             if p.exists() {
                 fs::remove_dir_all(&p).with_context(|| format!("wipe {}", p.display()))?;
             }
-            fs::create_dir_all(&p)?;
+            Self::ensure_dir_restricted(&p)?;
         }
         let _ = fs::remove_file(self.pending_deletes_path());
         Ok(())
@@ -155,30 +193,143 @@ impl Storage {
         Ok(next)
     }
 
-    pub fn load_pending_deletes(&self) -> Vec<PendingDelete> {
-        let path = self.pending_deletes_path();
-        let Ok(raw) = fs::read_to_string(&path) else {
-            return Vec::new();
-        };
-        serde_json::from_str(&raw).unwrap_or_default()
+    // Helper: ejecuta una operación bajo el mutex de pending_deletes (protege threads).
+    // El flock protege entre procesos.
+    fn with_pending_deletes_lock<F, T>(&self, f: F) -> anyhow::Result<T>
+    where
+        F: FnOnce() -> anyhow::Result<T>,
+    {
+        let _guard = self.pending_deletes_lock.lock().unwrap();
+        f()
+    }
+
+    pub fn load_pending_deletes(&self) -> anyhow::Result<Vec<PendingDelete>> {
+        self.with_pending_deletes_lock(|| {
+            let path = self.pending_deletes_path();
+            let Ok(raw) = fs::read_to_string(&path) else {
+                return Ok(Vec::new());
+            };
+            if raw.trim().is_empty() {
+                return Ok(Vec::new());
+            }
+            let items: Vec<PendingDelete> = serde_json::from_str(&raw).with_context(|| {
+                format!("JSON inválido en {}", self.pending_deletes_path().display())
+            })?;
+            Ok(items)
+        })
     }
 
     pub fn save_pending_deletes(&self, items: &[PendingDelete]) -> anyhow::Result<()> {
-        let raw = serde_json::to_string_pretty(items)?;
-        Self::atomic_write(&self.pending_deletes_path(), raw.as_bytes())
+        self.with_pending_deletes_lock(|| {
+            let raw = serde_json::to_string_pretty(items)?;
+            Self::atomic_write(&self.pending_deletes_path(), raw.as_bytes())
+        })
     }
 
     pub fn enqueue_pending_delete(&self, kind: PendingKind, id: &str) -> anyhow::Result<()> {
-        let mut items = self.load_pending_deletes();
+        // Validar ID canónico antes de encolar (evita basura en la cola)
+        if Storage::validate_id(id).is_err() {
+            // ID no canónico: mover a quarantine/ y loggear
+            let quarantine_dir = self.root.join("quarantine");
+            fs::create_dir_all(&quarantine_dir)?;
+            let qpath = quarantine_dir.join(format!("{}_{}.json", kind.as_str(), id));
+            let entry = serde_json::json!({
+                "kind": kind.as_str(),
+                "id": id,
+                "enqueued_at": jiff::Timestamp::now().to_string(),
+                "reason": "invalid_id"
+            });
+            fs::write(&qpath, serde_json::to_string_pretty(&entry)?)?;
+            tracing::warn!(kind = %kind.as_str(), %id, "ID no canónico encolado en quarantine");
+            return Ok(());
+        }
+        // Read-modify-write bajo mutex + flock (inline sin helper)
+        let path = self.pending_deletes_path();
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        let mut file = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(&path)?;
+        #[allow(clippy::incompatible_msrv)]
+        file.lock_exclusive()?;
+        let raw = std::io::read_to_string(&file)?;
+        let mut items: Vec<PendingDelete> = if raw.trim().is_empty() {
+            Vec::new()
+        } else {
+            serde_json::from_str(&raw).with_context(|| {
+                format!("JSON inválido en {}", self.pending_deletes_path().display())
+            })?
+        };
         if !items.iter().any(|p| p.kind == kind && p.id == id) {
             items.push(PendingDelete {
                 kind,
                 id: id.to_string(),
                 enqueued_at: jiff::Timestamp::now().to_string(),
             });
-            self.save_pending_deletes(&items)?;
+            let raw = serde_json::to_string_pretty(&items)?;
+            file.set_len(0)?;
+            use std::io::{Seek, Write};
+            file.seek(std::io::SeekFrom::Start(0))?;
+            file.write_all(raw.as_bytes())?;
+            file.flush()?;
         }
         Ok(())
+    }
+    /// Procesa borrados pendientes bajo mutex + flock: carga, filtra válidos, procesa, guarda resto.
+    /// Devuelve ProcessResult con procesados_ok, errores, items_restantes.
+    pub fn process_pending_deletes_locked(
+        &self,
+        process_fn: &mut dyn FnMut(&PendingDelete) -> anyhow::Result<()>,
+    ) -> anyhow::Result<ProcessResult> {
+        self.with_pending_deletes_lock(|| {
+            let path = self.pending_deletes_path();
+            let Ok(raw) = fs::read_to_string(&path) else {
+                return Ok(ProcessResult {
+                    processed_ok: 0,
+                    errors: Vec::new(),
+                    remaining: Vec::new(),
+                });
+            };
+            let mut items: Vec<PendingDelete> = if raw.trim().is_empty() {
+                Vec::new()
+            } else {
+                serde_json::from_str(&raw).with_context(|| {
+                    format!("JSON inválido en {}", self.pending_deletes_path().display())
+                })?
+            };
+
+            let mut processed_ok = 0;
+            let mut errors = Vec::new();
+            let mut remaining = Vec::new();
+
+            for item in items.drain(..) {
+                match process_fn(&item) {
+                    Ok(()) => {
+                        processed_ok += 1;
+                    }
+                    Err(e) => {
+                        tracing::error!(id = %item.id, kind = ?item.kind, error = %e, "borrado pendiente sigue fallando");
+                        errors.push((item, e));
+                    }
+                }
+            }
+            // Los items con error se reencolan (remaining)
+            remaining.extend(errors.iter().map(|(item, _)| item.clone()));
+
+            // Escribir items restantes
+            let raw = serde_json::to_string_pretty(&remaining)?;
+            Self::atomic_write(&self.pending_deletes_path(), raw.as_bytes())?;
+
+            Ok(ProcessResult {
+                processed_ok,
+                errors,
+                remaining,
+            })
+        })
     }
 
     /// Escritura atómica vía `secure_fs` (0600 / persist).
@@ -265,6 +416,16 @@ pub enum PendingKind {
     Job,
     Upload,
     JobDir,
+}
+
+impl PendingKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            PendingKind::Job => "job",
+            PendingKind::Upload => "upload",
+            PendingKind::JobDir => "job_dir",
+        }
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

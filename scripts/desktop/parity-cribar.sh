@@ -63,12 +63,12 @@ if [[ -n "${ZEDAZO_ADDR:-}" && -n "${ZEDAZO_TOKEN:-}" ]]; then
     exit 1
   fi
 
-  JOB_JSON="$(curl -sS "${HDR[@]}" -H "Content-Type: application/json" \
-    -d "{\"upload_id\":\"${UPLOAD_ID}\"}" \
-    "${BASE}/api/v1/jobs")"
-  JOB_ID="$(echo "$JOB_JSON" | jq -r '.id // .job_id // .job.id // empty')"
+  # W2-T1: commit explícito crea el job automáticamente.
+  JOB_JSON="$(curl -sS "${HDR[@]}" -X POST \
+    "${BASE}/api/v1/uploads/${UPLOAD_ID}/commit")"
+  JOB_ID="$(echo "$JOB_JSON" | jq -r '.job_id // .id // .job.id // empty')"
   if [[ -z "$JOB_ID" ]]; then
-    echo "error: job sin id: $JOB_JSON" >&2
+    echo "error: commit sin job_id: $JOB_JSON" >&2
     exit 1
   fi
 

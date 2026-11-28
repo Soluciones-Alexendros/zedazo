@@ -1,6 +1,7 @@
 pub mod admin;
 pub mod artifacts;
 pub mod audit;
+pub mod cache_control;
 pub mod contacts;
 pub mod health;
 pub mod jobs;

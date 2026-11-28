@@ -41,6 +41,20 @@ pub struct JobManifest {
     pub artifacts: Vec<String>,
     pub error: Option<String>,
     pub retention_hours: u64,
+    /// Config TOML inline usada para este job (para reconstrucción en reconcile).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config_toml: Option<String>,
+    /// Timestamp de confirmación de persistencia (cuando se escribió manifiesto + vistas en disco).
+    /// Solo presente si `persisted = true` y status = Completed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub persisted_at: Option<String>,
+    /// Indica si el resultado se confirmó en disco (manifiesto + vistas).
+    /// `Completed` implica `persisted = true`; `Failed` con `persisted = false` = fallo de persistencia.
+    #[serde(default)]
+    pub persisted: bool,
+    /// Si el fallo es reintentable (ej. disco lleno, permisos). Solo relevante si `persisted = false`.
+    #[serde(default)]
+    pub retryable: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

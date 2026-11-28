@@ -1,7 +1,8 @@
 //! Zedazo API — adaptador HTTP sobre zedazo-core (ADR-0015).
 
-use tracing_subscriber::EnvFilter;
+use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Layer};
 use zedazo_api::auth;
+use zedazo_api::observability::RedactionLayer;
 use zedazo_api::retention;
 use zedazo_api::serve::{serve, ApiConfig};
 
@@ -11,9 +12,13 @@ async fn main() -> anyhow::Result<()> {
         return health_check_once().await;
     }
 
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env().add_directive("zedazo_api=info".parse()?))
-        .init();
+    // Inicializar tracing con layer de redacción (S-01)
+    let fmt_layer = tracing_subscriber::fmt::layer()
+        .with_filter(EnvFilter::from_default_env().add_directive("zedazo_api=info".parse()?));
+    let subscriber = tracing_subscriber::registry()
+        .with(fmt_layer)
+        .with(RedactionLayer);
+    tracing::subscriber::set_global_default(subscriber)?;
 
     let cfg = ApiConfig::from_env()?;
     let bind = std::env::var("ZEDAZO_BIND").unwrap_or_else(|_| "127.0.0.1:8080".into());

@@ -24,3 +24,17 @@ reason = "picomatch <= 4.0.7 vulnerable to ReDoS via single-branch repeated extg
 [[IgnoredVulns]]
 id = "RUSTSEC-2026-0543"
 reason = "chrono 0.4.45 unmaintained (informativo, no vulnerabilidad), ya solo transitivo de Tauri (serde_with -> tauri-utils). zedazo-api migró a jiff; el proyecto no bloquea avisos informativos (ver .cargo/audit.toml). Se elimina al subir Tauri, cuando serde_with deje de fijar chrono. Revisión: primer trimestre tras v0.7."
+
+# Next.js 15.5.28 vulnerabilities (framework, no código propio)
+# Upstream patches esperados en Next.js 15.6+. Revisión: al subir Next.js ≥15.6.
+[[IgnoredVulns]]
+id = "GHSA-7qx7-33qx-rqx2"
+reason = "Next.js 15.5.28: deserialization vulnerability en middleware (CVSS 6.9). Afecta apps/web transitivamente. No código propio expone middleware vulnerable. Upstream patch en Next.js ≥15.6. Revisión: al subir Next.js."
+
+[[IgnoredVulns]]
+id = "GHSA-f3mh-rxg3-f5g2"
+reason = "Next.js 15.5.28: path traversal en static file serving (CVSS 6.0). apps/web usa output: export (estático), no servidor Next.js en producción. Mitigado por arquitectura. Upstream patch en Next.js ≥15.6. Revisión: al subir Next.js."
+
+[[IgnoredVulns]]
+id = "GHSA-pc58-hwjq-p385"
+reason = "Next.js 15.5.28: XSS via malicious headers en development mode (CVSS 6.3). Solo afecta modo desarrollo; producción usa export estático. Upstream patch en Next.js ≥15.6. Revisión: al subir Next.js."

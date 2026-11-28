@@ -44,14 +44,12 @@ test.describe("API Rust real", () => {
     expect(upload.status()).toBe(201);
     const { upload_id } = await upload.json();
 
-    const create = await request.post(`${apiBase}/api/v1/jobs`, {
-      data: {
-        upload_id,
-        artifacts: ["vcf", "audit_tsv", "stats_json"],
-      },
-    });
-    expect(create.status()).toBe(201);
-    const { job_id } = await create.json();
+    // W2-T1: commit explícito crea el job automáticamente.
+    const commit = await request.post(
+      `${apiBase}/api/v1/uploads/${upload_id}/commit`,
+    );
+    expect(commit.status()).toBe(200);
+    const { job_id } = await commit.json();
 
     let status = "";
     for (let i = 0; i < 60; i++) {

@@ -76,6 +76,10 @@ pub async fn create_audit(
         artifacts: vec![],
         error: None,
         retention_hours: state.retention_hours,
+        config_toml: config_toml.clone(),
+        persisted_at: None,
+        persisted: false,
+        retryable: false,
     };
     state
         .storage

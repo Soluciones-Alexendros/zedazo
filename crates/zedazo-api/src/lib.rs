@@ -7,6 +7,7 @@ pub mod dto;
 pub mod errors;
 pub mod host_guard;
 pub mod jobs;
+pub mod observability;
 pub mod retention;
 pub mod security_headers;
 pub mod serve;

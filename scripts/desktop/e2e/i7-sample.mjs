@@ -306,18 +306,18 @@ try {
     throw new Error(`upload sin id: ${JSON.stringify(upload)}`);
   }
 
-  const jobRes = await fetch(`${base}/api/v1/jobs`, {
+  // W2-T1: commit explícito crea el job automáticamente.
+  const jobRes = await fetch(`${base}/api/v1/uploads/${uploadId}/commit`, {
     method: "POST",
-    headers: { ...headers, "Content-Type": "application/json" },
-    body: JSON.stringify({ upload_id: uploadId }),
+    headers,
   });
   if (!jobRes.ok) {
-    throw new Error(`jobs HTTP ${jobRes.status}: ${await jobRes.text()}`);
+    throw new Error(`commit HTTP ${jobRes.status}: ${await jobRes.text()}`);
   }
   const job = await jobRes.json();
   const jobId = job.job_id || job.id;
   if (!jobId) {
-    throw new Error(`job sin id: ${JSON.stringify(job)}`);
+    throw new Error(`commit sin job_id: ${JSON.stringify(job)}`);
   }
 
   let status = job.status || "";
