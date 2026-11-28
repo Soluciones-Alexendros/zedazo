@@ -39,6 +39,7 @@ tempfile = { workspace = true }
 http-body-util = "0.1"
 fs2 = "0.4"
 thiserror = "2"
+regex = "1"
 
 [dev-dependencies]
 http-body-util = "0.1"

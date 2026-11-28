@@ -5401,6 +5401,7 @@ dependencies = [
  "http-body-util",
  "jiff",
  "mime_guess",
+ "regex",
  "serde",
  "serde_json",
  "sha2",
