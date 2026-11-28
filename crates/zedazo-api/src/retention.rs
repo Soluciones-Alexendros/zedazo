@@ -579,6 +579,9 @@ mod should_expire_tests {
             error: None,
             retention_hours,
             config_toml: None,
+            persisted_at: None,
+            persisted: false,
+            retryable: false,
         }
     }
 

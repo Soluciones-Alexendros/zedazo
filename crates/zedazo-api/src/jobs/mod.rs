@@ -208,41 +208,74 @@ fn run_job_sync(state: &AppState, job_id: &str, epoch_at_spawn: u64) -> anyhow::
         anyhow::bail!("wipe durante el procesamiento; no se persisten resultados");
     }
 
-    handle.block_on(async {
+    // Persistir resultados: vistas + manifiesto. Si falla, marcar Failed con persisted=false/retryable=true.
+    let persist_result: anyhow::Result<()> = handle.block_on(async {
         let mut jobs = state.jobs.write().await;
         if let Some(r) = jobs.get_mut(job_id) {
             if r.cancel.is_cancelled() {
                 r.manifest.status = JobStatus::Cancelled;
-            } else {
-                r.manifest.status = JobStatus::Completed;
-                r.manifest.summary = Some(result.summary.clone());
-                r.contact_views = result.contact_views.clone();
-                r.duplicate_groups = result.duplicate_groups.clone();
-                r.warnings = result.warnings.clone();
-                r.manifest.artifacts = result
-                    .artifacts
-                    .iter()
-                    .map(|a| artifact_kind_str(a.kind).to_string())
-                    .collect();
-                let contacts_path = job_dir.join("contacts_view.json");
-                let _ = Storage::atomic_write(
-                    &contacts_path,
-                    serde_json::to_string_pretty(&result.contact_views)
-                        .unwrap_or_default()
-                        .as_bytes(),
-                );
-                let dup_path = job_dir.join("duplicates_view.json");
-                let _ = Storage::atomic_write(
-                    &dup_path,
-                    serde_json::to_string_pretty(&result.duplicate_groups)
-                        .unwrap_or_default()
-                        .as_bytes(),
-                );
+                r.manifest.completed_at = Some(now_rfc3339());
+                save_manifest(state, &r.manifest);
+                return Ok(());
             }
-            r.manifest.completed_at = Some(now_rfc3339());
-            save_manifest(state, &r.manifest);
+            r.manifest.summary = Some(result.summary.clone());
+            r.contact_views = result.contact_views.clone();
+            r.duplicate_groups = result.duplicate_groups.clone();
+            r.warnings = result.warnings.clone();
+            r.manifest.artifacts = result
+                .artifacts
+                .iter()
+                .map(|a| artifact_kind_str(a.kind).to_string())
+                .collect();
+
+            // Escrituras críticas: vistas + manifiesto. Cualquier fallo = persisted=false.
+            let contacts_path = job_dir.join("contacts_view.json");
+            Storage::atomic_write(
+                &contacts_path,
+                serde_json::to_string_pretty(&result.contact_views)
+                    .unwrap_or_default()
+                    .as_bytes(),
+            )?;
+            let dup_path = job_dir.join("duplicates_view.json");
+            Storage::atomic_write(
+                &dup_path,
+                serde_json::to_string_pretty(&result.duplicate_groups)
+                    .unwrap_or_default()
+                    .as_bytes(),
+            )?;
+
+            // Manifiesto con persisted=true
+            let completed_at = now_rfc3339();
+            r.manifest.completed_at = Some(completed_at.clone());
+            r.manifest.status = JobStatus::Completed;
+            r.manifest.persisted = true;
+            r.manifest.persisted_at = Some(completed_at);
+            r.manifest.retryable = false;
+            save_manifest_result(state, &r.manifest)?;
+
+            Ok(())
+        } else {
+            Ok(())
         }
     });
+
+    if let Err(e) = persist_result {
+        // Fallo de persistencia crítica: marcar Failed con persisted=false, retryable=true
+        handle.block_on(async {
+            let mut jobs = state.jobs.write().await;
+            if let Some(r) = jobs.get_mut(job_id) {
+                let completed_at = now_rfc3339();
+                r.manifest.status = JobStatus::Failed;
+                r.manifest.completed_at = Some(completed_at.clone());
+                r.manifest.persisted = false;
+                r.manifest.persisted_at = None;
+                r.manifest.retryable = true;
+                r.manifest.error = Some(format!("persist_failed: {}", e));
+                let _ = save_manifest_result(state, &r.manifest);
+            }
+        });
+        tracing::error!(%job_id, error = %e, "fallo crítico de persistencia; job marcado Failed/retryable");
+    }
 
     Ok(())
 }

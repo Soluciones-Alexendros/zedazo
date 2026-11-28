@@ -150,6 +150,9 @@ pub async fn create_job(
         error: None,
         retention_hours: retention,
         config_toml: config_toml.clone(),
+        persisted_at: None,
+        persisted: false,
+        retryable: false,
     };
 
     state
