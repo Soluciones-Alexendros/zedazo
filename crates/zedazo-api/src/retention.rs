@@ -48,25 +48,31 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
             .to_string();
         if Storage::validate_id(&id).is_err() {
             tracing::warn!(path = %dir.display(), "directorio de job con id inválido; en cola de limpieza");
-            let _ = state
+            state
                 .storage
-                .enqueue_pending_delete(PendingKind::JobDir, &id);
+                .enqueue_pending_delete(PendingKind::JobDir, &id)?;
             continue;
         }
         let manifest_path = dir.join("manifest.json");
         if !manifest_path.exists() {
             tracing::warn!(job_id = %id, "job sin manifiesto; en cola de limpieza");
-            let _ = state.storage.enqueue_pending_delete(PendingKind::Job, &id);
+            state
+                .storage
+                .enqueue_pending_delete(PendingKind::Job, &id)?;
             continue;
         }
         let Ok(raw) = std::fs::read_to_string(&manifest_path) else {
             tracing::warn!(job_id = %id, "manifiesto ilegible; en cola de limpieza");
-            let _ = state.storage.enqueue_pending_delete(PendingKind::Job, &id);
+            state
+                .storage
+                .enqueue_pending_delete(PendingKind::Job, &id)?;
             continue;
         };
         let Ok(mut manifest) = serde_json::from_str::<JobManifest>(&raw) else {
             tracing::warn!(job_id = %id, "manifiesto inválido; en cola de limpieza");
-            let _ = state.storage.enqueue_pending_delete(PendingKind::Job, &id);
+            state
+                .storage
+                .enqueue_pending_delete(PendingKind::Job, &id)?;
             continue;
         };
 
@@ -101,7 +107,9 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
                 }
                 Err(e) => {
                     tracing::error!(job_id = %id, error = %e, "fallo al borrar job vencido");
-                    let _ = state.storage.enqueue_pending_delete(PendingKind::Job, &id);
+                    state
+                        .storage
+                        .enqueue_pending_delete(PendingKind::Job, &id)?;
                     continue;
                 }
             }
@@ -307,9 +315,9 @@ fn sweep_uploads(
             continue;
         }
         if Storage::validate_id(&upload_id).is_err() {
-            let _ = state
+            state
                 .storage
-                .enqueue_pending_delete(PendingKind::Upload, &upload_id);
+                .enqueue_pending_delete(PendingKind::Upload, &upload_id)?;
             continue;
         }
         let meta_path = state.storage.upload_meta_path(&upload_id);
@@ -341,9 +349,9 @@ fn sweep_uploads(
                 Ok(()) => tracing::info!(%upload_id, "upload huérfano eliminado"),
                 Err(e) => {
                     tracing::error!(%upload_id, error = %e, "fallo al borrar upload");
-                    let _ = state
+                    state
                         .storage
-                        .enqueue_pending_delete(PendingKind::Upload, &upload_id);
+                        .enqueue_pending_delete(PendingKind::Upload, &upload_id)?;
                 }
             }
         }
@@ -466,7 +474,9 @@ async fn expire_job(state: &AppState, id: &str) {
         }
         Err(e) => {
             tracing::error!(job_id = %id, error = %e, "fallo al borrar job expirado; se reintentará");
-            let _ = state.storage.enqueue_pending_delete(PendingKind::Job, id);
+            if let Err(e) = state.storage.enqueue_pending_delete(PendingKind::Job, id) {
+                tracing::error!(job_id = %id, error = %e, "fallo al encolar borrado pendiente");
+            }
             // Mantener entrada en registro para reintento visible.
         }
     }
@@ -536,9 +546,12 @@ pub async fn delete_job_tracked(state: &AppState, job_id: &str) -> DeleteOutcome
         }
         Err(e) => {
             tracing::error!(job_id = %job_id, error = %e, "delete_job: borrado falló");
-            let _ = state
+            if let Err(e) = state
                 .storage
-                .enqueue_pending_delete(PendingKind::Job, job_id);
+                .enqueue_pending_delete(PendingKind::Job, job_id)
+            {
+                tracing::error!(job_id = %job_id, error = %e, "fallo al encolar borrado pendiente");
+            }
             {
                 let mut jobs = state.jobs.write().await;
                 jobs.remove(job_id);
