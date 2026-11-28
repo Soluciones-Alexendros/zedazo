@@ -40,6 +40,7 @@ fn write_interrupted_job(storage: &Storage, job_id: &str) {
         artifacts: vec![],
         error: None,
         retention_hours: 24,
+        config_toml: None,
     };
     let path = storage.job_dir(job_id).join("manifest.json");
     Storage::atomic_write(
@@ -212,6 +213,7 @@ async fn completed_job_survives_restart() {
             artifacts: vec!["vcf".into()],
             error: None,
             retention_hours: 24,
+            config_toml: None,
         };
         // Asegurar no vencido.
         manifest.completed_at = Some(now_rfc3339());

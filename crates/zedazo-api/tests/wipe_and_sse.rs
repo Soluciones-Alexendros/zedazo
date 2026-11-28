@@ -121,6 +121,7 @@ async fn sse_query_last_event_id_replays() {
                     artifacts: vec![],
                     error: None,
                     retention_hours: 24,
+                    config_toml: None,
                 },
                 contact_views: vec![],
                 duplicate_groups: vec![],

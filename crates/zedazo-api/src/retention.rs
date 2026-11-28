@@ -3,8 +3,11 @@
 //! El TTL no es exacto al segundo: el barrido corre cada hora (y una vez al arrancar).
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
-use zedazo_core::application::process::CancellationToken;
+use zedazo_core::application::process::{
+    ArtifactKind, CancellationToken, NullProgress, ProcessRequest, RulesConfigSource,
+};
 
 use crate::app::AppState;
 use crate::dto::{JobManifest, JobRecord, JobStatus};
@@ -104,15 +107,50 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
             }
         }
 
+        // Para jobs Completed, cargar vistas persistidas o reconstruir (F-01, Q1-D híbrido)
+        let (contact_views, duplicate_groups, warnings) = if manifest.status == JobStatus::Completed
+        {
+            let job_dir = state.storage.job_dir(&id);
+            match load_views_or_rebuild(&job_dir, &manifest).await {
+                Ok((cv, dg, w)) => (cv, dg, w),
+                Err(e) => {
+                    tracing::error!(job_id = %id, error = %e, "fallo al cargar/reconstruir vistas; job marcado como RecoveredPartial");
+                    manifest.status = JobStatus::Failed;
+                    manifest.error = Some(format!("recovery_failed: {}", e));
+                    let _ = crate::jobs::save_manifest_result(state, &manifest);
+                    (vec![], vec![], vec![])
+                }
+            }
+        } else {
+            (vec![], vec![], vec![])
+        };
+
+        // Reconstruir requested_artifacts desde el manifiesto
+        let requested_artifacts: Vec<zedazo_core::application::process::ArtifactKind> = manifest
+            .artifacts
+            .iter()
+            .filter_map(|s| match s.as_str() {
+                "vcf" => Some(zedazo_core::application::process::ArtifactKind::Vcf),
+                "audit_tsv" => Some(zedazo_core::application::process::ArtifactKind::AuditTsv),
+                "stats_json" => Some(zedazo_core::application::process::ArtifactKind::StatsJson),
+                "stats_markdown" => {
+                    Some(zedazo_core::application::process::ArtifactKind::StatsMarkdown)
+                }
+                "csv" => Some(zedazo_core::application::process::ArtifactKind::Csv),
+                "json" => Some(zedazo_core::application::process::ArtifactKind::Json),
+                _ => None,
+            })
+            .collect();
+
         recovered.insert(
             id.clone(),
             JobRecord {
                 manifest,
-                contact_views: vec![],
-                duplicate_groups: vec![],
-                warnings: vec![],
+                contact_views,
+                duplicate_groups,
+                warnings,
                 cancel: CancellationToken::new(),
-                requested_artifacts: vec![],
+                requested_artifacts,
                 config_toml: None,
             },
         );
@@ -134,6 +172,111 @@ pub async fn reconcile_on_startup(state: &AppState) -> anyhow::Result<()> {
     retry_pending_deletes(state).await?;
 
     Ok(())
+}
+
+/// Intenta cargar vistas persistidas (contacts_view.json, duplicates_view.json, warnings.json).
+/// Si faltan o están corruptas, reconstruye re-procesando el VCF original desde artifacts/.
+async fn load_views_or_rebuild(
+    job_dir: &std::path::Path,
+    manifest: &JobManifest,
+) -> anyhow::Result<(
+    Vec<zedazo_core::application::process::ContactView>,
+    Vec<zedazo_core::application::process::DuplicateGroupView>,
+    Vec<zedazo_core::application::process::ProcessWarning>,
+)> {
+    // Rutas de las vistas persistidas
+    let contacts_path = job_dir.join("contacts_view.json");
+    let duplicates_path = job_dir.join("duplicates_view.json");
+    let warnings_path = job_dir.join("warnings.json");
+
+    // Intentar cargar vistas existentes
+    if contacts_path.exists() && duplicates_path.exists() && warnings_path.exists() {
+        let contacts_raw = std::fs::read_to_string(&contacts_path)?;
+        let duplicates_raw = std::fs::read_to_string(&duplicates_path)?;
+        let warnings_raw = std::fs::read_to_string(&warnings_path)?;
+
+        let contacts: Vec<zedazo_core::application::process::ContactView> =
+            serde_json::from_str(&contacts_raw)?;
+        let duplicates: Vec<zedazo_core::application::process::DuplicateGroupView> =
+            serde_json::from_str(&duplicates_raw)?;
+        let warnings: Vec<zedazo_core::application::process::ProcessWarning> =
+            serde_json::from_str(&warnings_raw)?;
+
+        tracing::info!(job_id = %manifest.job_id, "vistas cargadas desde JSON persistido");
+        return Ok((contacts, duplicates, warnings));
+    }
+
+    // Fallback: reconstruir re-procesando el VCF original
+    tracing::info!(job_id = %manifest.job_id, "vistas no encontradas o incompletas; reconstruyendo desde artefactos");
+
+    // Buscar el VCF de entrada original en artifacts/ o en el directorio del job
+    let input_vcf = job_dir.join("artifacts").join("input.vcf");
+    let fallback_vcf = job_dir.join("input.vcf");
+    let vcf_path = if input_vcf.exists() {
+        input_vcf
+    } else if fallback_vcf.exists() {
+        fallback_vcf
+    } else {
+        // Sin VCF original: mantener vistas vacías (compatibilidad legacy)
+        tracing::warn!(job_id = %manifest.job_id, "job Completed sin vistas persistidas ni VCF original; manteniendo vistas vacías");
+        return Ok((vec![], vec![], vec![]));
+    };
+
+    // Configuración: usar BuiltIn o TomlInline del manifiesto si está disponible
+    let config = if let Some(toml) = &manifest.config_toml {
+        RulesConfigSource::TomlInline(toml.clone())
+    } else {
+        RulesConfigSource::BuiltIn
+    };
+
+    // Artefactos solicitados (los que estaban en el manifiesto original)
+    let mut arts: std::collections::BTreeSet<ArtifactKind> = manifest
+        .artifacts
+        .iter()
+        .filter_map(|s| match s.as_str() {
+            "vcf" => Some(ArtifactKind::Vcf),
+            "audit_tsv" => Some(ArtifactKind::AuditTsv),
+            "stats_json" => Some(ArtifactKind::StatsJson),
+            "stats_markdown" => Some(ArtifactKind::StatsMarkdown),
+            "csv" => Some(ArtifactKind::Csv),
+            "json" => Some(ArtifactKind::Json),
+            _ => None,
+        })
+        .collect();
+    if arts.is_empty() {
+        arts.insert(ArtifactKind::Vcf);
+        arts.insert(ArtifactKind::AuditTsv);
+        arts.insert(ArtifactKind::StatsJson);
+        arts.insert(ArtifactKind::Csv);
+        arts.insert(ArtifactKind::Json);
+    }
+
+    let req = ProcessRequest {
+        job_id: zedazo_core::application::process::JobId(manifest.job_id.clone()),
+        input_path: vcf_path.clone(),
+        working_directory: job_dir.to_path_buf(),
+        config,
+        requested_artifacts: arts,
+        source_override: manifest
+            .input
+            .source_detected
+            .clone()
+            .unwrap_or_else(|| "auto".into()),
+        dry_run: false,
+        strict: false,
+        cancellation: CancellationToken::new(),
+        progress: Arc::new(NullProgress),
+    };
+
+    let result = zedazo_core::application::process::run(&req)
+        .map_err(|e| anyhow::anyhow!("fallback re-proceso falló: {}", e))?;
+
+    tracing::info!(job_id = %manifest.job_id, contacts = result.contact_views.len(), duplicates = result.duplicate_groups.len(), "vistas reconstruidas");
+    Ok((
+        result.contact_views,
+        result.duplicate_groups,
+        result.warnings,
+    ))
 }
 
 /// ¿Ha vencido el TTL de retención? Reloj inyectable para tests (S-12).
@@ -435,6 +578,7 @@ mod should_expire_tests {
             artifacts: vec![],
             error: None,
             retention_hours,
+            config_toml: None,
         }
     }
 

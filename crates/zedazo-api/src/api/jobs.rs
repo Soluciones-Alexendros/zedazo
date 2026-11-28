@@ -149,6 +149,7 @@ pub async fn create_job(
         artifacts: vec![],
         error: None,
         retention_hours: retention,
+        config_toml: config_toml.clone(),
     };
 
     state

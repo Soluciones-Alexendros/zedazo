@@ -41,6 +41,9 @@ pub struct JobManifest {
     pub artifacts: Vec<String>,
     pub error: Option<String>,
     pub retention_hours: u64,
+    /// Config TOML inline usada para este job (para reconstrucción en reconcile).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config_toml: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
