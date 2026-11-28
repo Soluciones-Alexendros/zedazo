@@ -279,6 +279,9 @@ pub fn router(state: AppState) -> Router {
         .merge(uploads)
         .merge(protected)
         .layer(TraceLayer::new_for_http())
+        .layer(middleware::from_fn(
+            api::cache_control::cache_control_middleware,
+        ))
         .layer(cors)
         .layer(middleware::from_fn_with_state(
             state.clone(),

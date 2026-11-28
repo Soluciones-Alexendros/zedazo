@@ -14,7 +14,7 @@ example.com {
 	}
 
 	@api path /api/*
-	header @api Cache-Control "no-store"
+	header @api Cache-Control "no-store, private"
 
 	handle /api/* {
 		request_body {

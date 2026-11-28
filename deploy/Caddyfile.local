@@ -11,7 +11,7 @@ https://localhost, https://127.0.0.1 {
 	}
 
 	@api path /api/*
-	header @api Cache-Control "no-store"
+	header @api Cache-Control "no-store, private"
 
 	handle /api/* {
 		request_body {
