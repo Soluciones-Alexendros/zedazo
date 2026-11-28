@@ -25,10 +25,32 @@ pub struct Storage {
 }
 
 impl Storage {
+    /// Crea directorio con permisos 0700 (owner only).
+    pub fn ensure_dir_restricted(path: &Path) -> anyhow::Result<()> {
+        fs::create_dir_all(path)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(path, fs::Permissions::from_mode(0o700))?;
+        }
+        Ok(())
+    }
+
+    /// Crea archivo con permisos 0600 (owner only).
+    pub fn create_file_restricted(path: &Path) -> anyhow::Result<fs::File> {
+        use std::os::unix::fs::OpenOptionsExt;
+        let file = fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(path)?;
+        Ok(file)
+    }
+
     pub fn new(root: PathBuf) -> anyhow::Result<Self> {
-        use zedazo_core::infrastructure::secure_fs;
         for sub in ["jobs", "tmp", "uploads"] {
-            secure_fs::ensure_dir_0700(&root.join(sub))?;
+            Self::ensure_dir_restricted(&root.join(sub))?;
         }
         let s = Self {
             root,
@@ -117,7 +139,7 @@ impl Storage {
         Self::validate_id(job_id)?;
         let d = self.job_dir(job_id);
         self.assert_under_root(&d)?;
-        fs::create_dir_all(&d)?;
+        Self::ensure_dir_restricted(&d)?;
         Ok(d)
     }
 
@@ -145,14 +167,14 @@ impl Storage {
         Ok(())
     }
 
-    /// Borra todos los jobs, uploads y tmp bajo el data dir.
+    /// Borra todos los jobs, uploads y tmp bajo el data dir; recrea con permisos 0700.
     pub fn wipe_all(&self) -> anyhow::Result<()> {
         for sub in ["jobs", "uploads", "tmp"] {
             let p = self.root.join(sub);
             if p.exists() {
                 fs::remove_dir_all(&p).with_context(|| format!("wipe {}", p.display()))?;
             }
-            fs::create_dir_all(&p)?;
+            Self::ensure_dir_restricted(&p)?;
         }
         let _ = fs::remove_file(self.pending_deletes_path());
         Ok(())
