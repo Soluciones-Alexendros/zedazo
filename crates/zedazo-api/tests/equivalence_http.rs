@@ -226,6 +226,7 @@ fn multipart_vcf(filename: &str, content: &[u8]) -> (String, Vec<u8>) {
 }
 
 /// Ejecuta el flujo HTTP completo reutilizando el mismo `AppState`.
+/// Nuevo flujo: upload -> commit (crea job automáticamente) -> esperar job.
 async fn api_artifacts(fixture_path: &Path) -> (Value, String, String, String, String, String) {
     let dir = tempdir().expect("tempdir");
     let state = AppState::new(dir.path().to_path_buf(), 52_428_800, 24).expect("state");
@@ -237,6 +238,7 @@ async fn api_artifacts(fixture_path: &Path) -> (Value, String, String, String, S
         .unwrap_or("input.vcf");
     let (ct, body) = multipart_vcf(name, &vcf);
 
+    // 1. Upload
     let upload_res = app::router(state.clone())
         .oneshot(
             Request::builder()
@@ -253,25 +255,21 @@ async fn api_artifacts(fixture_path: &Path) -> (Value, String, String, String, S
     let upload: Value = body_json(upload_res).await;
     let upload_id = upload["upload_id"].as_str().unwrap().to_string();
 
-    let create_body = serde_json::json!({
-        "upload_id": upload_id,
-        "artifacts": ["vcf", "audit_tsv", "stats_json", "csv", "json"]
-    });
-    let create_res = app::router(state.clone())
+    // 2. Commit (crea job automáticamente)
+    let commit_res = app::router(state.clone())
         .oneshot(
             Request::builder()
                 .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
-                .uri("/api/v1/jobs")
-                .header("content-type", "application/json")
-                .body(Body::from(serde_json::to_vec(&create_body).unwrap()))
+                .uri(format!("/api/v1/uploads/{upload_id}/commit"))
+                .body(Body::empty())
                 .unwrap(),
         )
         .await
         .unwrap();
-    assert_eq!(create_res.status(), StatusCode::CREATED);
-    let job: Value = body_json(create_res).await;
-    let job_id = job["job_id"].as_str().expect("job_id").to_string();
+    assert_eq!(commit_res.status(), StatusCode::OK);
+    let commit: Value = body_json(commit_res).await;
+    let job_id = commit["job_id"].as_str().expect("job_id").to_string();
 
     let deadline = tokio::time::Instant::now() + Duration::from_secs(60);
     let summary = loop {
@@ -536,26 +534,21 @@ async fn cancel_then_delete_is_idempotent() {
     let upload: Value = body_json(upload_res).await;
     let upload_id = upload["upload_id"].as_str().unwrap();
 
-    let create_res = app::router(state.clone())
+    // Commit crea job automáticamente
+    let commit_res = app::router(state.clone())
         .oneshot(
             Request::builder()
                 .header(axum::http::header::HOST, "127.0.0.1:8080")
                 .method("POST")
-                .uri("/api/v1/jobs")
-                .header("content-type", "application/json")
-                .body(Body::from(
-                    serde_json::to_vec(&serde_json::json!({
-                        "upload_id": upload_id,
-                        "artifacts": ["vcf", "audit_tsv"]
-                    }))
-                    .unwrap(),
-                ))
+                .uri(format!("/api/v1/uploads/{upload_id}/commit"))
+                .body(Body::empty())
                 .unwrap(),
         )
         .await
         .unwrap();
-    let job: Value = body_json(create_res).await;
-    let job_id = job["job_id"].as_str().unwrap().to_string();
+    assert_eq!(commit_res.status(), StatusCode::OK);
+    let commit: Value = body_json(commit_res).await;
+    let job_id = commit["job_id"].as_str().unwrap().to_string();
 
     let cancel = app::router(state.clone())
         .oneshot(
